@@ -1,0 +1,7 @@
+*.png
+preview.html
+asl-scenario-card-maker.html
+src/template.before_*.html
+__pycache__/
+ref/
+out/
