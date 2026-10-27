@@ -263,6 +263,8 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 .tplsel { height: 30px; border: 1px solid var(--line); border-radius: 4px; background: var(--rail); color: var(--ink); font: 600 13px var(--f-ui); padding: 0 6px; cursor: pointer; }
 
 /* ---------- SASL mission card (one page, two columns, laid out after the SASL 2nd Ed. mission sheets) ---------- */
+/* personal-use notice, printed small along the bottom edge of every page (kept in exports) */
+.sheet .wm { position: absolute; left: 0; right: 0; bottom: 5px; text-align: center; font: italic 400 6.5px/1 var(--f-card); color: #8a8a8a; letter-spacing: .03em; pointer-events: none; user-select: none; }
 .sheet.sasl { padding: 40px 44px 30px; font-size: 10.3px; line-height: 1.22; }
 .sasl .top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 28px; flex: none; }
 .sasl .hdrc { display: flex; flex-direction: column; min-width: 0; }
@@ -394,7 +396,7 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 
 <header class="bar">
   <div class="bar-top">
-    <div class="brand"><span class="mark" id="brandMark">ASL</span><span>Scenario Card Maker</span><span class="ver" title="Version 1.0, built 2026-10-25">v1.0</span></div>
+    <div class="brand"><span class="mark" id="brandMark">ASL</span><span>Scenario Card Maker</span><span class="ver" title="Version 1.1, built 2026-10-27">v1.1</span></div>
     <div class="tg" role="group" aria-label="Template">
       <label class="lbl" for="tplSel">Template</label>
       <select id="tplSel" class="tplsel"><option value="asl">ASL scenario card</option><option value="sasl">SASL mission card</option></select>
@@ -599,6 +601,7 @@ const NORTH = `<svg viewBox="0 0 16 56" aria-hidden="true"><path d="M8 0 L15.5 2
 /* the same N with its arrowhead on the right side, pointing right */
 const NORTH_R = `<svg viewBox="0 0 48 23" aria-hidden="true"><path d="M0 23V0H5.2L10.9 13V0H16V23H10.8L5.1 10V23Z" fill="#111"/><path d="M47.5 11.5 L20.5 4 L26.5 11.5 L20.5 19 Z" fill="#111"/></svg>`;
 /* ---------- state ---------- */
+const WM = `<div class="wm" aria-hidden="true">This template is for personal use only.</div>`;
 const blankSlot = (size = "s") => ({ img: null, qty: "", size });
 const blankGroup = (n = 6) => ({ form: "", html: "", indent: 0, inline: false, slots: Array.from({ length: n }, () => blankSlot()) });
 function blankCard() {
@@ -977,10 +980,10 @@ function render() {
     ${s.trc.turns.map((t, i) => `<button type="button" class="turn f-${t.fill || "none"}" data-act="turn" data-i="${i}" aria-label="Turn ${i + 1} options${t.half ? ", game ends in the first half of this turn" : ""}">${t.half ? `<svg class="half" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="100,0 100,100 0,100" fill="#d4202a"/></svg>` : ""}<span class="tm">${t.mark.map(m => `<span class="sym xs">${sideSym(m)}</span>`).join("")}</span><span class="tnum">${i + 1}</span></button>`).join("")}
     ${ed("trc.end", "tend", "END", { single: true })}
   </div>
-  ${sections.slice(0, cut).join("")}`;
+  ${sections.slice(0, cut).join("")}${WM}`;
   if (cut < sections.length) {
     sheet2.hidden = false;
-    sheet2.innerHTML = `<div class="bhdr"><span class="bsid" data-mirror="sid"></span><span class="bttl" data-mirror="title"></span><span class="bcont">(continued)</span></div>${sections.slice(cut).join("")}`;
+    sheet2.innerHTML = `<div class="bhdr"><span class="bsid" data-mirror="sid"></span><span class="bttl" data-mirror="title"></span><span class="bcont">(continued)</span></div>${sections.slice(cut).join("")}${WM}`;
     syncMirrors();
   } else { sheet2.hidden = true; sheet2.innerHTML = ""; }
   syncBar(); alignSyms(); fitBoard(); fitStage();
@@ -1038,8 +1041,8 @@ function renderSasl() {
     </div>`;
   const secs = s.sections.map(secHTML).join("");
   sheet.innerHTML = s.showPhoto
-    ? `<div class="top">${header(true)}${zone("photo", "sphoto", "Drop the mission photo here")}</div><div class="sflow" id="sflow">${secs}</div>`
-    : `<div class="sflow" id="sflow" style="margin-top:0">${header(false)}${secs}</div>`;
+    ? `<div class="top">${header(true)}${zone("photo", "sphoto", "Drop the mission photo here")}</div><div class="sflow" id="sflow">${secs}</div>${WM}`
+    : `<div class="sflow" id="sflow" style="margin-top:0">${header(false)}${secs}</div>${WM}`;
   sheet2.hidden = true; sheet2.innerHTML = "";
   syncBarSasl(); fitStage();
   pages.querySelectorAll("img").forEach(im => { if (!im.complete) im.addEventListener("load", queueFit, { once: true }); });
@@ -1926,7 +1929,7 @@ async function snapshot(target = sheet) {
   } finally { target.classList.remove("exporting"); scaler.style.transform = prev; window.scrollTo(sx, sy); }
 }
 async function busy(btn, fn) { const t = btn.textContent; btn.disabled = true; btn.textContent = "Working…"; try { await fn(); } catch (e) { toast(e.message || "Export failed."); } finally { btn.textContent = t; setSaveUI(); } }
-const APP_VERSION = "1.0";
+const APP_VERSION = "1.1";
 $("bSave").addEventListener("click", (e) => busy(e.currentTarget, () => offer(baseName() + ".json", JSON.stringify({ ...state, appVersion: APP_VERSION }))));
 $("bPng").addEventListener("click", (e) => busy(e.currentTarget, async () => {
   const two = !sheet2.hidden;

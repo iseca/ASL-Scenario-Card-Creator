@@ -5,6 +5,9 @@ The version number shows next to the title in the app's toolbar, and cards saved
 
 Numbering: the second number goes up for each set of changes (1.0 → 1.1 → 1.2 …); the first number goes up for a big change such as a new template.
 
+## v1.1 — 2026-10-27
+- Every card page (ASL front and back page, SASL mission) now carries a small grey notice centred along the bottom edge: "This template is for personal use only." It appears in PDF and PNG exports.
+
 ## v1.0 — 2026-10-25
 First version-controlled release. Everything built so far:
 
