@@ -430,8 +430,10 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 .blright { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .bltools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
 .bltools label { display: flex; gap: 6px; align-items: center; margin-left: 6px; }
-.blws { flex: 1; min-height: 0; position: relative; overflow: hidden; background: repeating-conic-gradient(#0000000a 0 25%, transparent 0 50%) 0 0 / 24px 24px; }
-.blwsin { position: absolute; inset: 0; touch-action: none; }
+.blws { flex: 1; min-height: 0; position: relative; overflow: auto; background: repeating-conic-gradient(#0000000a 0 25%, transparent 0 50%) 0 0 / 24px 24px; }
+.blwsin { position: relative; touch-action: none; }
+.blzoom { display: inline-flex; align-items: center; gap: 4px; }
+.blzoom output { min-width: 42px; text-align: center; font-variant-numeric: tabular-nums; color: var(--muted); }
 .blb { position: absolute; overflow: hidden; cursor: move; box-shadow: 0 0 0 1px #0006; background: #fff; }
 .blin { position: absolute; left: 50%; top: 50%; transform-origin: 50% 50%; }
 .blin > .bimg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
@@ -447,6 +449,9 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 .bltabs button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .bltabs button:focus-visible { outline: 2px solid var(--accent); }
 .bllist.ovl { grid-template-columns: repeat(3, 1fr); }
+.blgrp { grid-column: 1 / -1; margin: 10px 0 0; padding-bottom: 3px; border-bottom: 1px solid var(--line); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.blgrp span { color: var(--muted); font-weight: 500; }
+.blsub { grid-column: 1 / -1; margin: 6px 0 0; font-size: 11.5px; font-weight: 600; color: var(--muted); }
 .bllist.ovl .bltile img { max-height: 70px; object-position: center; border: none; background: repeating-conic-gradient(#0000000d 0 25%, transparent 0 50%) 0 0 / 10px 10px; }
 .bllist.ovl .bltile span { text-align: center; }
 .blb.sel { box-shadow: 0 0 0 3px var(--edit); z-index: 2; }
@@ -639,6 +644,7 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
         <button type="button" class="btn" id="blShade" title="Add a shaded area to show what is out of play; drag it, and drag its corner to size it">+ Shaded area</button>
         <button type="button" class="btn" id="blDel" title="Remove the selected board or shaded area (Delete)">Remove</button>
         <label><input type="checkbox" id="blLabels"> Board &amp; overlay IDs on the card</label>
+        <span class="blzoom" role="group" aria-label="Zoom"><button type="button" class="btn sq" id="blZoomOut" aria-label="Zoom out" title="Zoom out (−)">−</button><output id="blZoomPct">100%</output><button type="button" class="btn sq" id="blZoomIn" aria-label="Zoom in" title="Zoom in (+)">+</button><button type="button" class="btn" id="blZoomFit" title="Fit the whole layout (0)">Fit</button></span>
         <span class="sp"></span>
         <button type="button" class="btn" id="blNote" title="Write the list of boards into the card's board note">Put list in board note</button>
       </div>
@@ -2289,6 +2295,10 @@ $("blShade").addEventListener("click", () => {
   const r = { x: blSnapTo(ext.x1 - w, g.ox, g.sx), y: ext.y0, w: 0, h: ext.y1 - ext.y0 }; r.w = ext.x1 - r.x;
   BL.layout.shades.push(r); BL.sel = { t: "s", i: BL.layout.shades.length - 1 }; blDraw();
 });
+$("blZoomIn").addEventListener("click", () => blZoom((BL.zoom || 1) * 1.4));
+$("blZoomOut").addEventListener("click", () => blZoom((BL.zoom || 1) / 1.4));
+$("blZoomFit").addEventListener("click", () => { BL.zoom = 1; blDraw(); $("blWs").scrollTo(0, 0); });
+$("blWs").addEventListener("wheel", (e) => { if (!(e.ctrlKey || e.metaKey)) return; e.preventDefault(); blZoom((BL.zoom || 1) * (e.deltaY < 0 ? 1.15 : 1 / 1.15)); }, { passive: false });
 $("blLabels").addEventListener("change", (e) => { BL.layout.labels = e.target.checked; blDraw(); });
 $("blNote").addEventListener("click", () => {
   if (!BL.layout.boards.length) return;
@@ -2301,6 +2311,9 @@ document.addEventListener("keydown", (e) => {
   if (e.target.closest?.("input, textarea, select")) return;
   if (e.key === "Escape") { blClose(); e.stopPropagation(); }
   else if ((e.key === "Delete" || e.key === "Backspace") && BL.sel) { e.preventDefault(); $("blDel").click(); }
+  else if (e.key === "+" || e.key === "=") { e.preventDefault(); blZoom((BL.zoom || 1) * 1.4); }
+  else if (e.key === "-" || e.key === "_") { e.preventDefault(); blZoom((BL.zoom || 1) / 1.4); }
+  else if (e.key === "0") { e.preventDefault(); $("blZoomFit").click(); }
   else if ((e.key === "r" || e.key === "R") && BL.sel?.t === "b") { e.preventDefault(); blTurn(90); }
   else if ((e.key === "r" || e.key === "R") && BL.sel?.t === "o") { e.preventDefault(); blTurnOverlay(e.shiftKey ? -1 : 1); }
 }, true);

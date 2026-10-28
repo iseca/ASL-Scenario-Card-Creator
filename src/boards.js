@@ -216,12 +216,39 @@ async function openBoards(imgPath) {
   BL.layout = saved && Array.isArray(saved.boards) ? JSON.parse(JSON.stringify(saved)) : { boards: [], shades: [], labels: true };
   BL.layout.overlays = BL.layout.overlays || [];
   BL.layout.boards.forEach(b => { if (!b.id) b.id = blUid(); });
-  BL.sel = null; BL.note = false;
+  BL.sel = null; BL.note = false; BL.zoom = 1;
   BOARDS._idx = await BOARDS.getIndex(); BOARDS._ovl = await BOARDS.getOverlays();
   $("blDlg").hidden = false; document.body.classList.add("blopen");
   blDrawList(); blDraw();
 }
 function blClose() { $("blDlg").hidden = true; document.body.classList.remove("blopen"); }
+/* list groups: boards by family, overlays by regular/Deluxe and then terrain */
+const OVL_TERRAIN = {
+  "": "Map sections", b: "Brush", bb: "Bamboo", be: "Beach", br: "Bridges", d: "Deirs", dj: "Dense jungle", e: "Escarpments",
+  ef: "Streams with fords", elrr: "Elevated railroads", g: "Grain", h: "Hills", hd: "Hedges", hi: "Hillocks", m: "Marsh",
+  o: "Orchards", ob: "Ocean & beach", oc: "Ocean", og: "Open ground", ow: "Olive groves", p: "Ponds", rp: "Rice paddies",
+  rr: "Railroads", s: "Sand", sd: "Sand dunes", sh: "Shellholes", sr: "Rubble", st: "Streams", surr: "Sunken railroads",
+  rv: "Rivers", sw: "Swamp", v: "Vineyards", w: "Wadis", wd: "Woods", wr: "Wrecks", wt: "Water", x: "Buildings",
+};
+function blBoardGroup(b) {
+  const n = String(b.name);
+  if (/^\d{1,2}$/.test(n)) return [0, "ASL boards"];
+  if (/dx/i.test(n)) return [1, "Deluxe boards"];
+  if (/^\d+[ab]$/i.test(n)) return [2, "Fortenberry boards"];
+  return [3, "Third-party boards"];
+}
+function blOvlGroup(o) {
+  const pre = (o.key.match(/^[a-z]*/) || [""])[0];
+  if (pre === "dx") return [1, "Deluxe overlays", ""];
+  const t = OVL_TERRAIN[pre];
+  return [0, "ASL overlays", t ? `${t} (${pre ? pre.toUpperCase() : "1–7"})` : `Other (${pre.toUpperCase()})`];
+}
+function blGrouped(items, groupOf, tile) {
+  const g = new Map();
+  for (const it of items) { const [rank, head, sub = ""] = groupOf(it); const k = rank + "|" + head; if (!g.has(k)) g.set(k, { rank, head, subs: new Map() }); const G = g.get(k); if (!G.subs.has(sub)) G.subs.set(sub, []); G.subs.get(sub).push(it); }
+  return [...g.values()].sort((a, b) => a.rank - b.rank).map(G => `<h4 class="blgrp">${esc(G.head)} <span>${[...G.subs.values()].reduce((n, l) => n + l.length, 0)}</span></h4>`
+    + [...G.subs.entries()].sort((a, b) => BOARDS.natCmp(a[0], b[0])).map(([sub, list]) => (sub ? `<h5 class="blsub">${esc(sub)}</h5>` : "") + list.map(tile).join("")).join("")).join("");
+}
 function blDrawList() {
   const idx = BOARDS._idx || [], ovl = BOARDS._ovl || [];
   $("blCount").textContent = idx.length ? `${idx.length} boards, ${ovl.length} overlays` : "";
@@ -232,11 +259,11 @@ function blDrawList() {
   if (BL.tab === "boards") {
     $("blList").className = "bllist";
     const list = idx.filter(b => !q || (b.label + " " + b.file).toLowerCase().includes(q));
-    $("blList").innerHTML = list.map(b => `<button type="button" class="bltile" draggable="true" data-key="${esc(b.key)}" title="Add board ${esc(b.label)} (${b.cols}×${b.rows} hexes)"><img src="${b.thumb}" alt="" loading="lazy" draggable="false"><span>${esc(b.label)}</span></button>`).join("") || `<p class="palmsg">No boards match.</p>`;
+    $("blList").innerHTML = blGrouped(list, blBoardGroup, b => `<button type="button" class="bltile" draggable="true" data-key="${esc(b.key)}" title="Add board ${esc(b.label)} (${b.cols}×${b.rows} hexes)"><img src="${b.thumb}" alt="" loading="lazy" draggable="false"><span>${esc(b.label)}</span></button>`) || `<p class="palmsg">No boards match.</p>`;
   } else {
     $("blList").className = "bllist ovl";
-    const list = ovl.filter(o => !q || (o.name + " " + o.set).toLowerCase().includes(q));
-    $("blList").innerHTML = list.map(o => `<button type="button" class="bltile" draggable="true" data-ovl="${esc(o.key)}" title="Add overlay ${esc(o.name)} to the selected board"><img src="${o.thumb}" alt="" loading="lazy" draggable="false"><span>${esc(o.name)}</span></button>`).join("")
+    const list = ovl.filter(o => !q || (o.name + " " + o.set + " " + blOvlGroup(o).join(" ")).toLowerCase().includes(q));
+    $("blList").innerHTML = blGrouped(list, blOvlGroup, o => `<button type="button" class="bltile" draggable="true" data-ovl="${esc(o.key)}" title="Add overlay ${esc(o.name)} to the selected board"><img src="${o.thumb}" alt="" loading="lazy" draggable="false"><span>${esc(o.name)}</span></button>`)
       || `<p class="palmsg">${ovl.length ? "No overlays match." : "No overlays were found. Load the boards folder again; its overlays folder is read too."}</p>`;
   }
 }
@@ -332,11 +359,30 @@ async function blTurnOverlay(steps) {
   const after = await BOARDS.overlay(o.key, o.ori); if (!after) return;
   o.x = cx - after.snap[0]; o.y = cy - after.snap[1]; blDraw();
 }
+/* the view fits the layout, times the zoom; when zoomed in the work area scrolls */
 function blFit() {
   const ws = $("blWs"), ext = blExtent(), pad = 40;
   const W = Math.max(1, ext.x1 - ext.x0 + pad * 2), H = Math.max(1, ext.y1 - ext.y0 + pad * 2);
-  BL.scale = Math.min((ws.clientWidth - 8) / W, (ws.clientHeight - 8) / H, 0.6);
+  const fit = Math.min((ws.clientWidth - 8) / W, (ws.clientHeight - 8) / H, 0.6);
+  BL.scale = fit * (BL.zoom || 1);
   BL.ox = ext.x0 - pad; BL.oy = ext.y0 - pad;
+  const inn = $("blWsIn");
+  inn.style.width = Math.max(ws.clientWidth, W * BL.scale) + "px"; inn.style.height = Math.max(ws.clientHeight, H * BL.scale) + "px";
+  $("blZoomPct").textContent = Math.round((BL.zoom || 1) * 100) + "%";
+}
+/* zoom about the selected board / overlay / shaded area, or else about the middle of the view */
+function blSelCentre() {
+  const S = BL.sel, L = BL.layout; if (!S) return null;
+  if (S.t === "b") { const b = L.boards[S.i], info = blInfo(b.key); if (!info) return null; const bx = blBox(b, info); return { x: b.x + bx.w / 2, y: b.y + bx.h / 2 }; }
+  if (S.t === "s") { const r = L.shades[S.i]; return { x: r.x + r.w / 2, y: r.y + r.h / 2 }; }
+  if (S.t === "o") { const o = L.overlays[S.i], b = L.boards.find(x => x.id === o.bid), info = b && blInfo(b.key), im = BOARDS.overlaySync(o.key, o.ori); if (!info || !im) return null; return blFromBoard(b, info, { x: o.x + im.w / 2, y: o.y + im.h / 2 }); }
+  return null;
+}
+function blZoom(z) {
+  const ws = $("blWs"), s0 = BL.scale, c = blSelCentre(), cx = c ? c.x : (ws.scrollLeft + ws.clientWidth / 2) / s0 + BL.ox, cy = c ? c.y : (ws.scrollTop + ws.clientHeight / 2) / s0 + BL.oy;
+  BL.zoom = Math.min(8, Math.max(0.25, z));
+  blDraw();
+  ws.scrollLeft = (cx - BL.ox) * BL.scale - ws.clientWidth / 2; ws.scrollTop = (cy - BL.oy) * BL.scale - ws.clientHeight / 2;
 }
 /* where a board's number goes: the corner nearest the board's own printed ID
    (lower-left on an unturned geomorphic board), following the board as it is rotated or reversed */

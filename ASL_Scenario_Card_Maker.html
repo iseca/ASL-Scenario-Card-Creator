@@ -432,8 +432,10 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 .blright { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .bltools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
 .bltools label { display: flex; gap: 6px; align-items: center; margin-left: 6px; }
-.blws { flex: 1; min-height: 0; position: relative; overflow: hidden; background: repeating-conic-gradient(#0000000a 0 25%, transparent 0 50%) 0 0 / 24px 24px; }
-.blwsin { position: absolute; inset: 0; touch-action: none; }
+.blws { flex: 1; min-height: 0; position: relative; overflow: auto; background: repeating-conic-gradient(#0000000a 0 25%, transparent 0 50%) 0 0 / 24px 24px; }
+.blwsin { position: relative; touch-action: none; }
+.blzoom { display: inline-flex; align-items: center; gap: 4px; }
+.blzoom output { min-width: 42px; text-align: center; font-variant-numeric: tabular-nums; color: var(--muted); }
 .blb { position: absolute; overflow: hidden; cursor: move; box-shadow: 0 0 0 1px #0006; background: #fff; }
 .blin { position: absolute; left: 50%; top: 50%; transform-origin: 50% 50%; }
 .blin > .bimg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
@@ -449,6 +451,9 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 .bltabs button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .bltabs button:focus-visible { outline: 2px solid var(--accent); }
 .bllist.ovl { grid-template-columns: repeat(3, 1fr); }
+.blgrp { grid-column: 1 / -1; margin: 10px 0 0; padding-bottom: 3px; border-bottom: 1px solid var(--line); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.blgrp span { color: var(--muted); font-weight: 500; }
+.blsub { grid-column: 1 / -1; margin: 6px 0 0; font-size: 11.5px; font-weight: 600; color: var(--muted); }
 .bllist.ovl .bltile img { max-height: 70px; object-position: center; border: none; background: repeating-conic-gradient(#0000000d 0 25%, transparent 0 50%) 0 0 / 10px 10px; }
 .bllist.ovl .bltile span { text-align: center; }
 .blb.sel { box-shadow: 0 0 0 3px var(--edit); z-index: 2; }
@@ -641,6 +646,7 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
         <button type="button" class="btn" id="blShade" title="Add a shaded area to show what is out of play; drag it, and drag its corner to size it">+ Shaded area</button>
         <button type="button" class="btn" id="blDel" title="Remove the selected board or shaded area (Delete)">Remove</button>
         <label><input type="checkbox" id="blLabels"> Board &amp; overlay IDs on the card</label>
+        <span class="blzoom" role="group" aria-label="Zoom"><button type="button" class="btn sq" id="blZoomOut" aria-label="Zoom out" title="Zoom out (−)">−</button><output id="blZoomPct">100%</output><button type="button" class="btn sq" id="blZoomIn" aria-label="Zoom in" title="Zoom in (+)">+</button><button type="button" class="btn" id="blZoomFit" title="Fit the whole layout (0)">Fit</button></span>
         <span class="sp"></span>
         <button type="button" class="btn" id="blNote" title="Write the list of boards into the card's board note">Put list in board note</button>
       </div>
@@ -1084,12 +1090,39 @@ async function openBoards(imgPath) {
   BL.layout = saved && Array.isArray(saved.boards) ? JSON.parse(JSON.stringify(saved)) : { boards: [], shades: [], labels: true };
   BL.layout.overlays = BL.layout.overlays || [];
   BL.layout.boards.forEach(b => { if (!b.id) b.id = blUid(); });
-  BL.sel = null; BL.note = false;
+  BL.sel = null; BL.note = false; BL.zoom = 1;
   BOARDS._idx = await BOARDS.getIndex(); BOARDS._ovl = await BOARDS.getOverlays();
   $("blDlg").hidden = false; document.body.classList.add("blopen");
   blDrawList(); blDraw();
 }
 function blClose() { $("blDlg").hidden = true; document.body.classList.remove("blopen"); }
+/* list groups: boards by family, overlays by regular/Deluxe and then terrain */
+const OVL_TERRAIN = {
+  "": "Map sections", b: "Brush", bb: "Bamboo", be: "Beach", br: "Bridges", d: "Deirs", dj: "Dense jungle", e: "Escarpments",
+  ef: "Streams with fords", elrr: "Elevated railroads", g: "Grain", h: "Hills", hd: "Hedges", hi: "Hillocks", m: "Marsh",
+  o: "Orchards", ob: "Ocean & beach", oc: "Ocean", og: "Open ground", ow: "Olive groves", p: "Ponds", rp: "Rice paddies",
+  rr: "Railroads", s: "Sand", sd: "Sand dunes", sh: "Shellholes", sr: "Rubble", st: "Streams", surr: "Sunken railroads",
+  rv: "Rivers", sw: "Swamp", v: "Vineyards", w: "Wadis", wd: "Woods", wr: "Wrecks", wt: "Water", x: "Buildings",
+};
+function blBoardGroup(b) {
+  const n = String(b.name);
+  if (/^\d{1,2}$/.test(n)) return [0, "ASL boards"];
+  if (/dx/i.test(n)) return [1, "Deluxe boards"];
+  if (/^\d+[ab]$/i.test(n)) return [2, "Fortenberry boards"];
+  return [3, "Third-party boards"];
+}
+function blOvlGroup(o) {
+  const pre = (o.key.match(/^[a-z]*/) || [""])[0];
+  if (pre === "dx") return [1, "Deluxe overlays", ""];
+  const t = OVL_TERRAIN[pre];
+  return [0, "ASL overlays", t ? `${t} (${pre ? pre.toUpperCase() : "1–7"})` : `Other (${pre.toUpperCase()})`];
+}
+function blGrouped(items, groupOf, tile) {
+  const g = new Map();
+  for (const it of items) { const [rank, head, sub = ""] = groupOf(it); const k = rank + "|" + head; if (!g.has(k)) g.set(k, { rank, head, subs: new Map() }); const G = g.get(k); if (!G.subs.has(sub)) G.subs.set(sub, []); G.subs.get(sub).push(it); }
+  return [...g.values()].sort((a, b) => a.rank - b.rank).map(G => `<h4 class="blgrp">${esc(G.head)} <span>${[...G.subs.values()].reduce((n, l) => n + l.length, 0)}</span></h4>`
+    + [...G.subs.entries()].sort((a, b) => BOARDS.natCmp(a[0], b[0])).map(([sub, list]) => (sub ? `<h5 class="blsub">${esc(sub)}</h5>` : "") + list.map(tile).join("")).join("")).join("");
+}
 function blDrawList() {
   const idx = BOARDS._idx || [], ovl = BOARDS._ovl || [];
   $("blCount").textContent = idx.length ? `${idx.length} boards, ${ovl.length} overlays` : "";
@@ -1100,11 +1133,11 @@ function blDrawList() {
   if (BL.tab === "boards") {
     $("blList").className = "bllist";
     const list = idx.filter(b => !q || (b.label + " " + b.file).toLowerCase().includes(q));
-    $("blList").innerHTML = list.map(b => `<button type="button" class="bltile" draggable="true" data-key="${esc(b.key)}" title="Add board ${esc(b.label)} (${b.cols}×${b.rows} hexes)"><img src="${b.thumb}" alt="" loading="lazy" draggable="false"><span>${esc(b.label)}</span></button>`).join("") || `<p class="palmsg">No boards match.</p>`;
+    $("blList").innerHTML = blGrouped(list, blBoardGroup, b => `<button type="button" class="bltile" draggable="true" data-key="${esc(b.key)}" title="Add board ${esc(b.label)} (${b.cols}×${b.rows} hexes)"><img src="${b.thumb}" alt="" loading="lazy" draggable="false"><span>${esc(b.label)}</span></button>`) || `<p class="palmsg">No boards match.</p>`;
   } else {
     $("blList").className = "bllist ovl";
-    const list = ovl.filter(o => !q || (o.name + " " + o.set).toLowerCase().includes(q));
-    $("blList").innerHTML = list.map(o => `<button type="button" class="bltile" draggable="true" data-ovl="${esc(o.key)}" title="Add overlay ${esc(o.name)} to the selected board"><img src="${o.thumb}" alt="" loading="lazy" draggable="false"><span>${esc(o.name)}</span></button>`).join("")
+    const list = ovl.filter(o => !q || (o.name + " " + o.set + " " + blOvlGroup(o).join(" ")).toLowerCase().includes(q));
+    $("blList").innerHTML = blGrouped(list, blOvlGroup, o => `<button type="button" class="bltile" draggable="true" data-ovl="${esc(o.key)}" title="Add overlay ${esc(o.name)} to the selected board"><img src="${o.thumb}" alt="" loading="lazy" draggable="false"><span>${esc(o.name)}</span></button>`)
       || `<p class="palmsg">${ovl.length ? "No overlays match." : "No overlays were found. Load the boards folder again; its overlays folder is read too."}</p>`;
   }
 }
@@ -1200,11 +1233,30 @@ async function blTurnOverlay(steps) {
   const after = await BOARDS.overlay(o.key, o.ori); if (!after) return;
   o.x = cx - after.snap[0]; o.y = cy - after.snap[1]; blDraw();
 }
+/* the view fits the layout, times the zoom; when zoomed in the work area scrolls */
 function blFit() {
   const ws = $("blWs"), ext = blExtent(), pad = 40;
   const W = Math.max(1, ext.x1 - ext.x0 + pad * 2), H = Math.max(1, ext.y1 - ext.y0 + pad * 2);
-  BL.scale = Math.min((ws.clientWidth - 8) / W, (ws.clientHeight - 8) / H, 0.6);
+  const fit = Math.min((ws.clientWidth - 8) / W, (ws.clientHeight - 8) / H, 0.6);
+  BL.scale = fit * (BL.zoom || 1);
   BL.ox = ext.x0 - pad; BL.oy = ext.y0 - pad;
+  const inn = $("blWsIn");
+  inn.style.width = Math.max(ws.clientWidth, W * BL.scale) + "px"; inn.style.height = Math.max(ws.clientHeight, H * BL.scale) + "px";
+  $("blZoomPct").textContent = Math.round((BL.zoom || 1) * 100) + "%";
+}
+/* zoom about the selected board / overlay / shaded area, or else about the middle of the view */
+function blSelCentre() {
+  const S = BL.sel, L = BL.layout; if (!S) return null;
+  if (S.t === "b") { const b = L.boards[S.i], info = blInfo(b.key); if (!info) return null; const bx = blBox(b, info); return { x: b.x + bx.w / 2, y: b.y + bx.h / 2 }; }
+  if (S.t === "s") { const r = L.shades[S.i]; return { x: r.x + r.w / 2, y: r.y + r.h / 2 }; }
+  if (S.t === "o") { const o = L.overlays[S.i], b = L.boards.find(x => x.id === o.bid), info = b && blInfo(b.key), im = BOARDS.overlaySync(o.key, o.ori); if (!info || !im) return null; return blFromBoard(b, info, { x: o.x + im.w / 2, y: o.y + im.h / 2 }); }
+  return null;
+}
+function blZoom(z) {
+  const ws = $("blWs"), s0 = BL.scale, c = blSelCentre(), cx = c ? c.x : (ws.scrollLeft + ws.clientWidth / 2) / s0 + BL.ox, cy = c ? c.y : (ws.scrollTop + ws.clientHeight / 2) / s0 + BL.oy;
+  BL.zoom = Math.min(8, Math.max(0.25, z));
+  blDraw();
+  ws.scrollLeft = (cx - BL.ox) * BL.scale - ws.clientWidth / 2; ws.scrollTop = (cy - BL.oy) * BL.scale - ws.clientHeight / 2;
 }
 /* where a board's number goes: the corner nearest the board's own printed ID
    (lower-left on an unturned geomorphic board), following the board as it is rotated or reversed */
@@ -3002,6 +3054,10 @@ $("blShade").addEventListener("click", () => {
   const r = { x: blSnapTo(ext.x1 - w, g.ox, g.sx), y: ext.y0, w: 0, h: ext.y1 - ext.y0 }; r.w = ext.x1 - r.x;
   BL.layout.shades.push(r); BL.sel = { t: "s", i: BL.layout.shades.length - 1 }; blDraw();
 });
+$("blZoomIn").addEventListener("click", () => blZoom((BL.zoom || 1) * 1.4));
+$("blZoomOut").addEventListener("click", () => blZoom((BL.zoom || 1) / 1.4));
+$("blZoomFit").addEventListener("click", () => { BL.zoom = 1; blDraw(); $("blWs").scrollTo(0, 0); });
+$("blWs").addEventListener("wheel", (e) => { if (!(e.ctrlKey || e.metaKey)) return; e.preventDefault(); blZoom((BL.zoom || 1) * (e.deltaY < 0 ? 1.15 : 1 / 1.15)); }, { passive: false });
 $("blLabels").addEventListener("change", (e) => { BL.layout.labels = e.target.checked; blDraw(); });
 $("blNote").addEventListener("click", () => {
   if (!BL.layout.boards.length) return;
@@ -3014,6 +3070,9 @@ document.addEventListener("keydown", (e) => {
   if (e.target.closest?.("input, textarea, select")) return;
   if (e.key === "Escape") { blClose(); e.stopPropagation(); }
   else if ((e.key === "Delete" || e.key === "Backspace") && BL.sel) { e.preventDefault(); $("blDel").click(); }
+  else if (e.key === "+" || e.key === "=") { e.preventDefault(); blZoom((BL.zoom || 1) * 1.4); }
+  else if (e.key === "-" || e.key === "_") { e.preventDefault(); blZoom((BL.zoom || 1) / 1.4); }
+  else if (e.key === "0") { e.preventDefault(); $("blZoomFit").click(); }
   else if ((e.key === "r" || e.key === "R") && BL.sel?.t === "b") { e.preventDefault(); blTurn(90); }
   else if ((e.key === "r" || e.key === "R") && BL.sel?.t === "o") { e.preventDefault(); blTurnOverlay(e.shiftKey ? -1 : 1); }
 }, true);
