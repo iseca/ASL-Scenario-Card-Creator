@@ -435,7 +435,8 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 .blb { position: absolute; overflow: hidden; cursor: move; box-shadow: 0 0 0 1px #0006; background: #fff; }
 .blin { position: absolute; left: 50%; top: 50%; transform-origin: 50% 50%; }
 .blin > .bimg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
-.blovl { position: absolute; z-index: 4; pointer-events: none; }
+.blovl { position: absolute; z-index: 2; pointer-events: none; }
+.blovl.tags { z-index: 5; }
 .blovl .blo, .blovl .blot { pointer-events: auto; }
 .blo { position: absolute; cursor: move; z-index: 1; }
 .blo.sel { outline: 2px solid var(--edit); outline-offset: 1px; z-index: 2; }
