@@ -437,6 +437,8 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 .blb { position: absolute; overflow: hidden; cursor: move; box-shadow: 0 0 0 1px #0006; background: #fff; }
 .blin { position: absolute; left: 50%; top: 50%; transform-origin: 50% 50%; }
 .blin > .bimg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
+.blovl { position: absolute; z-index: 4; pointer-events: none; }
+.blovl .blo, .blovl .blot { pointer-events: auto; }
 .blo { position: absolute; cursor: move; z-index: 1; }
 .blo.sel { outline: 2px solid var(--edit); outline-offset: 1px; z-index: 2; }
 .blot { position: absolute; z-index: 3; background: #fffffff0; border: 1px solid #333; padding: 0 5px; border-radius: 2px; font: 700 11px var(--f-ui); white-space: nowrap; cursor: move; }
@@ -1225,7 +1227,7 @@ function blUsed() {
 async function blDraw() {
   blFit();
   const L = BL.layout, s = BL.scale, X = (v) => (v - BL.ox) * s, Y = (v) => (v - BL.oy) * s;
-  const parts = [];
+  const parts = [], top = [];   /* overlays always sit on the top layer, above shading */
   L.boards.forEach((b, i) => {
     const info = blInfo(b.key);
     if (!info) { parts.push(`<div class="blb missing" data-i="${i}" style="left:${X(b.x)}px;top:${Y(b.y)}px;width:${1800 * s}px;height:${645 * s}px">Board ${esc(b.name)} isn't loaded</div>`); return; }
@@ -1236,15 +1238,16 @@ async function blDraw() {
       return `<img class="blo${osel ? " sel" : ""}" data-o="${j}" src="${im.src}" alt="" draggable="false" style="left:${o.x * s}px;top:${o.y * s}px;width:${im.w * s}px;height:${im.h * s}px">`
         + `<span class="blot${osel ? " sel" : ""}" data-o="${j}" style="left:${(o.x + im.ref[0]) * s}px;top:${(o.y + im.ref[1] - 30) * s}px;transform:translate(-50%,-50%) rotate(${-(b.rot || 0)}deg)">${esc(o.name)}</span>`;
     }).join("");
+    if (ovs) top.push(`<div class="blovl" style="left:${X(b.x)}px;top:${Y(b.y)}px;width:${bx.w * s}px;height:${bx.h * s}px"><div class="blin" style="width:${info.w * s}px;height:${info.h * s}px;transform:translate(-50%,-50%) rotate(${b.rot || 0}deg)">${ovs}</div></div>`);
     parts.push(`<div class="blb${sel ? " sel" : ""}" data-i="${i}" style="left:${X(b.x)}px;top:${Y(b.y)}px;width:${bx.w * s}px;height:${bx.h * s}px">
-      <div class="blin" style="width:${info.w * s}px;height:${info.h * s}px;transform:translate(-50%,-50%) rotate(${b.rot || 0}deg)"><img class="bimg" src="${BOARDS.urlSync(b.key) || info.thumb}" alt="" draggable="false">${ovs}</div>
+      <div class="blin" style="width:${info.w * s}px;height:${info.h * s}px;transform:translate(-50%,-50%) rotate(${b.rot || 0}deg)"><img class="bimg" src="${BOARDS.urlSync(b.key) || info.thumb}" alt="" draggable="false"></div>
       ${L.labels ? (() => { const p = blLabelSpot(b, info); return `<span class="bll" style="left:${(p.x - b.x) * s}px;top:${(p.y - b.y) * s}px;transform:translate(${-p.ax * 100}%,${-p.ay * 100}%)">${esc(b.name)}</span>`; })() : ""}</div>`);
   });
   L.shades.forEach((r, i) => {
     const sel = BL.sel?.t === "s" && BL.sel.i === i;
     parts.push(`<div class="bls${sel ? " sel" : ""}" data-s="${i}" style="left:${X(r.x)}px;top:${Y(r.y)}px;width:${r.w * s}px;height:${r.h * s}px"><span class="blh" data-h="${i}"></span></div>`);
   });
-  $("blWsIn").innerHTML = parts.join("") || `<p class="palmsg">Click a board on the left to start the layout. Boards snap together when their edges meet.</p>`;
+  $("blWsIn").innerHTML = (parts.join("") + top.join("")) || `<p class="palmsg">Click a board on the left to start the layout. Boards snap together when their edges meet.</p>`;
   $("blUsed").textContent = L.boards.length ? "In use: boards " + blUsed() : "No boards yet.";
   const t = BL.sel?.t;
   $("blRot").disabled = $("blRev").disabled = !(t === "b" || t === "o"); $("blDel").disabled = !BL.sel;
@@ -1325,14 +1328,7 @@ async function blRender(maxSide = 1600) {
   for (const b of L.boards) {
     const info = blInfo(b.key), im = info && await BOARDS.image(b.key); if (!im) continue;
     const bx = blBox(b, info), cx = (b.x - ext.x0 + bx.w / 2) * s, cy = (b.y - ext.y0 + bx.h / 2) * s;
-    g.save(); g.translate(cx, cy); g.rotate((b.rot || 0) * Math.PI / 180); g.drawImage(im, -info.w * s / 2, -info.h * s / 2, info.w * s, info.h * s);
-    /* the board's overlays, drawn in the board's own frame so they turn with it */
-    g.beginPath(); g.rect(-info.w * s / 2, -info.h * s / 2, info.w * s, info.h * s); g.clip();
-    for (const o of L.overlays.filter(o => o.bid === b.id)) {
-      const oi = await BOARDS.overlay(o.key, o.ori); if (!oi) continue;
-      g.drawImage(oi.im, (o.x - info.w / 2) * s, (o.y - info.h / 2) * s, oi.w * s, oi.h * s);
-    }
-    g.restore();
+    g.save(); g.translate(cx, cy); g.rotate((b.rot || 0) * Math.PI / 180); g.drawImage(im, -info.w * s / 2, -info.h * s / 2, info.w * s, info.h * s); g.restore();
   }
   /* shading only darkens the boards, never the empty space around them */
   g.save(); g.beginPath();
@@ -1340,6 +1336,15 @@ async function blRender(maxSide = 1600) {
   g.clip(); g.fillStyle = "rgba(205,25,25,.38)";
   for (const r of L.shades) g.fillRect((r.x - ext.x0) * s, (r.y - ext.y0) * s, r.w * s, r.h * s);
   g.restore();
+  /* overlays always on top: drawn in their board's own frame so they turn with it */
+  for (const b of L.boards) {
+    const info = blInfo(b.key); if (!info) continue; const bx = blBox(b, info);
+    for (const o of L.overlays.filter(o => o.bid === b.id)) {
+      const oi = await BOARDS.overlay(o.key, o.ori); if (!oi) continue;
+      g.save(); g.translate((b.x - ext.x0 + bx.w / 2) * s, (b.y - ext.y0 + bx.h / 2) * s); g.rotate((b.rot || 0) * Math.PI / 180);
+      g.drawImage(oi.im, (o.x - info.w / 2) * s, (o.y - info.h / 2) * s, oi.w * s, oi.h * s); g.restore();
+    }
+  }
   if (L.labels) {
     for (const b of L.boards) {
       const info = blInfo(b.key); if (!info) continue;
