@@ -180,6 +180,14 @@ function blFit() {
   BL.scale = Math.min((ws.clientWidth - 8) / W, (ws.clientHeight - 8) / H, 0.6);
   BL.ox = ext.x0 - pad; BL.oy = ext.y0 - pad;
 }
+/* where a board's number goes: the corner nearest the board's own printed ID
+   (lower-left on an unturned geomorphic board), following the board as it is rotated or reversed */
+function blLabelSpot(b, info) {
+  const bx = blBox(b, info), ins = Math.min(info.w, info.h) * 0.025;
+  const vx = -info.w / 2 + ins, vy = info.h / 2 - ins, a = (b.rot || 0) * Math.PI / 180;
+  const rx = vx * Math.cos(a) - vy * Math.sin(a), ry = vx * Math.sin(a) + vy * Math.cos(a);
+  return { x: b.x + bx.w / 2 + rx, y: b.y + bx.h / 2 + ry, ax: rx < 0 ? 0 : 1, ay: ry < 0 ? 0 : 1, short: Math.min(bx.w, bx.h) };
+}
 function blUsed() {
   return BL.layout.boards.map(b => b.name + (b.rot === 180 ? " (reversed)" : b.rot === 90 || b.rot === 270 ? " (turned)" : "")).join(", ");
 }
@@ -193,7 +201,7 @@ async function blDraw() {
     const bx = blBox(b, info), sel = BL.sel?.t === "b" && BL.sel.i === i;
     parts.push(`<div class="blb${sel ? " sel" : ""}" data-i="${i}" style="left:${X(b.x)}px;top:${Y(b.y)}px;width:${bx.w * s}px;height:${bx.h * s}px">
       <img src="${BOARDS.urlSync(b.key) || info.thumb}" alt="" draggable="false" style="width:${info.w * s}px;height:${info.h * s}px;transform:translate(-50%,-50%) rotate(${b.rot || 0}deg)">
-      ${L.labels ? `<span class="bll">${esc(b.name)}</span>` : ""}</div>`);
+      ${L.labels ? (() => { const p = blLabelSpot(b, info); return `<span class="bll" style="left:${(p.x - b.x) * s}px;top:${(p.y - b.y) * s}px;transform:translate(${-p.ax * 100}%,${-p.ay * 100}%)">${esc(b.name)}</span>`; })() : ""}</div>`);
   });
   L.shades.forEach((r, i) => {
     const sel = BL.sel?.t === "s" && BL.sel.i === i;
@@ -256,17 +264,18 @@ async function blRender(maxSide = 1600) {
   /* shading only darkens the boards, never the empty space around them */
   g.save(); g.beginPath();
   for (const b of L.boards) { const info = blInfo(b.key); if (!info) continue; const bx = blBox(b, info); g.rect((b.x - ext.x0) * s, (b.y - ext.y0) * s, bx.w * s, bx.h * s); }
-  g.clip(); g.fillStyle = "rgba(40,40,40,.45)";
+  g.clip(); g.fillStyle = "rgba(205,25,25,.38)";
   for (const r of L.shades) g.fillRect((r.x - ext.x0) * s, (r.y - ext.y0) * s, r.w * s, r.h * s);
   g.restore();
   if (L.labels) {
     for (const b of L.boards) {
       const info = blInfo(b.key); if (!info) continue; const bx = blBox(b, info);
-      const fs = Math.max(14, Math.round(Math.min(bx.w, bx.h) * s * 0.16));
+      const p = blLabelSpot(b, info), fs = Math.max(12, Math.round(p.short * s * 0.13));
       g.font = `700 ${fs}px Barlow, Arial, sans-serif`; g.textAlign = "center"; g.textBaseline = "middle";
-      const cx = (b.x - ext.x0 + bx.w / 2) * s, cy = (b.y - ext.y0 + bx.h / 2) * s, tw = g.measureText(b.name).width;
-      g.fillStyle = "rgba(255,255,255,.82)"; g.fillRect(cx - tw / 2 - fs * 0.3, cy - fs * 0.62, tw + fs * 0.6, fs * 1.24);
-      g.fillStyle = "#111"; g.fillText(b.name, cx, cy + fs * 0.04);
+      const tw = g.measureText(b.name).width, bw = tw + fs * 0.6, bh = fs * 1.24;
+      const x0 = (p.x - ext.x0) * s - p.ax * bw, y0 = (p.y - ext.y0) * s - p.ay * bh;
+      g.fillStyle = "rgba(255,255,255,.85)"; g.fillRect(x0, y0, bw, bh);
+      g.fillStyle = "#111"; g.fillText(b.name, x0 + bw / 2, y0 + bh / 2 + fs * 0.04);
     }
   }
   /* WebP keeps the see-through corners of odd-shaped layouts at a fraction of PNG's size (PNG where WebP isn't available) */

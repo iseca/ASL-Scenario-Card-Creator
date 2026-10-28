@@ -5,6 +5,10 @@ The version number shows next to the title in the app's toolbar, and cards saved
 
 Numbering: the second number goes up for each set of changes (1.0 → 1.1 → 1.2 …); the first number goes up for a big change such as a new template.
 
+## v1.4 — 2026-10-28
+- Board layout: shaded (out-of-play) areas are now **red** instead of grey, in the editor and on the card.
+- Board layout: each board's number now sits in the **corner where the board's own ID is printed** (lower-left on an unturned geomorphic board), and moves with the board when it is rotated or reversed (a reversed board's number goes to its upper-right).
+
 ## v1.3 — 2026-10-28
 - **Board layout from your VASL boards.** Click **Board layout** in the toolbar (or hover the board box on the card and click **Board layout…**). The first time, click **Load boards folder…** and choose your VASL `boards` folder; each board's picture is read in your browser and kept in its storage (nothing is uploaded). Load the folder again whenever you get new or updated boards.
   - Board list with pictures and a search box (240 board files: geomorphic, Action Pack, HASL maps, bundles such as Festung Budapest).

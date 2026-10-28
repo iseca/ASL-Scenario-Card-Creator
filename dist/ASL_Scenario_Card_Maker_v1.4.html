@@ -1,0 +1,2799 @@
+<!doctype html>
+<html><head><meta charset="utf-8"></head><body>
+<title>ASL Scenario Card Maker</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;500;600;700&family=Roboto+Condensed:wght@700&family=Tinos:ital,wght@0,400;0,700;1,400;1,700&display=swap">
+<style>
+/* Layout: a field-grey workbench with a sticky tool rail; the card is a fixed 8.5 x 11 in sheet (816 x 1056 px) that scales down to fit narrow screens. */
+:root {
+  --desk: #c9cfc0;
+  --rail: #eef0e9;
+  --ink: #1d2219;
+  --muted: #5a6253;
+  --line: #b2b9a8;
+  --accent: #7b1e16;
+  --accent-ink: #ffffff;
+  --ok: #2c6a33;
+  --warn: #a3261b;
+  --chip: #e1e5d8;
+  --f-ui: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-card: "Tinos", "Liberation Serif", "Times New Roman", Times, serif;
+  --f-num: "Roboto Condensed", "Arial Narrow", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --desk: #141812; --rail: #20251d; --ink: #e6e9de; --muted: #a2aa97; --line: #3a4334;
+    --accent: #e3806e; --accent-ink: #1b0d0a; --ok: #82cc8c; --warn: #ff8f80; --chip: #2b3127;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --desk: #141812; --rail: #20251d; --ink: #e6e9de; --muted: #a2aa97; --line: #3a4334;
+  --accent: #e3806e; --accent-ink: #1b0d0a; --ok: #82cc8c; --warn: #ff8f80; --chip: #2b3127;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--desk); color: var(--ink); font-family: var(--f-ui); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--rail); }
+
+/* ---------- tool rail ---------- */
+.bar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+  background: var(--rail); border-bottom: 1px solid var(--line);
+  padding-block: 10px 8px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.bar-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 22px; }
+.brand { font-weight: 700; font-size: 16px; letter-spacing: .02em; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.brand .ver { font-weight: 500; font-size: 11.5px; color: var(--muted); letter-spacing: .03em; }
+.brand .mark { font-family: var(--f-card); background: var(--accent); color: var(--accent-ink); padding: 1px 6px 0; border-radius: 3px; font-size: 14px; letter-spacing: .06em; }
+.tg { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.tg .lbl, .tg label.lbl { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.btn, .tg select {
+  height: 30px; padding: 0 10px; border: 1px solid var(--line); border-radius: 4px;
+  background: var(--rail); color: var(--ink); font: 500 13px/1 var(--f-ui); cursor: pointer;
+}
+.tg select { padding-right: 6px; max-width: 170px; }
+.btn:hover { border-color: var(--muted); }
+.btn:focus-visible, .tg select:focus-visible, .chk input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.sq { width: 30px; padding: 0; font-size: 15px; }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+.btn.armed { background: var(--warn); color: #fff; border-color: var(--warn); }
+output.count { min-width: 22px; text-align: center; font: 700 15px var(--f-num); font-variant-numeric: tabular-nums; }
+.chk[hidden], .sheet[hidden] { display: none; }
+.numin { width: 46px; font: inherit; padding: 2px 4px; border: 1px solid #b9b9b3; border-radius: 4px; }
+.chk { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+.fit { font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 999px; background: var(--chip); white-space: nowrap; }
+.fit::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 0; background: var(--ok); }
+.fit.bad { color: var(--warn); }
+.fit.bad::before { background: var(--warn); }
+.hint { margin: 8px 0 0; font-size: 12.5px; color: var(--muted); }
+.bar-row2 { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 22px; margin-top: 8px; }
+
+/* ---------- stage ---------- */
+.stage {
+  padding-block: 22px 70px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; justify-content: center;
+}
+.fitbox { position: relative; flex: none; }
+.scaler { width: 816px; transform-origin: top left; position: absolute; left: 0; top: 0; }
+.pages { display: flex; flex-direction: column; gap: 28px; }
+.bhdr { display: flex; align-items: baseline; gap: 14px; border-bottom: 1.5px solid #111; padding-bottom: 4px; flex: none; }
+.bhdr .bsid { font-weight: 700; font-size: 15px; text-transform: uppercase; white-space: nowrap; }
+.bhdr .bttl { font-weight: 700; font-size: 20px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.bhdr .bcont { margin-left: auto; font-style: italic; font-size: 10.5px; white-space: nowrap; }
+.sheet.back .ob:first-of-type { margin-top: 12px; }
+
+/* ---------- the card (deliberately a single printed look: white paper, black ink) ---------- */
+.sheet {
+  position: relative;
+  --paper: #ffffff; --ink-c: #111111; --red: #d4202a; --edit: #2f6fd0; --rule: #111111;
+  width: 816px; height: 1056px; padding: 14px 42px 18px; background: var(--paper); color: var(--ink-c);
+  font-family: var(--f-card); font-size: 10.5px; line-height: 1.22;
+  display: flex; flex-direction: column; overflow: hidden; position: relative;
+  box-shadow: 0 2px 4px rgba(0,0,0,.18), 0 10px 30px rgba(0,0,0,.22);
+}
+.sheet .h2 { font-weight: 700; font-size: 17.5px; line-height: 1.05; letter-spacing: .005em; text-transform: uppercase; }
+.ed { outline: 1px dashed transparent; outline-offset: 1px; border-radius: 1px; min-width: 8px; }
+.ed:hover { outline-color: rgba(47,111,208,.45); }
+.ed:focus { outline: 1px solid var(--edit); background: rgba(47,111,208,.05); }
+[data-ph]:empty::before { content: attr(data-ph); color: #9b9b9b; font-style: italic; pointer-events: none; }
+
+.hdr { position: relative; height: 60px; flex: none; }
+.ttl { position: absolute; left: 70px; right: 70px; top: -2px; text-align: center; font-weight: 700; font-size: 41px; line-height: 1; letter-spacing: .01em; white-space: nowrap; overflow: hidden; text-transform: uppercase; }
+.sid { position: absolute; left: 0; bottom: 1px; font-weight: 700; font-size: 20px; line-height: 1; text-transform: uppercase; white-space: nowrap; }
+.dsg { position: absolute; right: 60px; bottom: 3px; font-style: italic; font-size: 10.5px; white-space: nowrap; }
+.zone.logo { position: absolute; right: 0; top: 2px; width: 52px; height: 52px; }
+
+.zone { position: relative; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #fff; }
+.zone:not(.has) { border: 1px dashed #8f8f8f; background: #f6f6f3; }
+.zone:not(.has):hover, .zone.dragover { border-color: var(--edit); background: #eef3fb; }
+.zone:focus-visible { outline: 2px solid var(--edit); outline-offset: 1px; }
+.zone img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.zone .zl { font: 500 10.5px/1.2 var(--f-ui); color: #7a7a7a; text-align: center; padding: 4px; pointer-events: none; }
+.zone.dragover { outline: 2px solid var(--edit); }
+
+.band { display: grid; grid-template-columns: 350px minmax(0, 1fr); column-gap: 13px; flex: none; align-items: start; }
+.bl { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.zone.photo { width: 350px; height: 250px; }
+.zone.photo.has { border: 1px solid #111; }
+.zone.photo img { object-fit: cover; }
+.vc, .hist { text-align: justify; hyphens: auto; }
+.br { display: flex; flex-direction: column; min-width: 0; }
+.br .h2 { margin-top: 5px; }
+.bcg { flex: 1 1 auto; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; align-items: end; }
+.balw { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding-bottom: 2px; }
+.balw .h2 { margin-top: 4px; margin-bottom: 1px; }
+.balrow { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px; align-items: start; }
+.balrow .sym { margin-top: 1px; }
+.boardw { display: grid; grid-template-columns: 16px auto; grid-template-rows: auto auto; column-gap: 10px; align-items: center; padding-top: 4px; }
+.north { grid-column: 1; grid-row: 1; width: 16px; }
+.north svg { display: block; width: 16px; height: 56px; }
+.boardw .zone.board { grid-column: 2; grid-row: 1; justify-self: end; }
+.boardw .zone.board.tall { justify-self: center; }
+.bcg > .boardw { align-self: center; padding-bottom: 6px; }   /* every map is centred vertically in its space */
+.boardw .bnote { grid-column: 2; grid-row: 2; margin-top: 3px; justify-self: end; }
+.zone.board { width: 121px; height: 92px; }
+.zone.board.has { height: auto; }
+.zone.board.has img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.bnote { font-family: var(--f-num); font-weight: 700; font-size: 8px; line-height: 1.15; text-align: center; width: 121px; }
+
+.trch { margin-top: 7px; margin-bottom: 1px; flex: none; }
+.trc { display: grid; border: 1.5px solid var(--rule); height: 52px; flex: none; }
+.trl { position: relative; display: grid; grid-template-rows: 1fr 1fr; min-width: 0; }
+.trr { display: flex; align-items: center; gap: 6px; padding: 0 8px; font-weight: 700; font-size: 11px; min-width: 0; }
+.trr + .trr { border-top: 1px solid var(--rule); }
+.trr .ed { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; }
+.turn {
+  all: unset; position: relative; border-left: 1px solid var(--rule); display: flex; align-items: center; justify-content: center;
+  font: 700 31px/1 var(--f-num); color: var(--ink-c); cursor: pointer; background: #fff; padding-top: 7px;
+}
+.turn:focus-visible { outline: 2px solid var(--edit); outline-offset: -3px; }
+.turn:hover { background: #f1f4fa; }
+.turn.f-grey { background: #cfcfcf; }
+.turn.f-red { background: #e2402f; }
+.turn .half { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.turn .tnum { position: relative; z-index: 1; }
+.turn .tm { z-index: 1; }
+.turn .tm { position: absolute; top: 2px; left: 2px; display: flex; gap: 2px; }
+.tend { border-left: 1px solid var(--rule); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; text-transform: uppercase; white-space: nowrap; overflow: hidden; }
+
+.ob { position: relative; border: 1.5px solid var(--rule); margin-top: 11px; padding: 8px 10px 4.5px 6px; display: grid; grid-template-columns: 96px minmax(0, 1fr); column-gap: 8px; flex: none; }
+.gut { display: flex; flex-direction: column; align-items: center; gap: 12px; padding-top: 4px; }
+.symwrap { position: relative; min-width: 58px; height: 58px; display: flex; justify-content: center; }
+.symwrap select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font-size: 16px; }
+.sym.big:empty { outline: 1px dashed #9a9a9a; outline-offset: -1px; }
+.sheet.exporting .sym:empty { outline: none; }
+.symwrap:hover { outline: 1px dashed rgba(47,111,208,.6); outline-offset: 2px; }
+.zone.gutimg { width: 56px; height: 104px; }
+.grps { display: flex; flex-wrap: wrap; column-gap: 22px; row-gap: 5px; min-width: 0; align-content: flex-start; }
+.grp { position: relative; flex: 0 0 100%; min-width: 0; padding-top: 2px; }
+.grp.inl { flex: 0 1 auto; max-width: 100%; }
+.grp.ind1 { padding-left: 47px; }
+.grp.ind2 { padding-left: 94px; }
+.gtxt { margin-bottom: 5px; max-width: 100%; }
+.ed.lead { font-weight: 700; }
+.ed.body { font-weight: 400; }
+.ed[data-inline] { min-width: 12px; }
+.grp.inl .gtxt { max-width: 300px; }
+.strip { display: flex; flex-wrap: wrap; align-items: flex-end; padding-left: 1px; min-height: 30px; }
+.strip.dragover { outline: 2px dashed var(--edit); outline-offset: 2px; }
+.slot { position: relative; display: flex; flex-direction: column; align-items: center; margin-left: -1px; }
+.slot .cimg { width: 46px; height: 46px; border: 1px solid #111; }
+/* counters taken from VASL already have their own edge */
+.slot .cimg.vasl.has { border: none; }
+.slot .cimg.vasl.has img { object-fit: contain; }
+.slot.l .cimg { width: 58px; height: 58px; }
+.slot .cimg:not(.has) { border: 1px dashed #8f8f8f; }
+.slot .cimg .zl { font-size: 16px; }
+.slot.dragging { opacity: .4; }
+.slot.dropbefore::before { content: ""; position: absolute; left: -2px; top: 0; bottom: 18px; width: 3px; background: var(--edit); z-index: 2; }
+.qty { width: 100%; height: 17px; padding-top: 2px; text-align: center; font: 700 13.5px/15px var(--f-num); color: var(--red); white-space: nowrap; overflow: hidden; }
+.addslot {
+  all: unset; box-sizing: border-box; width: 30px; height: 46px; margin-left: 6px; margin-bottom: 17px; border: 1px dashed #8f8f8f;
+  display: flex; align-items: center; justify-content: center; font: 600 18px var(--f-ui); color: #7a7a7a; cursor: pointer; background: #f6f6f3; opacity: 0;
+}
+.addslot:hover, .addslot.dragover { border-color: var(--edit); color: var(--edit); background: #eef3fb; }
+.addslot:focus-visible { outline: 2px solid var(--edit); }
+
+.flow { flex: 1 1 0; min-height: 0; margin-top: 12px; column-count: 2; column-gap: 22px; column-fill: auto; overflow: hidden; }
+.ssrh { margin-bottom: 2px; }
+.ssr { counter-reset: ssr; }
+.ssr > div { margin-bottom: 1px; counter-increment: ssr; font-weight: 400; }
+.ssr > div::before { content: counter(ssr) ". "; font-weight: 700; }
+.am { font-size: 8.7px; line-height: 1.2; text-align: justify; hyphens: auto; margin-top: 8px; }
+.am.newcol { break-before: column; margin-top: 0; }
+.ssr { min-height: 1.2em; }
+
+.sym { display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.sym svg, .sym img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.sym.sm { width: 13px; height: 13px; }
+.sym.xs { width: 12px; height: 12px; }
+.sym.big { width: 58px; height: 58px; }
+/* image symbols keep their height; a wide image (several symbols side by side) grows sideways */
+.sym.big:has(img) { width: auto; min-width: 58px; max-width: 92px; }
+.sym.big img { width: auto; max-width: 92px; }
+.sym.sm:has(img) { width: auto; min-width: 13px; max-width: 52px; }
+.sym.xs:has(img) { width: auto; min-width: 12px; max-width: 40px; }
+.sym.sm img, .sym.xs img { width: auto; max-width: 100%; }
+
+/* hover controls on the card (never exported) */
+/* controls linger ~0.5 s after the pointer leaves, so there is time to reach them */
+.ctl { position: absolute; z-index: 5; display: flex; gap: 3px; opacity: 0; visibility: hidden; transition: opacity .15s ease .35s, visibility 0s linear .5s; }
+.ctl button, .ctlb {
+  all: unset; box-sizing: border-box; font: 600 10.5px/1 var(--f-ui); padding: 4px 6px; border-radius: 3px; cursor: pointer;
+  background: #263045; color: #fff; white-space: nowrap;
+}
+.ctl button:hover { background: #2f6fd0; }
+.ctl button:focus-visible { outline: 2px solid #ffbf3c; }
+.ctl button.armed { background: #b3261b; }
+.slot:hover > .sctl, .slot:focus-within > .sctl,
+.grp:hover > .gctl, .grp:focus-within > .gctl,
+.ob:hover > .pctl, .ob:focus-within > .pctl,
+.trl:hover > .swap, .trl:focus-within > .swap,
+.zone:hover > .zb, .zone:focus-within > .zb,
+.zone:hover > .zx, .zone:focus-within > .zx { opacity: 1; visibility: visible; transition-delay: 0s; z-index: 7; }
+.sctl { top: -26px; left: 50%; transform: translateX(-50%); padding: 0 4px 8px; }
+.sctl button { padding: 4px 7px; font-size: 11.5px; }
+.gctl { top: -20px; right: 0; padding-bottom: 6px; }
+.pctl { bottom: -13px; right: 8px; padding-top: 6px; }
+.swap { right: 4px; top: 50%; transform: translateY(-50%); }
+.zx { top: 2px; right: 2px; }
+.zone .zb { position: absolute; left: 2px; bottom: 2px; }
+.zone .zx { position: absolute; }
+.addslot.ctl-like { opacity: 0; }
+.grp:hover .addslot, .grp:focus-within .addslot, .addslot:focus-visible, .strip.dragover .addslot, .strip.empty .addslot { opacity: 1; }
+.over { outline: 2px dashed #d4202a !important; outline-offset: -2px; }
+
+/* export mode: strip everything that is editor-only */
+.sheet.exporting { box-shadow: none; }
+.sheet.exporting .ctl, .sheet.exporting .addslot, .sheet.exporting select { display: none !important; }
+.sheet.exporting .zone:not(.has) { visibility: hidden; }
+.sheet.exporting [data-ph]:empty::before { content: none; }
+.sheet.exporting .ed, .sheet.exporting .over, .sheet.exporting .zone, .sheet.exporting .symwrap { outline: none !important; background-color: transparent; }
+.sheet.exporting .zone.has { background: #fff; }
+.sheet.exporting .turn:hover { background: #fff; }
+.sheet.exporting .turn.f-grey { background: #cfcfcf; }
+.sheet.exporting .turn.f-red { background: #e2402f; }
+
+/* ---------- template switch: ASL scenario card vs SASL mission card ---------- */
+body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
+.tplsel { height: 30px; border: 1px solid var(--line); border-radius: 4px; background: var(--rail); color: var(--ink); font: 600 13px var(--f-ui); padding: 0 6px; cursor: pointer; }
+
+/* ---------- SASL mission card (one page, two columns, laid out after the SASL 2nd Ed. mission sheets) ---------- */
+/* personal-use notice, printed small along the bottom edge of every page (kept in exports) */
+.sheet .wm { position: absolute; left: 0; right: 0; bottom: 5px; text-align: center; font: italic 400 6.5px/1 var(--f-card); color: #8a8a8a; letter-spacing: .03em; pointer-events: none; user-select: none; }
+.sheet.sasl { padding: 40px 44px 30px; font-size: 10.3px; line-height: 1.22; }
+.sasl .top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 28px; flex: none; }
+.sasl .hdrc { display: flex; flex-direction: column; min-width: 0; }
+.sasl .top .hdrc { min-height: 212px; }
+.sasl .icons { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; }
+.sasl .sflow .icons { flex-direction: row; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
+.zone.slogo { width: 56px; height: 58px; }
+.zone.badge { width: 112px; height: 46px; }
+.sasl .mnum { display: flex; align-items: center; gap: 14px; margin-top: auto; padding-top: 10px; }
+.sasl .mnum .ed { font: 700 24px/1.05 var(--f-card); white-space: nowrap; }
+.pmark { display: inline-flex; align-items: center; justify-content: center; width: 19px; height: 19px; border: 1.8px solid #111; border-radius: 50%; font: 700 11px/1 var(--f-num); flex: none; }
+.sasl .stitle { font: 400 45px/1.05 "Anton", "Roboto Condensed", "Arial Narrow", sans-serif; letter-spacing: .004em; margin-top: 4px; white-space: nowrap; overflow: hidden; }
+.sasl .srule { height: 5px; background: #111; margin-top: 5px; flex: none; }
+.zone.sphoto { width: 100%; height: 212px; }
+.zone.sphoto.has { border: 1px solid #111; }
+.zone.sphoto img { object-fit: cover; }
+.sasl .sflow { flex: 1 1 0; min-height: 0; margin-top: 12px; column-count: 2; column-gap: 28px; column-fill: auto; overflow: hidden; }
+.sasl .sflow > .hdrc { margin-bottom: 12px; }
+.sec { position: relative; margin-bottom: 6px; text-align: justify; hyphens: auto; }
+.sec.newcol { break-before: column; }
+.sech { font-weight: 700; font-size: 10.8px; }
+.sec.block > .sech { display: block; margin-bottom: 1px; }
+.sec .body { font-weight: 400; }
+.lines { min-height: 1.2em; }
+.lines > div { margin-bottom: 2px; }
+.lines.bul > div { padding-left: 9px; text-indent: -9px; }
+.lines.bul > div::before { content: "\2022"; display: inline-block; width: 9px; text-indent: 0; font-weight: 700; }
+.lines.num { counter-reset: msr; }
+.lines.num > div { counter-increment: msr; margin-bottom: 4px; }
+.lines.num > div::before { content: counter(msr) ". "; font-weight: 700; }
+/* outline bullets inside SASL text: • then – then ◦ then ▪ (drawn with ::before so exports match) */
+.sheet .ed ul.ol { list-style: none; margin: 1px 0 2px; padding: 0 0 0 11px; }
+.sheet .ed span ul.ol, .sheet span.ed ul.ol { display: block; }
+.sheet .ed ul.ol > li { position: relative; margin-bottom: 1px; }
+.sheet .ed ul.ol > li::before { content: "\2022"; position: absolute; left: -10px; width: 9px; font-weight: 700; }
+.sheet .ed ul.ol ul.ol { margin: 1px 0; }
+.sheet .ed ul.ol ul.ol > li::before { content: "\2013"; font-weight: 400; }
+.sheet .ed ul.ol ul.ol ul.ol > li::before { content: "\25E6"; }
+.sheet .ed ul.ol ul.ol ul.ol ul.ol > li::before { content: "\25AA"; }
+/* SASL order-of-battle sections */
+.obs { margin-bottom: 9px; }
+.obh { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.obsw { position: relative; flex: none; display: inline-flex; min-width: 24px; height: 24px; justify-content: center; }
+.obsw .sym { height: 24px; min-width: 24px; }
+.obsw .sym:has(img) { width: auto; max-width: 60px; }
+.obsw .sym img { width: auto; max-width: 60px; }
+.obsw .sym:empty { outline: 1px dashed #9a9a9a; outline-offset: -1px; width: 24px; }
+.sheet.exporting .obsw .sym:empty { display: none; }
+.obsw select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font-size: 16px; }
+.obsw:hover { outline: 1px dashed rgba(47,111,208,.6); outline-offset: 2px; }
+.obs .grps { column-gap: 14px; }
+.obs .grp.ind1 { padding-left: 24px; }
+.obs .grp.ind2 { padding-left: 48px; }
+.obs .grp.inl .gtxt { max-width: 200px; }
+.obs .gtxt { margin-bottom: 3px; }
+.obs:hover .addslot, .obs:focus-within .addslot { opacity: 1; }
+.sheet font[size="1"] { font-size: 7.6px; line-height: 1.2; }
+.sheet sup { font-size: .68em; line-height: 0; }
+.sheet .ed table.it { border-collapse: collapse; margin: 3px auto 4px 24px; text-indent: 0; text-align: left; font-size: 9.6px; }
+.sheet .ed table.it th { font-weight: 700; border-bottom: 1px solid #111; padding: 0 16px 1px 0; text-align: left; }
+.sheet .ed table.it td { padding: 0 16px 0 0; vertical-align: top; }
+/* ruled grid tables (made here, or pasted from Word / Excel / another card) */
+.sheet .ed table.gt { border-collapse: collapse; margin: 3px 0 4px; text-indent: 0; text-align: left; font-size: 9.4px; line-height: 1.15; width: 100%; table-layout: auto; break-inside: avoid; }
+.sheet .ed table.gt td, .sheet .ed table.gt th { border: 1px solid #111; padding: 1px 3px; vertical-align: middle; font-weight: 400; }
+.sheet .ed table.gt:not(.nohdr) tr:first-child > * { font-weight: 700; }
+.sheet .ed table.gt .c { text-align: center; }
+.sheet .ed table.gt .r { text-align: right; }
+.sheet .ed table.gt .t { vertical-align: top; }
+.sheet .ed table.gt .sh { background: #dfe3f3; }
+.sheet .ed table.gt .nb { border-style: none; }
+.sheet .ed table.gt td > div, .sheet .ed table.gt th > div { margin: 0; }
+.lines.num > div table.gt { margin-left: 0; }
+.mt { border-collapse: collapse; margin: 1px 0 2px; font-size: 9.7px; line-height: 1.15; }
+.mt th { font-weight: 700; text-align: center; vertical-align: bottom; padding: 0 5px; }
+.mt th.grp { font-size: 9.5px; white-space: nowrap; }
+.mt tr.subh th { border-bottom: 1px solid #111; padding-bottom: 1px; }
+.mt tr.subh th.c2 { padding-right: 9px; }
+.mt td { padding: 1px 5px 0; vertical-align: top; white-space: nowrap; text-align: center; }
+.mt td.c2 { padding-right: 9px; }
+.mt .ed { display: block; min-width: 10px; }
+.cfg { display: grid; grid-template-columns: auto auto auto; column-gap: 16px; align-items: center; justify-content: start; margin: 8px 0 10px; text-align: left; }
+.cfg .cfgl { grid-column: 1; grid-row: 1; font-weight: 700; font-size: 10.8px; line-height: 1.25; width: 80px; }
+.cfg .north { grid-column: 2; grid-row: 1; width: auto; cursor: pointer; }
+.cfg .north:hover { outline: 1px dashed rgba(47,111,208,.6); outline-offset: 2px; }
+.sheet.exporting .cfg .north { outline: none; }
+.cfg .zone.scfg { grid-column: 3; grid-row: 1; }
+.cfg .north svg { width: 14px; height: 48px; }
+.cfg .north.right svg { width: 41px; height: 20px; }
+.zone.scfg { width: 70px; height: 74px; }
+.zone.scfg.has { width: auto; height: auto; max-width: 220px; }
+.zone.scfg.has img { width: auto; height: auto; max-width: 220px; max-height: 120px; }
+.sec > .secctl { top: -20px; right: 0; padding-bottom: 6px; }
+.sec:hover > .secctl, .sec:focus-within > .secctl { opacity: 1; visibility: visible; transition-delay: 0s; z-index: 7; }
+.sheet.exporting .pmark-off { display: none; }
+
+/* popovers + toast */
+.pop {
+  position: fixed; z-index: 40; background: var(--rail); color: var(--ink); border: 1px solid var(--line); border-radius: 6px;
+  padding: 10px 12px 12px; box-shadow: 0 8px 28px rgba(0,0,0,.28); width: 248px; font-size: 13px;
+}
+.pop h3 { margin: 0 0 8px; font-size: 13px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.pop .pl { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 8px 0 4px; }
+.pop .row { display: flex; flex-wrap: wrap; gap: 6px; }
+.pop .btn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.pop input[type="text"] { width: 100%; height: 30px; border: 1px solid var(--line); border-radius: 4px; padding: 0 8px; background: var(--rail); color: var(--ink); font: 14px var(--f-ui); }
+.symlist { list-style: none; margin: 0 0 12px; padding: 0; max-height: 220px; overflow: auto; }
+.symlist li { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.symlist img { height: 26px; max-width: 64px; object-fit: contain; flex: none; }
+.symlist .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.symlist button { all: unset; cursor: pointer; font-size: 12px; color: #b3261e; padding: 2px 6px; border-radius: 4px; }
+.symlist button:hover, .symlist button:focus-visible { background: #fbe9e7; outline: none; }
+/* ---------- VASL counter palette (side drawer) ---------- */
+@media (min-width: 900px) { body.palopen .stage { padding-right: calc(min(420px, 100vw) + 16px); } }
+.pal { position: fixed; right: 0; top: var(--barH, 120px); bottom: 0; width: min(420px, 100vw); z-index: 25; background: var(--rail); border-left: 1px solid var(--line); box-shadow: -6px 0 24px rgba(0,0,0,.18); display: flex; flex-direction: column; font: 13px var(--f-ui); color: var(--ink); }
+.pal[hidden] { display: none; }
+.palh { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.palh b { font-size: 14px; letter-spacing: .03em; }
+.palh .sp { flex: 1; }
+.palh .ver { color: var(--muted); font-size: 12px; }
+.palx { all: unset; cursor: pointer; font: 600 18px/1 var(--f-ui); padding: 2px 6px; border-radius: 4px; }
+.palx:hover { background: rgba(0,0,0,.08); }
+.palx:focus-visible { outline: 2px solid var(--accent); }
+.palctl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px 12px 6px; }
+.palctl select, .palctl input { height: 30px; border: 1px solid var(--line); border-radius: 4px; padding: 0 8px; background: var(--paper-ui, #fff); color: var(--ink); font: 13px var(--f-ui); min-width: 0; }
+.palcats { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 12px 8px; }
+.palcats button { all: unset; cursor: pointer; padding: 3px 8px; border: 1px solid var(--line); border-radius: 12px; font-size: 12px; }
+.palcats button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.palcats button:focus-visible { outline: 2px solid var(--accent); }
+.paltgt { margin: 0 12px 8px; padding: 6px 8px; border-radius: 4px; background: rgba(0,0,0,.05); font-size: 12px; color: var(--muted); }
+.paltgt b { color: var(--ink); }
+.palgrid { flex: 1; overflow: auto; padding: 4px 12px 16px; display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 8px 6px; align-content: start; }
+.palsub { grid-column: 1 / -1; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-top: 6px; }
+.tile { all: unset; box-sizing: border-box; cursor: grab; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px 2px; border-radius: 6px; text-align: center; }
+.tile:hover { background: rgba(0,0,0,.06); }
+.tile:focus-visible { outline: 2px solid var(--accent); }
+.tile .th { width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; }
+.tile .th img { max-width: 60px; max-height: 60px; }
+.tile .th.wait { background: rgba(0,0,0,.05); border-radius: 4px; }
+.tile .nm { font-size: 11px; line-height: 1.2; word-break: break-word; }
+.palempty { padding: 16px 14px; line-height: 1.45; }
+.palempty p { margin: 0 0 10px; }
+.palmsg { padding: 14px; color: var(--muted); }
+.grp.paltarget { outline: 2px solid var(--edit); outline-offset: 3px; border-radius: 2px; }
+.sheet.exporting .grp.paltarget { outline: none; }
+/* ---------- board layout editor ---------- */
+.bldlg { position: fixed; inset: 0; z-index: 40; background: var(--desk); display: flex; flex-direction: column; font: 13px var(--f-ui); color: var(--ink); }
+.bldlg[hidden] { display: none; }
+.blhd { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--rail); border-bottom: 1px solid var(--line); }
+.blhd b { font-size: 15px; } .blhd .ver { color: var(--muted); font-size: 12px; } .blhd .sp, .bltools .sp { flex: 1; }
+.blmain { flex: 1; min-height: 0; display: grid; grid-template-columns: 290px minmax(0, 1fr); }
+.blside { border-right: 1px solid var(--line); background: var(--rail); display: flex; flex-direction: column; min-height: 0; }
+#blListW { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+#blListW[hidden] { display: none; }
+#blQ { margin: 10px 12px; height: 30px; border: 1px solid var(--line); border-radius: 4px; padding: 0 8px; font: 13px var(--f-ui); }
+.bllist { flex: 1; overflow: auto; padding: 0 12px 16px; display: grid; grid-template-columns: 1fr; gap: 8px; align-content: start; }
+.bltile { all: unset; box-sizing: border-box; cursor: grab; display: flex; flex-direction: column; gap: 3px; padding: 4px; border-radius: 6px; }
+.bltile:hover { background: rgba(0,0,0,.06); } .bltile:focus-visible { outline: 2px solid var(--accent); }
+.bltile img { width: 100%; height: auto; max-height: 160px; object-fit: contain; object-position: left; border: 1px solid #0003; background: #fff; }
+.bltile span { font-weight: 600; font-size: 12px; }
+.blright { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.bltools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+.bltools label { display: flex; gap: 6px; align-items: center; margin-left: 6px; }
+.blws { flex: 1; min-height: 0; position: relative; overflow: hidden; background: repeating-conic-gradient(#0000000a 0 25%, transparent 0 50%) 0 0 / 24px 24px; }
+.blwsin { position: absolute; inset: 0; touch-action: none; }
+.blb { position: absolute; overflow: hidden; cursor: move; box-shadow: 0 0 0 1px #0006; background: #fff; }
+.blb img { position: absolute; left: 50%; top: 50%; transform-origin: 50% 50%; pointer-events: none; }
+.blb.sel { box-shadow: 0 0 0 3px var(--edit); z-index: 2; }
+.blb.missing { display: flex; align-items: center; justify-content: center; background: #f4d7d7; color: #6d1b1b; font-weight: 600; }
+.bll { position: absolute; background: #ffffffd9; padding: 1px 7px; border-radius: 2px; font-weight: 700; font-size: 13px; pointer-events: none; white-space: nowrap; }
+.bls { position: absolute; background: rgba(205,25,25,.38); outline: 1px dashed #fff8; cursor: move; z-index: 3; }
+.bls.sel { outline: 2px solid var(--edit); }
+.blh { position: absolute; right: -6px; bottom: -6px; width: 12px; height: 12px; background: #fff; border: 2px solid var(--edit); border-radius: 2px; cursor: nwse-resize; }
+.blused { padding: 8px 12px; border-top: 1px solid var(--line); background: var(--rail); font-weight: 600; }
+#tblPop { width: 360px; }
+#tblPop .note { max-width: none; }
+.pop .grid2 { display: grid; grid-template-columns: auto 64px; gap: 6px 10px; align-items: center; }
+.pop input[type="number"] { height: 28px; border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; background: var(--rail); color: var(--ink); font: 14px var(--f-ui); width: 64px; }
+.pop .ck { display: flex; gap: 7px; align-items: center; font-size: 13px; margin: 5px 0; }
+.pop .note { font-size: 12px; color: var(--muted); margin: 6px 0 0; max-width: 300px; }
+.pop .btnsym { display: inline-flex; align-items: center; gap: 6px; }
+.pop .btnsym .sym { width: 14px; height: 14px; }
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 50;
+  background: var(--ink); color: var(--rail); padding: 9px 14px; border-radius: 6px; font-size: 13.5px; max-width: calc(100vw - 32px);
+  opacity: 0; transition: opacity .2s; pointer-events: none;
+}
+.toast.show { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .ctl { transition: visibility 0s linear .5s; } .toast { transition: none; } }
+@media (max-width: 640px) { .hint { display: none; } }
+</style>
+
+<header class="bar">
+  <div class="bar-top">
+    <div class="brand"><span class="mark" id="brandMark">ASL</span><span>Scenario Card Maker</span><span class="ver" title="Version 1.4, built 2026-10-28">v1.4</span></div>
+    <div class="tg" role="group" aria-label="Template">
+      <label class="lbl" for="tplSel">Template</label>
+      <select id="tplSel" class="tplsel"><option value="asl">ASL scenario card</option><option value="sasl">SASL mission card</option></select>
+    </div>
+    <div class="tg" role="group" aria-label="Counters">
+      <button type="button" class="btn" id="bPal" title="Pick counters from your VASL module and add them to an OB row">Counter palette</button>
+      <button type="button" class="btn" id="bBoards" title="Lay out VASL boards for the board configuration">Board layout</button>
+    </div>
+    <div class="tg" role="group" aria-label="Card file">
+      <button type="button" class="btn" id="bUndo" title="Undo (⌘Z / Ctrl+Z)" disabled>↶ Undo</button>
+      <button type="button" class="btn" id="bRedo" title="Redo (⇧⌘Z / Ctrl+Y)" disabled>↷ Redo</button>
+      <button type="button" class="btn" id="bNew">New card</button>
+      <button type="button" class="btn" id="bOpen">Open card…</button>
+      <button type="button" class="btn" id="bSave">Save card</button>
+      <button type="button" class="btn" id="bPng">Export PNG</button>
+      <button type="button" class="btn primary" id="bPdf">Export PDF</button>
+    </div>
+    <div id="fit" class="fit" role="status" aria-live="polite">Fits on the page</div>
+  </div>
+  <div class="bar-row2">
+    <div class="tg only-asl" role="group" aria-label="Nationalities">
+      <label class="lbl" for="selA">Side 1</label><select id="selA"></select>
+      <label class="lbl" for="selB">Side 2</label><select id="selB"></select>
+      <button type="button" class="btn" id="bSym">Symbols…</button>
+    </div>
+    <div class="tg only-asl" role="group" aria-label="Layout">
+      <span class="lbl">Turns</span>
+      <button type="button" class="btn sq" id="tMinus" aria-label="Fewer turns">−</button>
+      <output class="count" id="tCount">6</output>
+      <button type="button" class="btn sq" id="tPlus" aria-label="More turns">+</button>
+      <button type="button" class="btn" id="bPanel">+ OB panel</button>
+      <label class="lbl" for="backSel">Back page</label><select id="backSel"></select>
+      <label class="chk"><input type="checkbox" id="ssrCol"> Special Rules continue to the right column</label>
+      <label class="chk" id="ssrAtW" hidden>from rule <input type="number" id="ssrAt" min="2" step="1" class="numin" aria-label="Rule number that starts the right column"></label>
+      <label class="chk"><input type="checkbox" id="amCol"> Aftermath starts in right column</label>
+    </div>
+    <div class="tg only-sasl" role="group" aria-label="Mission layout">
+      <label class="lbl" for="secAdd">Add section</label>
+      <select id="secAdd">
+        <option value="">Choose…</option>
+        <option value="text">Text (heading on its own line)</option>
+        <option value="inline">Text (heading runs into the text)</option>
+        <option value="bullets">Bulleted list</option>
+        <option value="numbers">Numbered rules</option>
+        <option value="tables">Mission tables</option>
+        <option value="config">Mapboard configuration</option>
+        <option value="ob">Order of battle (OB)</option>
+      </select>
+      <button type="button" class="btn" id="bSym2">Symbols…</button>
+      <label class="chk"><input type="checkbox" id="sPhoto"> Photo</label>
+      <label class="chk"><input type="checkbox" id="sP"> Ⓟ mark</label>
+    </div>
+    <div class="tg" role="group" aria-label="Text formatting">
+      <span class="lbl">Text</span>
+      <button type="button" class="btn sq" data-cmd="bold" aria-label="Bold"><b>B</b></button>
+      <button type="button" class="btn sq" data-cmd="italic" aria-label="Italic"><i>I</i></button>
+      <button type="button" class="btn sq" data-cmd="underline" aria-label="Underline"><u>U</u></button>
+      <button type="button" class="btn sq" data-ins="≤" aria-label="Insert less than or equal">≤</button>
+      <button type="button" class="btn sq" data-ins="≥" aria-label="Insert greater than or equal">≥</button>
+      <button type="button" class="btn sq" data-ins="½" aria-label="Insert one half">½</button>
+      <button type="button" class="btn sq" data-ins="²" aria-label="Insert superscript two">²</button>
+      <button type="button" class="btn sq" data-cmd="superscript" aria-label="Superscript (footnote marks)" title="Superscript (footnote marks)">x<sup>s</sup></button>
+      <button type="button" class="btn" id="bSmall" title="Make the selected text footnote-sized">Small</button>
+    </div>
+    <div class="tg only-sasl" role="group" aria-label="Outline bullets">
+      <span class="lbl">Outline</span>
+      <button type="button" class="btn" data-ol="toggle" title="Add or remove an outline bullet on the line(s) with the cursor">• Bullet</button>
+      <button type="button" class="btn sq" data-ol="out" aria-label="Promote: move the bullet one level out" title="Move the bullet one level out (Shift+Tab)">←</button>
+      <button type="button" class="btn sq" data-ol="in" aria-label="Demote: move the bullet one level in" title="Move the bullet one level in (Tab)">→</button>
+    </div>
+    <div class="tg" role="group" aria-label="Tables inside text">
+      <span class="lbl">Table</span>
+      <button type="button" class="btn" data-tbl="insert" title="Insert a small dr / result table where the cursor is">Insert</button>
+      <button type="button" class="btn sq" data-tbl="row+" aria-label="Add a table row" title="Add a row below the cursor">+R</button>
+      <button type="button" class="btn sq" data-tbl="row-" aria-label="Remove the table row" title="Remove the row with the cursor">−R</button>
+      <button type="button" class="btn sq" data-tbl="col+" aria-label="Add a table column" title="Add a column right of the cursor">+C</button>
+      <button type="button" class="btn sq" data-tbl="col-" aria-label="Remove the table column" title="Remove the column with the cursor">−C</button>
+      <button type="button" class="btn only-sasl" data-tbl="grid" title="Build a ruled table: choose rows, columns, shading and a side box (or paste one copied from Word, Excel or another card)">Grid…</button>
+      <button type="button" class="btn only-sasl" data-tbl="shade" title="Shade or unshade the cell with the cursor (select across cells to do several)">Shade</button>
+      <button type="button" class="btn only-sasl" data-tbl="center" title="Center or left-align the text in the cell(s)">Center</button>
+      <button type="button" class="btn only-sasl" data-tbl="merge" title="Drag across several cells to select them, then merge them into one">Merge</button>
+      <button type="button" class="btn only-sasl" data-tbl="top" title="Put the cell's text at the top instead of the middle">Top</button>
+      <button type="button" class="btn only-sasl" data-tbl="head" title="Turn the bold heading row on or off">Head row</button>
+      <button type="button" class="btn only-sasl" data-tbl="mergeD" title="Merge the cell with the one below it">Merge ↓</button>
+      <button type="button" class="btn only-sasl" data-tbl="mergeR" title="Merge the cell with the one to its right">Merge →</button>
+      <button type="button" class="btn only-sasl" data-tbl="split" title="Undo merges on the cell with the cursor">Unmerge</button>
+      <button type="button" class="btn only-sasl" data-tbl="border" title="Hide or show the border lines of the cell(s), e.g. a blank spacer column">Lines</button>
+    </div>
+  </div>
+  <p class="hint only-sasl">Click any text on the card to edit it, including the section headings. Drop images onto the logo, badge, photo and mapboard boxes. Hover a section for its controls (move it, start it in the right column, remove it); hover the mission tables to add or remove rows and columns. Press Enter in a bulleted or numbered section to start the next item. In any text, Outline • Bullet adds or removes a bullet; Tab / Shift+Tab (or → / ←) move it a level in or out. <b>Counter palette</b> adds counters from your VASL module to an OB row (hover the row, click <b>Counters…</b>); <b>Board layout</b> builds the mapboard diagram from your VASL boards.</p>
+  <p class="hint only-asl">Click any text on the card to edit it. Drop images onto the photo, counter boxes, board box, logo and side art, or click a box to choose a file. Hover a counter, counter row or OB panel for its controls; drag counters to reorder them. Click a turn box to mark reinforcements, shading or a half-turn game end. <b>Counter palette</b> adds counters straight from your VASL module: hover a counter row and click <b>Counters…</b>, then click or drag counters into it. <b>Board layout</b> (or hover the board box) builds the board configuration from your VASL boards.</p>
+</header>
+
+<main class="stage" id="stage">
+  <div class="fitbox" id="fitbox"><div class="scaler" id="scaler"><div class="pages" id="pages"><div class="sheet" id="sheet" aria-label="Front page"></div><div class="sheet back" id="sheet2" aria-label="Back page" hidden></div></div></div></div>
+</main>
+
+<div class="pop" id="turnPop" hidden role="dialog" aria-label="Turn box options">
+  <h3>Turn <span id="popN">1</span></h3>
+  <div class="pl">Reinforcements</div>
+  <div class="row" id="popMarks"></div>
+  <div class="pl">Game end</div>
+  <div class="row"><button type="button" class="btn" id="popHalf" aria-pressed="false">Ends in first half (red triangle)</button></div>
+  <div class="pl">Shading</div>
+  <div class="row" id="popFill">
+    <button type="button" class="btn" data-fill="">None</button>
+    <button type="button" class="btn" data-fill="grey">Grey</button>
+    <button type="button" class="btn" data-fill="red">Red</button>
+  </div>
+</div>
+
+<div class="pop" id="symPop" hidden role="dialog" aria-label="Add a nationality symbol">
+  <div id="symListW" hidden>
+    <h3>Your symbols</h3>
+    <ul class="symlist" id="symList"></ul>
+  </div>
+  <h3>Add a nationality symbol</h3>
+  <label class="pl" for="symName">Name</label>
+  <input type="text" id="symName" placeholder="e.g. Finnish" autocomplete="off">
+  <div class="pl">Image</div>
+  <div class="row"><button type="button" class="btn primary" id="symPick">Choose image…</button><button type="button" class="btn" id="symCancel">Cancel</button></div>
+</div>
+
+<div class="pop" id="tblPop" hidden role="dialog" aria-label="Build a table">
+  <h3>Build a table</h3>
+  <div class="grid2">
+    <label for="tpRows">Rows (not counting the heading)</label><input type="number" id="tpRows" min="1" max="40" value="4">
+    <label for="tpCols">Columns</label><input type="number" id="tpCols" min="1" max="10" value="2">
+  </div>
+  <label class="ck"><input type="checkbox" id="tpHead" checked> Bold heading row</label>
+  <label class="ck"><input type="checkbox" id="tpShade" checked> Shade every other row</label>
+  <label class="ck"><input type="checkbox" id="tpCenter" checked> Center the text</label>
+  <label class="ck"><input type="checkbox" id="tpSide"> Side box for notes / footnotes (separate column on the right)</label>
+  <div class="row" style="margin-top:8px"><button type="button" class="btn primary" id="tpGo">Insert table</button><button type="button" class="btn" id="tpMsr">Activation table layout</button><button type="button" class="btn" id="tpCancel">Cancel</button></div>
+  <p class="note">Afterwards, click in a cell and use Shade, Center, Top, Lines, Merge and +R / −R / +C / −C in the toolbar. Drag across cells to merge several at once.</p>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="filePick" accept="image/*" hidden>
+<input type="file" id="cardPick" accept=".json,application/json" hidden>
+<input type="file" id="symFile" accept="image/*" hidden>
+<input type="file" id="vmodPick" accept=".vmod,.zip,application/zip" hidden>
+<input type="file" id="boardsPick" webkitdirectory directory multiple hidden>
+<div class="bldlg" id="blDlg" hidden role="dialog" aria-label="Board layout">
+  <div class="blhd"><b>Board layout</b><span class="ver" id="blCount"></span><span class="sp"></span>
+    <button type="button" class="btn" id="blLoad">Load boards folder…</button><button type="button" class="btn" id="blCancel">Cancel</button><button type="button" class="btn primary" id="blOk">Place on card</button></div>
+  <div class="blmain">
+    <div class="blside">
+      <div class="palempty" id="blEmpty">
+        <p>Choose your VASL <b>boards</b> folder (for example <b>VASSAL Mods/VASL/boards</b>). Each board's picture is read here in your browser and kept with your saved cards; nothing is uploaded.</p>
+        <p>When you get new or updated boards, load the folder again.</p>
+        <button type="button" class="btn primary" id="blLoad2">Load boards folder…</button>
+      </div>
+      <div id="blListW" hidden><input type="search" id="blQ" placeholder="Search boards, e.g. 24 or RB" aria-label="Search boards"><div class="bllist" id="blList"></div></div>
+    </div>
+    <div class="blright">
+      <div class="bltools">
+        <button type="button" class="btn" id="blRot" title="Turn the selected board a quarter turn (R)">Rotate 90°</button>
+        <button type="button" class="btn" id="blRev" title="Turn the selected board end for end">Reverse</button>
+        <button type="button" class="btn" id="blShade" title="Add a shaded area to show what is out of play; drag it, and drag its corner to size it">+ Shaded area</button>
+        <button type="button" class="btn" id="blDel" title="Remove the selected board or shaded area (Delete)">Remove</button>
+        <label><input type="checkbox" id="blLabels"> Board numbers</label>
+        <span class="sp"></span>
+        <button type="button" class="btn" id="blNote" title="Write the list of boards into the card's board note">Put list in board note</button>
+      </div>
+      <div class="blws" id="blWs"><div class="blwsin" id="blWsIn"></div></div>
+      <div class="blused" id="blUsed"></div>
+    </div>
+  </div>
+</div>
+<aside class="pal" id="pal" hidden aria-label="Counter palette">
+  <div class="palh"><b>Counter palette</b><span class="ver" id="palVer"></span><span class="sp"></span><button type="button" class="btn" id="palLoad">Load VASL module…</button><button type="button" class="palx" id="palClose" aria-label="Close the counter palette">×</button></div>
+  <div class="palempty" id="palEmpty">
+    <p>The palette uses the counters in your own copy of VASL. Choose your VASL module file (for example <b>vasl-6.7.3.vmod</b>) once; it is read here in your browser and kept with your saved cards, nothing is uploaded.</p>
+    <p>When a new VASL comes out, load the new file the same way and the palette is rebuilt from it. Counters already on your cards don't change.</p>
+    <button type="button" class="btn primary" id="palLoad2">Load VASL module…</button>
+  </div>
+  <div id="palBody" hidden style="display:flex;flex-direction:column;min-height:0;flex:1">
+    <div class="palctl"><select id="palNat" aria-label="Nationality"></select><input type="search" id="palQ" placeholder="Search, e.g. 8-3-8 or PzKw IV" aria-label="Search counters"></div>
+    <div class="palcats" id="palCats" role="group" aria-label="Counter type"></div>
+    <div class="paltgt" id="palTgt"></div>
+    <div class="palgrid" id="palGrid"></div>
+  </div>
+</aside>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+/* ---------- VASL counter palettes ----------
+   Reads a VASL module (.vmod, a zip) chosen by the user, lists the O/B counters by nationality
+   and draws counter FRONTS the way VASL layers them (base image + active image layers).
+   Everything stays in this browser: the module file and the catalogue go into IndexedDB. */
+const VASL = (() => {
+  /* VASSAL SequenceEncoder: split on a delimiter unless it is escaped with a backslash */
+  function tok(s, d) {
+    const out = []; let cur = "";
+    for (let i = 0; i < s.length; i++) {
+      const c = s[i];
+      if (c === "\\" && s[i + 1] === d) { cur += d; i++; continue; }
+      if (c === d) { out.push(cur); cur = ""; continue; }
+      cur += c;
+    }
+    out.push(cur); return out;
+  }
+  /* "outer\tinner..." → [outer, inner, ...]; each nesting level adds one escape before the tab */
+  function chain(s) {
+    const res = [];
+    for (let guard = 0; guard < 200; guard++) {
+      let i = 0, cut = -1;
+      for (; i < s.length; i++) if (s[i] === "\t" && s[i - 1] !== "\\") { cut = i; break; }
+      if (cut < 0) { res.push(s); return res; }
+      res.push(s.slice(0, cut));
+      s = s.slice(cut + 1).replace(/\\\t/g, "\t");
+    }
+    return res;
+  }
+  function pieceParts(text) {
+    const top = tok((text || "").trim(), "/");
+    return { type: top[2] || "", state: top[3] || "" };
+  }
+  /* expand prototypes so every trait is listed, outermost first, with its state */
+  function traitsOf(type, state, protos, depth = 0) {
+    const ts = chain(type), ss = chain(state), out = [];
+    ts.forEach((t, i) => {
+      const id = t.split(";")[0];
+      if (id === "prototype" && depth < 12) {
+        const p = protos.get(t.slice(10));
+        if (p) { const pp = pieceParts(p); const inner = traitsOf(pp.type, pp.state, protos, depth + 1); out.push(...inner.filter(x => x.id !== "piece")); }
+        return;
+      }
+      out.push({ id, t, s: ss[i] ?? "" });
+    });
+    return out;
+  }
+  const num = (v, d = 0) => { const n = parseInt(v, 10); return Number.isFinite(n) ? n : d; };
+  /* the image layers that show on the front, bottom first */
+  function layersOf(traits) {
+    const props = {};
+    for (const tr of traits) {
+      if (tr.id === "mark") { const names = tok(tok(tr.t, ";")[1] || "", ","), vals = tok(tr.s, ","); names.forEach((n, i) => props[n] = vals[i] ?? ""); }
+      else if (tr.id === "PROP") { const f = tok(tr.t, ";"); props[f[1]] = tok(tr.s, ";")[0]; }
+      else if (tr.id === "emb2") {
+        const f = tok(tr.t, ";"), name = f[19] || ""; const v = num(tr.s, 1);
+        if (name) { props[name + "_Level"] = String(Math.abs(v)); props[name + "_Active"] = String(v > 0); }
+      }
+    }
+    const layers = []; let label = "";
+    for (let i = traits.length - 1; i >= 0; i--) {
+      const tr = traits[i];
+      if (tr.id === "piece") {
+        const img = (tok(tr.t, ";")[3] || "").trim();
+        if (img) layers.push({ img, x: 0, y: 0 });
+      } else if (tr.id === "emb2") {
+        const f = tok(tr.t, ";");
+        const imgs = tok(f[16] || "", ",").map(x => x.trim());
+        const follow = f[22] === "true", prop = f[23] || "", first = num(f[24], 1);
+        let level, active;
+        if (follow) { const pv = num(props[prop], NaN); level = Number.isFinite(pv) ? pv - first + 1 : 1; active = true; }
+        else { const v = num(tr.s, 1); level = Math.abs(v); active = v > 0; }
+        /* newer modules can tie a layer's on/off to a property (e.g. the class badge shows only when BRK_Active) */
+        if (f[33] === "true" && f[32]) active = active && props[f[32]] === "true";
+        /* a layer switched on by a command (Activate…) only shows when its state says so */
+        if (!active) continue;
+        const img = imgs[level - 1];
+        if (img) layers.push({ img, x: num(f[14]), y: num(f[15]) });
+        /* the level's own name (e.g. "10-2" on a leader) is a better label than a generic piece name */
+        const nm = (tok(f[17] || "", ",")[level - 1] || "").replace(/\\/g, "").trim();
+        if (img && nm && !nm.includes("+")) label = nm;
+      }
+    }
+    layers.label = label;
+    return layers;
+  }
+  /* ---- catalogue ---- */
+  const tag = (e) => e.tagName.split(".").pop();
+  function buildCatalog(xmlText, version) {
+    const doc = new DOMParser().parseFromString(xmlText, "text/xml");
+    const protos = new Map();
+    for (const p of doc.getElementsByTagName("VASSAL.build.module.PrototypeDefinition")) protos.set(p.getAttribute("name"), p.textContent);
+    const win = [...doc.getElementsByTagName("VASSAL.build.module.PieceWindow")].find(w => w.getAttribute("name") === "VASL Counters");
+    const nations = [], seen = new Set();
+    if (!win) return { version, nations };
+    const boxes = [...win.getElementsByTagName("VASSAL.build.widget.BoxWidget")].filter(b => /O\/B/.test(b.getAttribute("entryName") || ""));
+    for (const box of boxes) {
+      const side = /Axis/.test(box.getAttribute("entryName")) ? "Axis" : "Allied";
+      for (const tab of [...box.children].filter(c => tag(c) === "TabWidget")) {
+        const name = tab.getAttribute("entryName"); if (!name || seen.has(name)) continue; seen.add(name);
+        const counters = [];
+        const walk = (el, path) => {
+          for (const c of el.children) {
+            const t = tag(c);
+            if (t === "PieceSlot") {
+              const { type, state } = pieceParts(c.textContent);
+              const layers = layersOf(traitsOf(type, state, protos));
+              if (!layers.length) continue;
+              const en = c.getAttribute("entryName") || "";
+              counters.push({ n: layers.label && layers.label !== en ? layers.label : en, a: en, g: path.join(" › "), id: c.getAttribute("gpid") || "", L: layers.map(l => ({ ...l })) });
+            } else if (/Widget$/.test(t)) {
+              const en = (c.getAttribute("entryName") || "").replace(/^<\s*/, "").trim();
+              walk(c, en && en !== "?" ? [...path, en] : path);
+            }
+          }
+        };
+        walk(tab, []);
+        nations.push({ name, side, counters });
+      }
+    }
+    return { version, nations };
+  }
+  /* ---- module file ---- */
+  let zipP = null, zipOf = null;
+  async function zip(blob) {
+    if (zipOf !== blob) { zipOf = blob; zipP = JSZip.loadAsync(blob); }
+    return zipP;
+  }
+  async function load(file) {
+    const z = await zip(file);
+    const bf = z.file("buildFile.xml") || z.file("buildFile"); if (!bf) throw new Error("That file doesn't look like a VASL module (no buildFile inside).");
+    const xml = await bf.async("string");
+    let version = (xml.match(/<VASSAL\.build\.GameModule[^>]*\sversion="([^"]+)"/) || [])[1] || "";
+    const name = (xml.match(/<VASSAL\.build\.GameModule[^>]*\sname="([^"]+)"/) || [])[1] || "";
+    if (name && !/VASL/i.test(name)) throw new Error(`That is the "${name}" module, not VASL.`);
+    const cat = buildCatalog(xml, version);
+    if (!cat.nations.length) throw new Error("No O/B counters were found in that module.");
+    return cat;
+  }
+  /* ---- drawing ---- */
+  const fileCache = new Map();
+  const norm = (p) => { const out = []; for (const s of p.split("/")) { if (s === "..") out.pop(); else if (s && s !== ".") out.push(s); } return out.join("/"); };
+  const mime = (p) => /\.svg$/i.test(p) ? "image/svg+xml" : /\.png$/i.test(p) ? "image/png" : /\.gif$/i.test(p) ? "image/gif" : /\.jpe?g$/i.test(p) ? "image/jpeg" : /\.ttf$/i.test(p) ? "font/ttf" : "application/octet-stream";
+  async function b64(z, path) { const f = z.file(path); return f ? f.async("base64") : null; }
+  /* an SVG with its fonts and linked images folded in, so it can be drawn on its own */
+  async function svgData(z, path, depth = 0) {
+    const key = "svg:" + path; if (fileCache.has(key)) return fileCache.get(key);
+    const p = (async () => {
+      const f = z.file(path); if (!f) return null;
+      let txt = await f.async("string");
+      const dir = path.includes("/") ? path.slice(0, path.lastIndexOf("/") + 1) : "";
+      const refs = new Set();
+      txt.replace(/url\(\s*["']?([^"')]+)["']?\s*\)/g, (m, u) => { if (!/^(data:|#|https?:)/.test(u)) refs.add(u); return m; });
+      txt.replace(/(?:xlink:)?href\s*=\s*["']([^"'#][^"']*)["']/g, (m, u) => { if (!/^(data:|https?:)/.test(u)) refs.add(u); return m; });
+      const map = {};
+      for (const u of refs) {
+        const full = norm(dir + u);
+        if (/\.svg$/i.test(full) && depth < 4) { const d = await svgData(z, full, depth + 1); if (d) map[u] = d; }
+        else { const d = await b64(z, full); if (d) map[u] = `data:${mime(full)};base64,${d}`; }
+      }
+      txt = txt.replace(/url\(\s*["']?([^"')]+)["']?\s*\)/g, (m, u) => map[u] ? `url("${map[u]}")` : m)
+               .replace(/((?:xlink:)?href\s*=\s*["'])([^"'#][^"']*)(["'])/g, (m, a, u, b) => map[u] ? a + map[u] + b : m)
+               .replace(/format\(\s*["']ttf["']\s*\)/g, 'format("truetype")');
+      return "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(txt)));
+    })();
+    fileCache.set(key, p); return p;
+  }
+  async function imgSrc(z, rel) {
+    let path = norm("images/" + rel);
+    /* older pieces name an image without its extension; use the sharpest file that exists */
+    if (!/\.[a-z0-9]{3,4}$/i.test(path) || !z.file(path)) {
+      const base = path.replace(/\.(gif|png|svg|jpe?g)$/i, "");
+      path = [".svg", ".png", ".gif", ".jpg"].map(e => base + e).find(q => z.file(q)) || path;
+    }
+    if (/\.svg$/i.test(path)) return svgData(z, path);
+    const key = "raw:" + path; if (!fileCache.has(key)) fileCache.set(key, b64(z, path).then(d => d ? `data:${mime(path)};base64,${d}` : null));
+    return fileCache.get(key);
+  }
+  const loadImg = (src) => new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = src; });
+  /* draw one counter front; returns { url, w, h } with w/h in VASL pixels (48 = ½", 60 = ⅝") */
+  async function render(blob, layers, scale = 4) {
+    const z = await zip(blob);
+    const ims = [];
+    for (const L of layers) { const src = await imgSrc(z, L.img); const im = src && await loadImg(src); if (im) ims.push({ im, x: L.x, y: L.y }); }
+    if (!ims.length) return null;
+    const base = ims[0].im, w = base.naturalWidth || base.width, h = base.naturalHeight || base.height;
+    const cv = document.createElement("canvas"); cv.width = Math.round(w * scale); cv.height = Math.round(h * scale);
+    const g = cv.getContext("2d"); g.imageSmoothingQuality = "high";
+    for (const { im, x, y } of ims) {
+      const iw = (im.naturalWidth || im.width) * scale, ih = (im.naturalHeight || im.height) * scale;
+      g.drawImage(im, cv.width / 2 + x * scale - iw / 2, cv.height / 2 + y * scale - ih / 2, iw, ih);
+    }
+    return { url: cv.toDataURL("image/png"), w, h };
+  }
+  return { tok, chain, pieceParts, traitsOf, layersOf, buildCatalog, load, render };
+})();
+
+(() => {
+"use strict";
+/* ---------- VASL board layouts ----------
+   Reads the user's VASL "boards" folder (each board is a zip archive), keeps each board's image in this
+   browser, and lets the user lay boards out (move, rotate, reverse, snap), shade parts that are out of play,
+   then draws the result into the card's board-configuration box. */
+const BOARDS = (() => {
+  const idbKeyIndex = "boards_index", imgKey = (k) => "board_img:" + k;
+  let index = null;                                  /* [{ key, name, file, w, h, cols, rows, version, thumb }] */
+  const imgCache = new Map();                        /* key -> HTMLImageElement */
+
+  async function getIndex() { if (!index) index = (await idb.get(idbKeyIndex)) || []; return index; }
+
+  /* ---- reading the folder ---- */
+  const attr = (tag, a) => { const m = tag.match(new RegExp("\\b" + a + "\\s*=\\s*\"([^\"]*)\"", "i")); return m ? m[1].trim() : ""; };
+  async function openArchive(file) {
+    let z = await JSZip.loadAsync(file);
+    const names = Object.keys(z.files).filter(n => !z.files[n].dir);
+    /* some downloads wrap the board archive in another zip */
+    if (names.length === 1 && !/\.(gif|png|jpe?g|xml|txt)$/i.test(names[0])) {
+      try { z = await JSZip.loadAsync(await z.file(names[0]).async("blob")); } catch (_) {}
+    }
+    return z;
+  }
+  const dims = (blob) => new Promise((res) => { const u = URL.createObjectURL(blob); const im = new Image(); im.onload = () => { res({ w: im.naturalWidth, h: im.naturalHeight, im }); }; im.onerror = () => res(null); im.src = u; });
+  async function thumbOf(im, maxW = 260) {
+    const s = Math.min(1, maxW / im.naturalWidth), c = document.createElement("canvas");
+    c.width = Math.max(1, Math.round(im.naturalWidth * s)); c.height = Math.max(1, Math.round(im.naturalHeight * s));
+    c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+    return c.toDataURL("image/jpeg", 0.8);
+  }
+  /* a download can bundle several board archives (e.g. FBboards.zip holds the four Festung Budapest boards) */
+  async function readBoards(file) {
+    const z = await JSZip.loadAsync(file);
+    const inner = Object.keys(z.files).filter(n => !z.files[n].dir && /(^|\/)bd[^/.]+$/i.test(n));
+    const hasImg = Object.keys(z.files).some(n => /(^|\/)bd[^/]*\.(gif|png|jpe?g)$/i.test(n));
+    if (inner.length && !hasImg) {
+      const out = [];
+      for (const n of inner) {
+        try { const blob = await z.file(n).async("blob"); const f = new File([blob], n.split("/").pop()); const b = await readBoard(f, await JSZip.loadAsync(blob)); if (b) out.push(b); } catch (_) {}
+      }
+      return out;
+    }
+    const b = await readBoard(file); return b ? [b] : [];
+  }
+  async function readBoard(file, zz) {
+    const z = zz || await openArchive(file);
+    const names = Object.keys(z.files).filter(n => !z.files[n].dir);
+    const mdName = names.find(n => /^BoardMetadata(\.xml)?$/i.test(n.split("/").pop()));
+    const md = mdName ? await z.file(mdName).async("string") : "";
+    const tag = (md.match(/<boardMetadata[\s\S]*?>/i) || [""])[0];
+    const base = file.name.replace(/\.zip$/i, "").replace(/^ap_/i, "");
+    let name = attr(tag, "name") || base.replace(/^bd/i, "");
+    if (/^0+\d+$/.test(name)) name = String(+name);            /* "01" → "1", as players say it */
+    let imgName = attr(tag, "boardImageFileName");
+    if (!imgName || !z.file(imgName)) {
+      const want = ("bd" + name).toLowerCase();
+      imgName = names.find(n => /\.(gif|png|jpe?g)$/i.test(n) && n.toLowerCase().replace(/\.(gif|png|jpe?g)$/, "") === want)
+        || names.find(n => /^bd[^/]*\.(gif|png|jpe?g)$/i.test(n)) || "";
+    }
+    if (!imgName) return null;
+    const blob = await z.file(imgName).async("blob");
+    const typed = new Blob([blob], { type: /\.png$/i.test(imgName) ? "image/png" : /\.jpe?g$/i.test(imgName) ? "image/jpeg" : "image/gif" });
+    const d = await dims(typed); if (!d) return null;
+    const cols = +attr(tag, "width") || 33, rows = +attr(tag, "height") || 10;
+    const ap = /^ap_/i.test(file.name);
+    const thumb = await thumbOf(d.im); URL.revokeObjectURL(d.im.src);
+    return { name, label: ap ? name + " (Action Pack)" : name, file: file.name, w: d.w, h: d.h, cols, rows, version: attr(tag, "version"), blob: typed, thumb };
+  }
+  /* files: the folder's File list. onProgress(done, total). Returns the number of boards kept. */
+  async function loadFolder(files, onProgress) {
+    const list = [...files].filter(f => {
+      const rel = f.webkitRelativePath || f.name, parts = rel.split("/");
+      if (parts.length > 2) return false;                       /* skip sub-folders such as overlays */
+      return !/^\./.test(f.name) && !/\.(txt|md|pdf|xml|json|html?)$/i.test(f.name);
+    });
+    const out = new Map(); let done = 0;
+    for (const f of list) {
+      try {
+        for (const b of await readBoards(f)) {
+          const key = b.label.toLowerCase();
+          const prev = out.get(key);
+          /* the same board twice (e.g. "bd1b" and "bd1b.zip"): keep the newer version */
+          if (!prev || (parseFloat(b.version) || 0) > (parseFloat(prev.version) || 0)) {
+            await idb.set(imgKey(key), b.blob);                 /* store the picture now; keep only the details in memory */
+            out.set(key, { key, name: b.name, label: b.label, file: b.file, w: b.w, h: b.h, cols: b.cols, rows: b.rows, version: b.version, thumb: b.thumb });
+          }
+        }
+      } catch (_) { /* not a board archive */ }
+      onProgress?.(++done, list.length);
+    }
+    const next = [...out.values()];
+    next.sort((a, b) => natCmp(a.label, b.label));
+    index = next; imgCache.clear();
+    await idb.set(idbKeyIndex, next);
+    return next.length;
+  }
+  const natCmp = (a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
+  /* a full-size picture for the editor, as an object URL */
+  const urlCache = new Map();
+  async function url(key) {
+    if (urlCache.has(key)) return urlCache.get(key);
+    const p = idb.get(imgKey(key)).then(b => b ? URL.createObjectURL(b) : null); urlCache.set(key, p); return p;
+  }
+  const urlNow = new Map();
+  function urlSync(key) { if (urlNow.has(key)) return urlNow.get(key); url(key).then(u => { if (u && !urlNow.has(key)) { urlNow.set(key, u); if (!$("blDlg").hidden) blDraw(); } }); return null; }
+  async function image(key) {
+    if (imgCache.has(key)) return imgCache.get(key);
+    const p = (async () => { const blob = await idb.get(imgKey(key)); if (!blob) return null; const d = await dims(blob); return d && d.im; })();
+    imgCache.set(key, p); return p;
+  }
+  return { getIndex, loadFolder, image, natCmp, urlSync };
+})();
+
+/* ---------- the board layout editor ---------- */
+const BL = { target: null, layout: null, sel: null, scale: 1, drag: null, q: "" };
+const blBox = (b, info) => { const r = (b.rot || 0) % 180 !== 0; return { w: r ? info.h : info.w, h: r ? info.w : info.h }; };
+const blInfo = (key) => (BOARDS._idx || []).find(x => x.key === key);
+function layoutPathFor(imgPath) { return imgPath === "board" ? "boardLayout" : imgPath.replace(/\.img$/, ".layout"); }
+async function openBoards(imgPath) {
+  BL.target = imgPath;
+  const saved = get(layoutPathFor(imgPath));
+  BL.layout = saved && Array.isArray(saved.boards) ? JSON.parse(JSON.stringify(saved)) : { boards: [], shades: [], labels: true };
+  BL.sel = null; BL.note = false;
+  BOARDS._idx = await BOARDS.getIndex();
+  $("blDlg").hidden = false; document.body.classList.add("blopen");
+  blDrawList(); blDraw();
+}
+function blClose() { $("blDlg").hidden = true; document.body.classList.remove("blopen"); }
+function blDrawList() {
+  const idx = BOARDS._idx || [];
+  $("blCount").textContent = idx.length ? `${idx.length} boards` : "";
+  $("blEmpty").hidden = !!idx.length; $("blListW").hidden = !idx.length;
+  const q = BL.q.trim().toLowerCase();
+  const list = idx.filter(b => !q || (b.label + " " + b.file).toLowerCase().includes(q));
+  $("blList").innerHTML = list.map(b => `<button type="button" class="bltile" data-key="${esc(b.key)}" title="Add board ${esc(b.label)} (${b.cols}×${b.rows} hexes)"><img src="${b.thumb}" alt="" loading="lazy" draggable="false"><span>${esc(b.label)}</span></button>`).join("") || `<p class="palmsg">No boards match.</p>`;
+}
+/* place a new board to the right of the others, lined up with the top of the layout */
+function blAdd(key, at) {
+  const info = blInfo(key); if (!info) return;
+  const L = BL.layout, b = { key, name: info.label, x: 0, y: 0, rot: 0 };
+  if (at) { b.x = at.x - info.w / 2; b.y = at.y - info.h / 2; }
+  else if (L.boards.length) {
+    const ext = blExtent(); b.x = ext.x1; b.y = ext.y0;
+  }
+  L.boards.push(b); BL.sel = { t: "b", i: L.boards.length - 1 };
+  if (at) blSnap(BL.sel.i);
+  blDraw();
+}
+function blExtent() {
+  const L = BL.layout; let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const b of L.boards) { const info = blInfo(b.key); if (!info) continue; const bx = blBox(b, info); x0 = Math.min(x0, b.x); y0 = Math.min(y0, b.y); x1 = Math.max(x1, b.x + bx.w); y1 = Math.max(y1, b.y + bx.h); }
+  for (const s of L.shades) { x0 = Math.min(x0, s.x); y0 = Math.min(y0, s.y); x1 = Math.max(x1, s.x + s.w); y1 = Math.max(y1, s.y + s.h); }
+  if (!isFinite(x0)) return { x0: 0, y0: 0, x1: 1800, y1: 645 };
+  return { x0, y0, x1, y1 };
+}
+/* snap a board's edges to the edges of the other boards when they are close */
+function blSnap(i) {
+  const L = BL.layout, b = L.boards[i], info = blInfo(b.key); if (!info) return;
+  const me = blBox(b, info), tol = 60;
+  let bestX = null, bestY = null;
+  L.boards.forEach((o, j) => {
+    if (j === i) return; const oi = blInfo(o.key); if (!oi) return; const ob = blBox(o, oi);
+    for (const cx of [o.x, o.x + ob.w - me.w, o.x + ob.w, o.x - me.w]) { const d = Math.abs(cx - b.x); if (d < tol && (!bestX || d < bestX.d)) bestX = { v: cx, d }; }
+    for (const cy of [o.y, o.y + ob.h - me.h, o.y + ob.h, o.y - me.h]) { const d = Math.abs(cy - b.y); if (d < tol && (!bestY || d < bestY.d)) bestY = { v: cy, d }; }
+  });
+  if (bestX) b.x = bestX.v; if (bestY) b.y = bestY.v;
+}
+/* shaded areas snap to half hexes of the board underneath (standard boards: 56.25 × 64.5 px hexes) */
+function blHexAt(x, y) {
+  const L = BL.layout;
+  for (const b of L.boards) { const info = blInfo(b.key); if (!info) continue; const bx = blBox(b, info); if (x >= b.x - 1 && x <= b.x + bx.w + 1 && y >= b.y - 1 && y <= b.y + bx.h + 1) {
+    const hw = info.w / Math.max(1, info.cols - 1), hh = info.h / Math.max(1, info.rows); const r = (b.rot || 0) % 180 !== 0;
+    return { ox: b.x, oy: b.y, sx: (r ? hh : hw) / 2, sy: (r ? hw : hh) / 2 };
+  } }
+  return { ox: 0, oy: 0, sx: 28.125, sy: 32.25 };
+}
+const blSnapTo = (v, o, s) => o + Math.round((v - o) / s) * s;
+function blFit() {
+  const ws = $("blWs"), ext = blExtent(), pad = 40;
+  const W = Math.max(1, ext.x1 - ext.x0 + pad * 2), H = Math.max(1, ext.y1 - ext.y0 + pad * 2);
+  BL.scale = Math.min((ws.clientWidth - 8) / W, (ws.clientHeight - 8) / H, 0.6);
+  BL.ox = ext.x0 - pad; BL.oy = ext.y0 - pad;
+}
+/* where a board's number goes: the corner nearest the board's own printed ID
+   (lower-left on an unturned geomorphic board), following the board as it is rotated or reversed */
+function blLabelSpot(b, info) {
+  const bx = blBox(b, info), ins = Math.min(info.w, info.h) * 0.025;
+  const vx = -info.w / 2 + ins, vy = info.h / 2 - ins, a = (b.rot || 0) * Math.PI / 180;
+  const rx = vx * Math.cos(a) - vy * Math.sin(a), ry = vx * Math.sin(a) + vy * Math.cos(a);
+  return { x: b.x + bx.w / 2 + rx, y: b.y + bx.h / 2 + ry, ax: rx < 0 ? 0 : 1, ay: ry < 0 ? 0 : 1, short: Math.min(bx.w, bx.h) };
+}
+function blUsed() {
+  return BL.layout.boards.map(b => b.name + (b.rot === 180 ? " (reversed)" : b.rot === 90 || b.rot === 270 ? " (turned)" : "")).join(", ");
+}
+async function blDraw() {
+  blFit();
+  const L = BL.layout, s = BL.scale, X = (v) => (v - BL.ox) * s, Y = (v) => (v - BL.oy) * s;
+  const parts = [];
+  L.boards.forEach((b, i) => {
+    const info = blInfo(b.key);
+    if (!info) { parts.push(`<div class="blb missing" data-i="${i}" style="left:${X(b.x)}px;top:${Y(b.y)}px;width:${1800 * s}px;height:${645 * s}px">Board ${esc(b.name)} isn't loaded</div>`); return; }
+    const bx = blBox(b, info), sel = BL.sel?.t === "b" && BL.sel.i === i;
+    parts.push(`<div class="blb${sel ? " sel" : ""}" data-i="${i}" style="left:${X(b.x)}px;top:${Y(b.y)}px;width:${bx.w * s}px;height:${bx.h * s}px">
+      <img src="${BOARDS.urlSync(b.key) || info.thumb}" alt="" draggable="false" style="width:${info.w * s}px;height:${info.h * s}px;transform:translate(-50%,-50%) rotate(${b.rot || 0}deg)">
+      ${L.labels ? (() => { const p = blLabelSpot(b, info); return `<span class="bll" style="left:${(p.x - b.x) * s}px;top:${(p.y - b.y) * s}px;transform:translate(${-p.ax * 100}%,${-p.ay * 100}%)">${esc(b.name)}</span>`; })() : ""}</div>`);
+  });
+  L.shades.forEach((r, i) => {
+    const sel = BL.sel?.t === "s" && BL.sel.i === i;
+    parts.push(`<div class="bls${sel ? " sel" : ""}" data-s="${i}" style="left:${X(r.x)}px;top:${Y(r.y)}px;width:${r.w * s}px;height:${r.h * s}px"><span class="blh" data-h="${i}"></span></div>`);
+  });
+  $("blWsIn").innerHTML = parts.join("") || `<p class="palmsg">Click a board on the left to start the layout. Boards snap together when their edges meet.</p>`;
+  $("blUsed").textContent = L.boards.length ? "Boards in use: " + blUsed() : "No boards yet.";
+  $("blRot").disabled = $("blRev").disabled = BL.sel?.t !== "b"; $("blDel").disabled = !BL.sel;
+  $("blNote").hidden = BL.target !== "board"; $("blNote").disabled = !L.boards.length;
+  $("blLabels").checked = !!L.labels;
+}
+/* pointer handling in the workspace: drag boards and shaded areas, resize shaded areas */
+function blToLayout(e) { const r = $("blWsIn").getBoundingClientRect(); return { x: (e.clientX - r.left) / BL.scale + BL.ox, y: (e.clientY - r.top) / BL.scale + BL.oy }; }
+function blPointerDown(e) {
+  const h = e.target.closest(".blh"), sh = e.target.closest(".bls"), bd = e.target.closest(".blb");
+  const p = blToLayout(e);
+  if (h) { const i = +h.dataset.h; BL.sel = { t: "s", i }; BL.drag = { t: "resize", i, p }; }
+  else if (sh) { const i = +sh.dataset.s, r = BL.layout.shades[i]; BL.sel = { t: "s", i }; BL.drag = { t: "s", i, dx: p.x - r.x, dy: p.y - r.y }; }
+  else if (bd) { const i = +bd.dataset.i, b = BL.layout.boards[i]; BL.sel = { t: "b", i }; BL.drag = { t: "b", i, dx: p.x - b.x, dy: p.y - b.y }; }
+  else { BL.sel = null; BL.drag = null; blDraw(); return; }
+  BL.drag.moved = false; BL.drag.scale = BL.scale; BL.drag.ox = BL.ox; BL.drag.oy = BL.oy;
+  $("blWsIn").setPointerCapture?.(e.pointerId);
+  e.preventDefault(); blDraw();
+}
+function blPointerMove(e) {
+  const d = BL.drag; if (!d) return;
+  /* keep the view still while dragging */
+  BL.scale = d.scale; BL.ox = d.ox; BL.oy = d.oy;
+  const r = $("blWsIn").getBoundingClientRect(), p = { x: (e.clientX - r.left) / d.scale + d.ox, y: (e.clientY - r.top) / d.scale + d.oy };
+  const L = BL.layout; d.moved = true;
+  if (d.t === "b") { const b = L.boards[d.i]; b.x = p.x - d.dx; b.y = p.y - d.dy; }
+  if (d.t === "s") { const s = L.shades[d.i]; s.x = p.x - d.dx; s.y = p.y - d.dy; }
+  if (d.t === "resize") { const s = L.shades[d.i]; s.w = Math.max(20, p.x - s.x); s.h = Math.max(20, p.y - s.y); }
+  const el = d.t === "b" ? $("blWsIn").querySelector(`.blb[data-i="${d.i}"]`) : $("blWsIn").querySelector(`.bls[data-s="${d.i}"]`);
+  const o = d.t === "b" ? L.boards[d.i] : L.shades[d.i];
+  if (el) { el.style.left = (o.x - d.ox) * d.scale + "px"; el.style.top = (o.y - d.oy) * d.scale + "px"; if (d.t === "resize") { el.style.width = o.w * d.scale + "px"; el.style.height = o.h * d.scale + "px"; } }
+}
+function blPointerUp() {
+  const d = BL.drag; BL.drag = null; if (!d) return;
+  const L = BL.layout;
+  if (d.t === "b") blSnap(d.i);
+  if (d.t === "s" || d.t === "resize") {
+    const s = L.shades[d.i], g = blHexAt(s.x + 1, s.y + 1);
+    const x1 = blSnapTo(s.x + s.w, g.ox, g.sx), y1 = blSnapTo(s.y + s.h, g.oy, g.sy);
+    s.x = blSnapTo(s.x, g.ox, g.sx); s.y = blSnapTo(s.y, g.oy, g.sy); s.w = Math.max(g.sx, x1 - s.x); s.h = Math.max(g.sy, y1 - s.y);
+  }
+  blDraw();
+}
+/* draw the finished layout into an image for the card */
+async function blRender(maxSide = 1600) {
+  const L = BL.layout; if (!L.boards.length) return null;
+  const ext = blExtent(), W = ext.x1 - ext.x0, H = ext.y1 - ext.y0, s = Math.min(1, maxSide / Math.max(W, H));
+  const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(W * s)); c.height = Math.max(1, Math.round(H * s));
+  const g = c.getContext("2d"); g.imageSmoothingQuality = "high";
+  for (const b of L.boards) {
+    const info = blInfo(b.key), im = info && await BOARDS.image(b.key); if (!im) continue;
+    const bx = blBox(b, info), cx = (b.x - ext.x0 + bx.w / 2) * s, cy = (b.y - ext.y0 + bx.h / 2) * s;
+    g.save(); g.translate(cx, cy); g.rotate((b.rot || 0) * Math.PI / 180); g.drawImage(im, -info.w * s / 2, -info.h * s / 2, info.w * s, info.h * s); g.restore();
+  }
+  /* shading only darkens the boards, never the empty space around them */
+  g.save(); g.beginPath();
+  for (const b of L.boards) { const info = blInfo(b.key); if (!info) continue; const bx = blBox(b, info); g.rect((b.x - ext.x0) * s, (b.y - ext.y0) * s, bx.w * s, bx.h * s); }
+  g.clip(); g.fillStyle = "rgba(205,25,25,.38)";
+  for (const r of L.shades) g.fillRect((r.x - ext.x0) * s, (r.y - ext.y0) * s, r.w * s, r.h * s);
+  g.restore();
+  if (L.labels) {
+    for (const b of L.boards) {
+      const info = blInfo(b.key); if (!info) continue; const bx = blBox(b, info);
+      const p = blLabelSpot(b, info), fs = Math.max(12, Math.round(p.short * s * 0.13));
+      g.font = `700 ${fs}px Barlow, Arial, sans-serif`; g.textAlign = "center"; g.textBaseline = "middle";
+      const tw = g.measureText(b.name).width, bw = tw + fs * 0.6, bh = fs * 1.24;
+      const x0 = (p.x - ext.x0) * s - p.ax * bw, y0 = (p.y - ext.y0) * s - p.ay * bh;
+      g.fillStyle = "rgba(255,255,255,.85)"; g.fillRect(x0, y0, bw, bh);
+      g.fillStyle = "#111"; g.fillText(b.name, x0 + bw / 2, y0 + bh / 2 + fs * 0.04);
+    }
+  }
+  /* WebP keeps the see-through corners of odd-shaped layouts at a fraction of PNG's size (PNG where WebP isn't available) */
+  const w = c.toDataURL("image/webp", 0.92);
+  return /^data:image\/webp/.test(w) ? w : c.toDataURL("image/png");
+}
+async function blDone() {
+  const t = BL.target; if (!t) return blClose();
+  if (!BL.layout.boards.length) { set(t, null); set(layoutPathFor(t), null); blClose(); render(); queueSave(); return; }
+  const url = await blRender();
+  if (!url) { toast("The board pictures couldn't be drawn. Try loading the boards folder again."); return; }
+  set(t, url); set(layoutPathFor(t), JSON.parse(JSON.stringify(BL.layout)));
+  if (BL.note && t === "board") state.boardNote = esc("Boards " + blUsed());
+  blClose(); render(); queueSave(); toast("Board layout placed: " + blUsed() + ".");
+}
+
+const W = 816, H = 1056;
+const SAMPLE = {"sid": "ASL SCENARIO KF1", "title": "Fick’s Cycles"};
+
+/* ---------- nationality symbols (built in; more can be added from images) ---------- */
+function starPts(cx, cy, R, r) {
+  const p = [];
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r : R;
+    p.push((cx + rr * Math.cos(a)).toFixed(2) + "," + (cy + rr * Math.sin(a)).toFixed(2));
+  }
+  return p.join(" ");
+}
+const roundel = (c) => `<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="48" fill="${c[0]}"/><circle cx="50" cy="50" r="32" fill="${c[1]}"/><circle cx="50" cy="50" r="16" fill="${c[2]}"/></svg>`;
+const sv = (inner) => `<svg viewBox="0 0 100 100" aria-hidden="true">${inner}</svg>`;
+const STAR = (cx, cy, R, fill, extra = "") => `<polygon points="${starPts(cx, cy, R, R * 0.382)}" fill="${fill}"${extra}/>`;
+const SHIELD = "M10 6H90V50C90 76 70 90 50 96C30 90 10 76 10 50Z", SHIELD_IN = "M18 13H82V50C82 71 66 82 50 88C34 82 18 71 18 50Z";
+const nordic = (bg, cross, edge) => sv(`<rect x="2" y="12" width="96" height="76" fill="${bg}" stroke="#111" stroke-width="2"/>` +
+  (edge ? `<rect x="24" y="12" width="22" height="76" fill="${edge}"/><rect x="2" y="39" width="96" height="22" fill="${edge}"/>` : "") +
+  `<rect x="${edge ? 29 : 27}" y="12" width="${edge ? 12 : 16}" height="76" fill="${cross}"/><rect x="2" y="${edge ? 44 : 42}" width="96" height="${edge ? 12 : 16}" fill="${cross}"/>`);
+const checker = (n, a, b) => { let r = ""; const c = 70 / n; for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) r += `<rect x="${15 + j * c}" y="${10 + i * c}" width="${c}" height="${c}" fill="${(i + j) % 2 ? b : a}"/>`; return r; };
+const MAPLE = "50,4 57,20 66,15 63,38 76,28 80,36 93,33 86,48 96,53 72,68 75,79 54,74 54,96 46,96 46,74 25,79 28,68 4,53 14,48 7,33 20,36 24,28 37,38 34,15 43,20";
+const BUILTIN = {
+  /* Allied */
+  soviet:    { g: "Allied", name: "Russian", svg: sv(STAR(50, 54, 50, "#d4202a")) },
+  american:  { g: "Allied", name: "American", svg: sv(`<circle cx="50" cy="50" r="48" fill="#1f3a68"/>` + STAR(50, 53, 40, "#fff")) },
+  usmc:      { g: "Allied", name: "US Marine Corps", svg: sv(`<circle cx="50" cy="50" r="48" fill="#a6192e"/>` + STAR(50, 53, 40, "#f2c200")) },
+  british:   { g: "Allied", name: "British", svg: roundel(["#1d3c78", "#ffffff", "#c8102e"]) },
+  canadian:  { g: "Allied", name: "Canadian", svg: sv(`<polygon points="${MAPLE}" fill="#d52b1e"/>`) },
+  anzac:     { g: "Allied", name: "ANZAC", svg: sv(`<circle cx="50" cy="50" r="48" fill="#1d3c78"/>` + STAR(50, 22, 10, "#fff") + STAR(50, 80, 10, "#fff") + STAR(26, 47, 9, "#fff") + STAR(73, 42, 8, "#fff") + STAR(60, 58, 5, "#fff")) },
+  french:    { g: "Allied", name: "French", svg: roundel(["#c8102e", "#ffffff", "#1d3c78"]) },
+  freefrench:{ g: "Allied", name: "Free French", svg: sv(`<circle cx="50" cy="50" r="46" fill="#fff" stroke="#1d3c78" stroke-width="5"/><rect x="45" y="12" width="10" height="76" fill="#c8102e"/><rect x="34" y="24" width="32" height="8" fill="#c8102e"/><rect x="26" y="40" width="48" height="8" fill="#c8102e"/>`) },
+  polish:    { g: "Allied", name: "Polish", svg: sv(`<rect x="4" y="4" width="92" height="92" fill="#fff" stroke="#111" stroke-width="2"/><rect x="4" y="4" width="46" height="46" fill="#dc143c"/><rect x="50" y="50" width="46" height="46" fill="#dc143c"/>`) },
+  belgian:   { g: "Allied", name: "Belgian", svg: roundel(["#111111", "#fdda24", "#ef3340"]) },
+  dutch:     { g: "Allied", name: "Dutch", svg: sv(`<polygon points="6,12 94,12 50,92" fill="#ff8200" stroke="#111" stroke-width="5" stroke-linejoin="round"/>`) },
+  norwegian: { g: "Allied", name: "Norwegian", svg: nordic("#ba0c2f", "#00205b", "#ffffff") },
+  danish:    { g: "Allied", name: "Danish", svg: nordic("#c8102e", "#ffffff") },
+  greek:     { g: "Allied", name: "Greek", svg: roundel(["#0d5eaf", "#ffffff", "#0d5eaf"]) },
+  yugoslav:  { g: "Allied", name: "Yugoslav", svg: sv(`<rect x="2" y="14" width="96" height="24" fill="#0c4076"/><rect x="2" y="38" width="96" height="24" fill="#fff"/><rect x="2" y="62" width="96" height="24" fill="#c6363c"/><rect x="2" y="14" width="96" height="72" fill="none" stroke="#111" stroke-width="2"/>`) },
+  partisan:  { g: "Allied", name: "Yugoslav Partisans", svg: sv(STAR(50, 54, 48, "#c6363c", ' stroke="#111" stroke-width="2.5" stroke-linejoin="round"')) },
+  chinese:   { g: "Allied", name: "Chinese (Nationalist)", svg: sv(`<circle cx="50" cy="50" r="48" fill="#000095"/><polygon points="${(() => { const p = []; for (let i = 0; i < 24; i++) { const a = -Math.PI / 2 + i * Math.PI / 12, r = i % 2 ? 21 : 38; p.push((50 + r * Math.cos(a)).toFixed(1) + "," + (50 + r * Math.sin(a)).toFixed(1)); } return p.join(" "); })()}" fill="#fff"/><circle cx="50" cy="50" r="19" fill="#000095"/><circle cx="50" cy="50" r="16" fill="#fff"/>`) },
+  chicom:    { g: "Allied", name: "Chinese (Communist)", svg: sv(STAR(50, 54, 46, "#d4202a", ' stroke="#f2c200" stroke-width="5" stroke-linejoin="round"')) },
+  /* Axis */
+  german:    { g: "Axis", name: "German", svg: sv(`<path fill="#111" d="M30 0H70V30H100V70H70V100H30V70H0V30H30Z"/><path fill="#fff" d="M34 0H66V34H100V66H66V100H34V66H0V34H34Z"/><path fill="#111" d="M41 0H59V41H100V59H59V100H41V59H0V41H41Z"/>`) },
+  italian:   { g: "Axis", name: "Italian", svg: sv(`<path d="${SHIELD}" fill="#1f4fa0"/><path d="${SHIELD_IN}" fill="#c8102e"/><rect x="43" y="13" width="14" height="72" fill="#fff"/><rect x="18" y="35" width="64" height="14" fill="#fff"/>`) },
+  japanese:  { g: "Axis", name: "Japanese", svg: sv(`<circle cx="50" cy="50" r="46" fill="#fff" stroke="#111" stroke-width="3"/><circle cx="50" cy="50" r="24" fill="#c8102e"/>`) },
+  finnish:   { g: "Axis", name: "Finnish", svg: nordic("#ffffff", "#002f6c") },
+  hungarian: { g: "Axis", name: "Hungarian", svg: sv(`<polygon points="4,10 96,10 50,94" fill="#ce2939" stroke="#111" stroke-width="2" stroke-linejoin="round"/><polygon points="22,20 78,20 50,72" fill="#fff"/><polygon points="36,28 64,28 50,54" fill="#477050"/>`) },
+  romanian:  { g: "Axis", name: "Romanian", svg: roundel(["#002b7f", "#fcd116", "#ce1126"]) },
+  bulgarian: { g: "Axis", name: "Bulgarian", svg: sv(`<rect x="4" y="4" width="92" height="92" fill="#fff" stroke="#111" stroke-width="3"/><path d="M14 14L86 86M86 14L14 86" stroke="#111" stroke-width="16"/>`) },
+  slovakian: { g: "Axis", name: "Slovakian", svg: sv(`<path d="${SHIELD}" fill="#fff" stroke="#111" stroke-width="2"/><path d="${SHIELD_IN}" fill="#ee1c25"/><path d="M18 72C30 60 40 62 50 70C60 62 70 60 82 72V74C70 84 60 86 50 88C40 86 30 84 18 74Z" fill="#0b4ea2"/><rect x="46" y="18" width="8" height="52" fill="#fff"/><rect x="34" y="28" width="32" height="7" fill="#fff"/><rect x="28" y="43" width="44" height="7" fill="#fff"/>`) },
+  croatian:  { g: "Axis", name: "Croatian", svg: sv(checker(5, "#d52b1e", "#ffffff") + `<rect x="15" y="10" width="70" height="70" fill="none" stroke="#111" stroke-width="3"/><path d="M15 80H85L50 96Z" fill="#d52b1e" stroke="#111" stroke-width="3" stroke-linejoin="round"/>`) },
+  /* Korea */
+  nkorean:   { g: "Korea", name: "North Korean", svg: sv(`<circle cx="50" cy="50" r="48" fill="#024fa2"/><circle cx="50" cy="50" r="38" fill="#fff"/>` + STAR(50, 53, 34, "#ed1c27")) },
+  skorean:   { g: "Korea", name: "South Korean", svg: sv(`<circle cx="50" cy="50" r="47" fill="#0047a0" stroke="#111" stroke-width="2"/><path d="M3 50A47 47 0 0 1 97 50A23.5 23.5 0 0 1 50 50A23.5 23.5 0 0 0 3 50Z" fill="#cd2e3a"/>`) },
+  none:      { g: "Other", name: "No symbol", svg: "" },
+};
+const NORTH = `<svg viewBox="0 0 16 56" aria-hidden="true"><path d="M8 0 L15.5 27 L8 21 L0.5 27 Z" fill="#111"/><path d="M0 56V33H5.2L10.9 46V33H16V56H10.8L5.1 43V56Z" fill="#111"/></svg>`;
+
+/* the same N with its arrowhead on the right side, pointing right */
+const NORTH_R = `<svg viewBox="0 0 48 23" aria-hidden="true"><path d="M0 23V0H5.2L10.9 13V0H16V23H10.8L5.1 10V23Z" fill="#111"/><path d="M47.5 11.5 L20.5 4 L26.5 11.5 L20.5 19 Z" fill="#111"/></svg>`;
+/* ---------- state ---------- */
+const WM = `<div class="wm" aria-hidden="true">This template is for personal use only.</div>`;
+const blankSlot = (size = "s") => ({ img: null, qty: "", size });
+const blankGroup = (n = 6) => ({ form: "", html: "", indent: 0, inline: false, slots: Array.from({ length: n }, () => blankSlot()) });
+function blankCard() {
+  return {
+    app: "asl-card-maker", v: 1,
+    sid: "", title: "", designer: "", logo: null, photo: null, histLoc: "", history: "", vc: "",
+    board: null, boardNote: "", sides: { A: "", B: "" }, balA: "", balB: "",
+    trc: { rows: [{ side: "A", html: "DEFENDER Sets up First" }, { side: "B", html: "ATTACKER Moves First" }], turns: Array.from({ length: 6 }, () => ({ mark: [], fill: "" })), end: "END" },
+    panels: [{ side: "A", gut: null, groups: [blankGroup()] }, { side: "B", gut: null, groups: [blankGroup()] }],
+    ssr: "", am: "", amNewCol: true, ssrSplit: null, backFrom: null, custom: [],
+  };
+}
+function normalize(o) {
+  const d = blankCard();
+  if (!o || typeof o !== "object") return d;
+  const out = Object.assign(d, o);
+  out.sides = Object.assign({ A: "soviet", B: "german" }, o.sides || {});
+  out.trc = Object.assign(blankCard().trc, o.trc || {});
+  if (!Array.isArray(out.trc.rows) || out.trc.rows.length !== 2) out.trc.rows = blankCard().trc.rows;
+  if (!Array.isArray(out.trc.turns) || !out.trc.turns.length) out.trc.turns = blankCard().trc.turns;
+  out.trc.turns = out.trc.turns.map(t => ({ mark: Array.isArray(t.mark) ? t.mark.filter(m => m === "A" || m === "B") : [], fill: t.fill || "", half: !!t.half }));
+  if (!Array.isArray(out.panels) || !out.panels.length) out.panels = blankCard().panels;
+  out.panels = out.panels.map(p => ({
+    side: p.side === "B" ? "B" : "A", gut: p.gut || null,
+    groups: (Array.isArray(p.groups) && p.groups.length ? p.groups : [blankGroup()]).map(g => ({
+      ...splitLead(g.form, g.html, "elr"), indent: [0, 1, 2].includes(g.indent) ? g.indent : 0, inline: !!g.inline,
+      slots: (Array.isArray(g.slots) ? g.slots : []).map(s => ({ img: s.img || null, qty: String(s.qty ?? ""), size: s.size === "l" ? "l" : "s", ...(s.v ? { v: 1 } : {}) })),
+    })),
+  }));
+  out.ssr = cleanSSR(out.ssr);
+  out.backFrom = Number.isInteger(o.backFrom) ? Math.max(0, Math.min(o.backFrom, out.panels.length)) : null;
+  { const h = splitLead(o.histLoc, out.history, "colon"); out.histLoc = h.form; out.history = h.html; }
+  out.vc = stripLabel(out.vc, "VICTORY CONDITIONS");
+  out.am = stripLabel(out.am, "AFTERMATH");
+  out.custom = Array.isArray(o.custom) ? o.custom.filter(c => c && c.id && c.img) : [];
+  return out;
+}
+/* special rules are numbered by the card; strip typed numbers and keep each rule's text plain */
+function cleanSSR(html) {
+  if (!html) return "";
+  const d = document.createElement("div"); d.innerHTML = html;
+  // wrap stray top-level text into rule lines
+  const lines = []; let cur = null;
+  for (const n of [...d.childNodes]) {
+    if (n.nodeType === 1 && /^(DIV|P)$/.test(n.tagName)) { cur = null; lines.push(n.innerHTML); }
+    else if (n.nodeType === 1 && n.tagName === "BR") { cur = null; }
+    else { if (cur === null) { lines.push(""); cur = lines.length - 1; } const t = document.createElement("span"); t.appendChild(n.cloneNode(true)); lines[cur] += t.innerHTML; }
+  }
+  return lines.map(h => {
+    let x = h;
+    const m = x.match(/^\s*<(b|strong)>([\s\S]*)<\/\1>\s*$/i);
+    if (m && !/<\/?(b|strong)>/i.test(m[2])) x = m[2];
+    x = x.replace(/^\s*(<(b|strong)>)\s*\d+\s*\.\s*(<\/(b|strong)>)\s*/i, "").replace(/^\s*\d+\s*\.\s+/, "");
+    const m2 = x.match(/^\s*<(b|strong)>([\s\S]*)<\/\1>\s*$/i);
+    if (m2 && !/<\/?(b|strong)>/i.test(m2[2])) x = m2[2];
+    return `<div>${x || "<br>"}</div>`;
+  }).join("");
+}
+/* bold lead-ins live in their own fields; pull them out of older cards where they were typed into the text */
+function htmlToText(h) { const d = document.createElement("div"); d.innerHTML = h || ""; return d.textContent; }
+function unwrapBold(h) {
+  const m = (h || "").match(/^\s*<(b|strong)>([\s\S]*)<\/\1>\s*$/i);
+  return m && !/<\/?(b|strong)>/i.test(m[2]) ? m[2] : null;
+}
+function splitLead(form, html, mode) {
+  html = html || "";
+  if (form != null && form !== "") return { form, html };
+  // leading bold run: <b>LEAD</b> rest
+  const m = html.match(/^\s*<(b|strong)>([\s\S]*?)<\/\1>\s*([\s\S]*)$/i);
+  if (m) {
+    const lead = m[2].trim(), rest = m[3];
+    const whole = unwrapBold(html);
+    if (whole !== null) {
+      // everything ran bold: split at the end of [ELR: n] or at the first colon
+      const t = htmlToText(whole);
+      const cut = mode === "elr" ? t.search(/\[ELR:[^\]]*\]/i) : t.indexOf(":");
+      if (cut >= 0) {
+        const end = mode === "elr" ? t.indexOf("]", cut) + 1 : cut + 1;
+        return { form: esc(t.slice(0, end).trim()), html: esc(t.slice(end).trim()) };
+      }
+      return { form: "", html: whole };
+    }
+    return { form: lead, html: rest };
+  }
+  return { form: "", html };
+}
+function stripLabel(html, label) {
+  let h = html || "";
+  const whole = unwrapBold(h); if (whole !== null) h = whole;
+  const re = new RegExp("^\\s*(<(b|strong)>)?\\s*" + label + "\\s*:\\s*(<\\/(b|strong)>)?\\s*", "i");
+  return h.replace(re, "");
+}
+/* ---------- SASL mission card state ---------- */
+const SEC_DEFAULTS = [
+  { kind: "inline",  head: "BRIEFING:", ph: "Your orders are to …" },
+  { kind: "inline",  head: "PREVAILING ATTITUDE (3.2):", ph: "Hold {A2b}" },
+  { kind: "tables",  head: "MISSION TABLES (12.32):" },
+  { kind: "text",    head: "MAPBOARD SELECTION & ACTIVATION (13.):", ph: "MAPBOARD SELECTION: A8a  ·  INITIAL MAPBOARD: …  ·  MAPBOARD ACTIVATION: …" },
+  { kind: "config",  head: "Initial Mapboard Configuration:" },
+  { kind: "text",    head: "VPO LOCATIONS (14.):", ph: "Determine the number {A6a} and placement {A10a} of ENEMY-Controlled VPO …" },
+  { kind: "text",    head: "S? PLACEMENT/ENTRY (4.):", ph: "Place S? as per 4.1, cases a, b and c …" },
+  { kind: "text",    head: "SEQUENCE:", ph: "ENEMY-Controlled VPO are determined {A10a} and S? are set up first …" },
+  { kind: "text",    head: "MISSION END (see also 12.5):", ph: "At the end of Game Turn 10, and at the end of each Game Turn thereafter, make a dr …" },
+  { kind: "bullets", head: "VP SCHEDULE (12.6; 9.41, 17.1321):", ph: "Each side gains VP {A10b} for Control of VPO.  (Enter starts the next bullet.)" },
+  { kind: "numbers", head: "MISSION SPECIAL RULES:", ph: "There is a +1 DRM to each DR on Table A1 …  (Enter starts the next rule; numbers are added for you.)" },
+];
+const blankMT = () => ({
+  cols: [
+    { h: "ENEMY SAN", c1: "DR", c2: "SAN #" }, { h: "FRIENDLY SAN", c1: "DR", c2: "SAN #" },
+    { h: "ENEMY AC#", c1: "dr", c2: "AC#" }, { h: "RE Numbers", c1: "dr", c2: "RE#s" },
+  ],
+  rows: Array.from({ length: 5 }, () => Array(8).fill("")),
+});
+let secSeq = 0;
+const secId = () => "s" + Date.now().toString(36) + (secSeq++).toString(36);
+function blankSection(kind, head = "", ph = "") {
+  const sc = { id: secId(), kind, head, ph, body: "", col: false };
+  if (kind === "tables") sc.table = blankMT();
+  if (kind === "config") { sc.img = null; sc.ndir = "up"; }
+  if (kind === "ob") { sc.nat = ""; sc.groups = [blankGroup()]; }
+  return sc;
+}
+/* a new OB: FRIENDLY first, then ENEMY */
+function newOB() {
+  const n = (state.sections || []).filter(x => x.kind === "ob").length;
+  return blankSection("ob", n % 2 ? "ENEMY OB:" : "FRIENDLY OB:");
+}
+function blankSasl() {
+  return {
+    app: "asl-card-maker", tpl: "sasl", v: 1,
+    logo: null, badge: null, num: "", pmark: false, title: "", photo: null, showPhoto: true,
+    sections: SEC_DEFAULTS.map(d => blankSection(d.kind, d.head, d.ph || "")),
+    custom: [],
+  };
+}
+function normalizeSasl(o) {
+  const out = Object.assign(blankSasl(), o || {});
+  out.tpl = "sasl";
+  out.showPhoto = o.showPhoto !== false; out.pmark = !!o.pmark;
+  const kinds = ["text", "inline", "bullets", "numbers", "tables", "config", "ob"];
+  out.sections = (Array.isArray(o.sections) ? o.sections : blankSasl().sections).filter(x => x && kinds.includes(x.kind)).map(x => {
+    const sc = Object.assign(blankSection(x.kind), x, { id: x.id || secId(), col: !!x.col });
+    if (sc.kind === "tables") {
+      const t = x.table || blankMT();
+      const cols = (Array.isArray(t.cols) && t.cols.length ? t.cols : blankMT().cols).map(c => ({ h: c.h || "", c1: c.c1 || "", c2: c.c2 || "" }));
+      const rows = (Array.isArray(t.rows) ? t.rows : []).map(r => Array.from({ length: cols.length * 2 }, (_, k) => String((r || [])[k] ?? "")));
+      sc.table = { cols, rows: rows.length ? rows : blankMT().rows.map(() => Array(cols.length * 2).fill("")) };
+    }
+    if (sc.kind === "bullets" || sc.kind === "numbers") {
+      sc.body = cleanSSR(sc.body);
+      if (/<table/i.test(sc.body)) { const d = document.createElement("div"); d.dataset.lines = "1"; d.innerHTML = sc.body; attachTables(d); sc.body = d.innerHTML; }
+    }
+    if (sc.kind === "ob") {
+      sc.nat = x.nat || "";
+      sc.groups = (Array.isArray(x.groups) && x.groups.length ? x.groups : [blankGroup()]).map(g => ({
+        form: g.form || "", html: g.html || "", indent: [0, 1, 2].includes(g.indent) ? g.indent : 0, inline: !!g.inline,
+        slots: (Array.isArray(g.slots) ? g.slots : []).map(t => ({ img: t.img || null, qty: String(t.qty ?? ""), size: t.size === "l" ? "l" : "s", ...(t.v ? { v: 1 } : {}) })),
+      }));
+    }
+    return sc;
+  });
+  out.custom = Array.isArray(o.custom) ? o.custom.filter(c => c && c.id && c.img) : [];
+  return out;
+}
+const isSasl = () => state.tpl === "sasl";
+const STORE_KEY = { asl: "card", sasl: "card_sasl" };
+let state = blankCard();
+const get = (path) => path.split(".").reduce((o, k) => (o == null ? undefined : o[k]), state);
+function set(path, val) {
+  const ks = path.split("."); let o = state;
+  for (let i = 0; i < ks.length - 1; i++) o = o[ks[i]];
+  o[ks[ks.length - 1]] = val;
+}
+const parentOf = (path) => { const ks = path.split("."); return { arr: ks.slice(0, -1).join("."), idx: +ks[ks.length - 1] }; };
+
+/* ---------- storage (this browser only) ---------- */
+const idb = (() => {
+  let dbp = null;
+  function open() {
+    if (!dbp) dbp = new Promise((res, rej) => {
+      try {
+        const r = indexedDB.open("asl-card-maker", 1);
+        r.onupgradeneeded = () => r.result.createObjectStore("kv");
+        r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+      } catch (e) { rej(e); }
+    });
+    return dbp;
+  }
+  return {
+    async get(k) {
+      try { const db = await open(); return await new Promise((res, rej) => { const q = db.transaction("kv").objectStore("kv").get(k); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); }
+      catch (e) { return undefined; }
+    },
+    async set(k, v) {
+      try { const db = await open(); await new Promise((res, rej) => { const tx = db.transaction("kv", "readwrite"); tx.objectStore("kv").put(v, k); tx.oncomplete = res; tx.onerror = () => rej(tx.error); }); return true; }
+      catch (e) { return false; }
+    },
+  };
+})();
+let saveT = 0;
+function saveNow() { saveT = 0; commit(); idb.set(STORE_KEY[isSasl() ? "sasl" : "asl"], JSON.parse(JSON.stringify(state))); }
+/* ---------- undo / redo: a snapshot of the card after each change (typing is grouped by pauses) ----------
+   images are kept once in a pool, so snapshots stay small */
+const IMGPOOL = new Map(), IMGLIST = [];
+function poolId(v) { let id = IMGPOOL.get(v); if (id === undefined) { id = IMGLIST.length; IMGLIST.push(v); IMGPOOL.set(v, id); } return id; }
+function snap(o) { return JSON.stringify(o, (k, v) => typeof v === "string" && v.length > 200 && v.startsWith("data:") ? "\u0000img" + poolId(v) : v); }
+function unsnap(t) { return JSON.parse(t, (k, v) => typeof v === "string" && v.startsWith("\u0000img") ? IMGLIST[+v.slice(4)] : v); }
+const hist = { asl: { st: [], i: -1 }, sasl: { st: [], i: -1 } };
+const HST = () => hist[isSasl() ? "sasl" : "asl"];
+let amendNext = false;   /* tidy-ups (like dropping an empty last rule) fold into the step before */
+function commit() {
+  const h = HST(), t = snap(state);
+  if (h.st[h.i] === t) { amendNext = false; return; }
+  if (amendNext && h.i === h.st.length - 1 && h.i > 0) { amendNext = false; h.st[h.i] = t; syncUndo(); histSave(); return; }
+  amendNext = false;
+  h.st.splice(h.i + 1); h.st.push(t);
+  if (h.st.length > 150) h.st.shift();
+  h.i = h.st.length - 1; syncUndo(); histSave();
+}
+function histStart() { const h = HST(); if (!h.st.length) { h.st = [snap(state)]; h.i = 0; } else commit(); syncUndo(); }
+/* the history is kept with the card, so Undo still works after you reload or reopen the page */
+let histT = 0;
+function histSave() {
+  clearTimeout(histT);
+  histT = setTimeout(() => {
+    const tpl = isSasl() ? "sasl" : "asl", h = hist[tpl];
+    idb.set("hist_" + tpl, { st: h.st.slice(-100), i: Math.max(0, h.i - Math.max(0, h.st.length - 100)) });
+    idb.set("hist_img", IMGLIST);
+  }, 800);
+}
+async function histLoad() {
+  try {
+    const imgs = await idb.get("hist_img");
+    if (Array.isArray(imgs)) imgs.forEach(v => { if (typeof v === "string" && !IMGPOOL.has(v)) { IMGPOOL.set(v, IMGLIST.length); IMGLIST.push(v); } else if (typeof v === "string") { /* keep index order */ } });
+    for (const tpl of ["asl", "sasl"]) {
+      const h = await idb.get("hist_" + tpl);
+      if (h && Array.isArray(h.st) && h.st.length && Number.isInteger(h.i)) { hist[tpl].st = h.st; hist[tpl].i = Math.min(h.i, h.st.length - 1); }
+    }
+  } catch (_) {}
+}
+function syncUndo() { const h = HST(); const u = $("bUndo"), r = $("bRedo"); if (u) u.disabled = h.i <= 0; if (r) r.disabled = h.i >= h.st.length - 1; }
+function undoRedo(dir) {
+  if (saveT) { clearTimeout(saveT); saveNow(); }
+  const a = document.activeElement; if (a && a.closest?.(".sheet")) { a.blur(); if (saveT) { clearTimeout(saveT); amendNext = true; saveNow(); } }
+  closePops();
+  const h = HST(), j = h.i + dir;
+  if (j < 0 || j >= h.st.length) { toast(dir < 0 ? "Nothing more to undo." : "Nothing to redo."); return; }
+  h.i = j; state = unsnap(h.st[j]); histSave();
+  render(); idb.set(STORE_KEY[isSasl() ? "sasl" : "asl"], JSON.parse(JSON.stringify(state))); syncUndo();
+  toast(dir < 0 ? "Undone." : "Redone.");
+}
+function queueSave() { clearTimeout(saveT); saveT = setTimeout(saveNow, 500); }
+
+/* ---------- helpers ---------- */
+const $ = (id) => document.getElementById(id);
+const sheet = $("sheet"), sheet2 = $("sheet2"), pages = $("pages"), scaler = $("scaler"), fitbox = $("fitbox"), stage = $("stage");
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function nationList() { return [...Object.entries(BUILTIN).map(([id, n]) => ({ id, name: n.name, g: n.g })), ...state.custom.map(c => ({ id: c.id, name: c.name, g: "Your symbols" }))]; }
+function nationOptions(cur) {
+  const groups = {};
+  for (const n of nationList()) (groups[n.g] = groups[n.g] || []).push(n);
+  const order = ["Allied", "Axis", "Korea", "Your symbols", "Other"];
+  return `<option value=""${cur ? "" : " selected"}>— None —</option>` + order.filter(g => groups[g]).map(g => `<optgroup label="${esc(g)}">${groups[g].map(n => `<option value="${n.id}"${n.id === cur ? " selected" : ""}>${esc(n.name)}</option>`).join("")}</optgroup>`).join("");
+}
+function nationName(id) { if (!id) return ""; return BUILTIN[id]?.name || state.custom.find(c => c.id === id)?.name || "Unknown"; }
+/* the side that sets up first (top TRC row) is the defender */
+function roleName(side) { return state.trc.rows[0].side === side ? "Defender" : "Attacker"; }
+function sideLabel(side) { return nationName(state.sides[side]) || roleName(side); }
+function symHTML(id) {
+  if (BUILTIN[id]) return BUILTIN[id].svg;
+  const c = state.custom.find(c => c.id === id);
+  return c ? `<img src="${c.img}" alt="">` : "";
+}
+const sideSym = (side) => symHTML(state.sides[side]);
+let toastT = 0;
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 2600); }
+
+function zone(path, cls, label, extra = "") {
+  const img = get(path);
+  return `<div class="zone ${cls}${img ? " has" : ""}" data-zone="${path}" tabindex="0" role="button" aria-label="${esc(label)}: drop an image or press Enter to choose one">${
+    img ? `<img src="${img}" alt="" draggable="false"><span class="ctl zx"><button type="button" data-act="clearImg" data-p="${path}" aria-label="Remove image">×</button></span>` : `<span class="zl">${esc(label)}</span>`}${extra}</div>`;
+}
+/* the "Board layout…" button that sits on a board-configuration box */
+const boardBtn = (path) => `<span class="ctl zb"><button type="button" data-act="boardsFor" data-p="${path}" title="Lay out VASL boards and put the result here">Board layout…</button></span>`;
+function ed(path, cls, ph, opts = {}) {
+  const v = get(path) ?? "";
+  const tag = opts.inline ? "span" : "div";
+  return `<${tag} class="ed ${cls}" contenteditable="${opts.plain ? "plaintext-only" : "true"}" spellcheck="true" data-bind="${path}"${opts.lines ? ' data-lines="1"' : ""}${opts.plain ? ' data-plain="1"' : ""}${opts.single ? ' data-single="1"' : ""}${opts.inline ? ' data-inline="1"' : ""}${ph ? ` data-ph="${esc(ph)}"` : ""}>${opts.plain ? esc(v) : v}</${tag}>`;
+}
+function natSelect(side, label) {
+  return `<select aria-label="${esc(label)}" data-side="${side}">${nationOptions(state.sides[side])}</select>`;
+}
+
+/* ---------- render ---------- */
+/* one counter, and one row of counters (shared by ASL OB panels and SASL OB sections) */
+function slotHTML(p, sl) { return `<div class="slot ${sl.size}" data-slot="${p}" draggable="${sl.img ? "true" : "false"}">
+      <div class="cimg zone${sl.img ? " has" : ""}${sl.v && sl.img ? " vasl" : ""}" data-zone="${p}.img" tabindex="0" role="button" aria-label="Counter image: drop an image or press Enter to choose one">${sl.img ? `<img src="${sl.img}" alt="" draggable="false">` : `<span class="zl">+</span>`}</div>
+      ${ed(p + ".qty", "qty", "", { plain: true, single: true })}
+      <span class="ctl sctl"><button type="button" data-act="size" data-p="${p}" aria-label="Switch counter size" title="Counter size">${sl.size === "l" ? "⅝″" : "½″"}</button><button type="button" data-act="delSlot" data-p="${p}" aria-label="Remove counter">×</button></span>
+    </div>`; }
+function groupHTML(gp, gi, g) {
+    return `<div class="grp ind${g.indent}${g.inline ? " inl" : ""}" data-g="${gp}">
+      <div class="gtxt">${ed(gp + ".form", "lead", gi === 0 ? "Elements of … [ELR: #]" : "Formation (optional)", { inline: true, single: true })} ${ed(gp + ".html", "body", gi === 0 ? "set up …: {SAN: #}" : "Enter on Turn # along the … edge:", { inline: true })}</div>
+      <div class="strip${g.slots.length ? "" : " empty"}" data-strip="${gp}">
+        ${g.slots.map((sl, si) => slotHTML(`${gp}.slots.${si}`, sl)).join("")}
+        <button type="button" class="addslot" data-act="addSlot" data-p="${gp}" aria-label="Add counter (or drop images here)" title="Add counter, or drop images here">+</button>
+      </div>
+      <span class="ctl gctl">
+        <button type="button" data-act="indent" data-p="${gp}" title="Indent the row">Indent ${g.indent ? "→".repeat(g.indent) : "off"}</button>
+        ${gi > 0 ? `<button type="button" data-act="inline" data-p="${gp}">${g.inline ? "Put on own line" : "Put beside previous"}</button>` : ""}
+        <button type="button" data-act="palFor" data-p="${gp}" title="Open the counter palette and add counters to this row">Counters…</button>
+        <button type="button" data-act="delGroup" data-p="${gp}">Remove row</button>
+      </span>
+    </div>`;
+}
+function render() {
+  document.body.classList.toggle("tpl-sasl", isSasl()); document.body.classList.toggle("tpl-asl", !isSasl());
+  $("brandMark").textContent = isSasl() ? "SASL" : "ASL"; $("tplSel").value = isSasl() ? "sasl" : "asl";
+  if (isSasl()) { renderSasl(); return; }
+  sheet.classList.remove("sasl");
+  const s = state, n = s.trc.turns.length;
+  const panelHTML = (p, pi) => `<section class="ob" data-pi="${pi}" aria-label="Order of battle panel ${pi + 1}">
+    <div class="gut">
+      <div class="symwrap" title="Change this side's nationality"><span class="sym big">${sideSym(p.side)}</span>${natSelect(p.side, "Nationality for this side")}</div>
+      ${zone(`panels.${pi}.gut`, "gutimg", "Side art")}
+    </div>
+    <div class="grps">${p.groups.map((g, gi) => groupHTML(`panels.${pi}.groups.${gi}`, gi, g)).join("")}</div>
+    <span class="ctl pctl">
+      <button type="button" data-act="addGroup" data-p="panels.${pi}">+ Counter row</button>
+      <button type="button" data-act="panelSide" data-p="panels.${pi}">Switch to ${p.side === "A" ? "Side 2" : "Side 1"}</button>
+      ${s.backFrom === pi ? `<button type="button" data-act="backHere" data-i="${pi + 1}">Return to front page</button>`
+        : (s.backFrom === null || pi < s.backFrom) ? `<button type="button" data-act="backHere" data-i="${pi}">Move this and below to back page</button>` : ""}
+      ${s.panels.length > 1 ? `<button type="button" data-act="delPanel" data-p="panels.${pi}">Remove panel</button>` : ""}
+    </span>
+  </section>`;
+  const flowHTML = `<div class="flow" id="flow">
+    <div class="h2 ssrh">Special Rules:</div>
+    ${ed("ssr", "ssr", "See … SSR.  (Press Enter to start the next rule; numbers are added for you.)", { lines: true })}
+    ${s.ssrSplit ? `<style>#flow .ssr > div:nth-child(${s.ssrSplit}) { break-before: column; }</style>` : ""}
+    <div class="am${s.amNewCol && !s.ssrSplit ? " newcol" : ""}"><b class="lbl">AFTERMATH:</b> ${ed("am", "body", "What happened next …", { inline: true })}</div>
+  </div>`;
+  const sections = [...s.panels.map(panelHTML), flowHTML];
+  const cut = s.backFrom === null ? sections.length : s.backFrom;
+  sheet.innerHTML = `
+  <div class="hdr">
+    ${ed("title", "ttl", "SCENARIO TITLE", { single: true })}
+    ${ed("sid", "sid", "ASL SCENARIO ##", { single: true })}
+    ${ed("designer", "dsg", "Scenario Design: Name", { single: true })}
+    ${zone("logo", "logo", "Logo")}
+  </div>
+  <div class="band">
+    <div class="bl">
+      ${zone("photo", "photo", "Drop the scenario photo here")}
+      <div class="vc"><b class="lbl">VICTORY CONDITIONS:</b> ${ed("vc", "body", "The … win at game end if …", { inline: true })}</div>
+    </div>
+    <div class="br">
+      <div class="hist">${ed("histLoc", "lead", "LOCATION, COUNTRY, Date:", { inline: true, single: true })} ${ed("history", "body", "Historical background …", { inline: true })}</div>
+      <div class="h2">Board Configuration:</div>
+      <div class="bcg">
+        <div class="balw">
+          <div class="h2">Balance:</div>
+          <div class="balrow"><span class="sym sm">${sideSym("A")}</span>${ed("balA", "", sideLabel("A") + " balance …")}</div>
+          <div class="balrow"><span class="sym sm">${sideSym("B")}</span>${ed("balB", "", sideLabel("B") + " balance …")}</div>
+        </div>
+        <div class="boardw">
+          <div class="north">${NORTH}</div>
+          ${zone("board", "board", "Board configuration image", boardBtn("board"))}
+          ${ed("boardNote", "bnote", "Board note (optional)")}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="h2 trch">Turn Record Chart</div>
+  <div class="trc" style="grid-template-columns: minmax(0,1fr) repeat(${n}, 50px) 58px">
+    <div class="trl">
+      ${s.trc.rows.map((r, i) => `<div class="trr"><span class="sym sm">${sideSym(r.side)}</span>${ed(`trc.rows.${i}.html`, "", i === 0 ? sideLabel(r.side).toUpperCase() + " Sets up First" : sideLabel(r.side).toUpperCase() + " Moves First", { single: true })}</div>`).join("")}
+      <span class="ctl swap"><button type="button" data-act="swapRows" title="Swap which side is on each row">Swap sides</button></span>
+    </div>
+    ${s.trc.turns.map((t, i) => `<button type="button" class="turn f-${t.fill || "none"}" data-act="turn" data-i="${i}" aria-label="Turn ${i + 1} options${t.half ? ", game ends in the first half of this turn" : ""}">${t.half ? `<svg class="half" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="100,0 100,100 0,100" fill="#d4202a"/></svg>` : ""}<span class="tm">${t.mark.map(m => `<span class="sym xs">${sideSym(m)}</span>`).join("")}</span><span class="tnum">${i + 1}</span></button>`).join("")}
+    ${ed("trc.end", "tend", "END", { single: true })}
+  </div>
+  ${sections.slice(0, cut).join("")}${WM}`;
+  if (cut < sections.length) {
+    sheet2.hidden = false;
+    sheet2.innerHTML = `<div class="bhdr"><span class="bsid" data-mirror="sid"></span><span class="bttl" data-mirror="title"></span><span class="bcont">(continued)</span></div>${sections.slice(cut).join("")}${WM}`;
+    syncMirrors();
+  } else { sheet2.hidden = true; sheet2.innerHTML = ""; }
+  syncBar(); alignSyms(); fitBoard(); fitStage(); palMark();
+  pages.querySelectorAll("img").forEach(im => { if (!im.complete) im.addEventListener("load", () => { alignSyms(); queueFit(); }, { once: true }); });
+  checkFit();
+}
+/* ---------- SASL render ---------- */
+const SEC_ORDER_LBL = { text: "Text", inline: "Text", bullets: "Bulleted list", numbers: "Numbered rules", tables: "Mission tables", config: "Mapboard configuration" };
+function mtHTML(sp, t) {
+  const tp = sp + ".table";
+  const cell = (path, cls, ph = "") => ed(path, cls, ph, { plain: true, single: true });
+  return `<div class="mtw" style="position:relative"><table class="mt">
+    <tr>${t.cols.map((c, i) => `<th class="grp" colspan="2">${ed(`${tp}.cols.${i}.h`, "", "HEADING", { inline: true })}</th>`).join("")}</tr>
+    <tr class="subh">${t.cols.map((c, i) => `<th class="c1">${cell(`${tp}.cols.${i}.c1`, "", "dr")}</th><th class="c2">${cell(`${tp}.cols.${i}.c2`, "", "#")}</th>`).join("")}</tr>
+    ${t.rows.map((r, ri) => `<tr>${r.map((v, k) => `<td class="${k % 2 ? "c2" : "c1"}">${cell(`${tp}.rows.${ri}.${k}`, "")}</td>`).join("")}</tr>`).join("")}
+  </table></div>`;
+}
+function secHTML(sc, i) {
+  const sp = `sections.${i}`, n = state.sections.length;
+  const ctl = `<span class="ctl secctl">
+      ${i > 0 ? `<button type="button" data-act="secUp" data-p="${sp}" title="Move this section up">↑</button>` : ""}
+      ${i < n - 1 ? `<button type="button" data-act="secDown" data-p="${sp}" title="Move this section down">↓</button>` : ""}
+      <button type="button" data-act="secCol" data-p="${sp}">${sc.col ? "Don't force right column" : "Start in right column"}</button>
+      ${sc.kind === "tables" ? `<button type="button" data-act="mtRow+" data-p="${sp}">+ Row</button><button type="button" data-act="mtRow-" data-p="${sp}">− Row</button><button type="button" data-act="mtCol+" data-p="${sp}" title="Add a column (heading plus its two sub-columns) at the right end">+ Column</button><button type="button" data-act="mtCol-" data-p="${sp}" title="Remove the column at the right end">− Column</button>` : ""}
+      ${sc.kind === "config" ? `<button type="button" data-act="nDir" data-p="${sp}">${sc.ndir === "right" ? "N arrow: point up" : "N arrow: point right"}</button>` : ""}
+      ${sc.kind === "text" || sc.kind === "inline" ? `<button type="button" data-act="secInl" data-p="${sp}">${sc.kind === "inline" ? "Heading on own line" : "Run heading into text"}</button>` : ""}
+      ${sc.kind === "ob" ? `<button type="button" data-act="addGroup" data-p="${sp}">+ Counter row</button>` : ""}
+      ${/^\s*SEQUENCE/i.test(htmlToText(sc.head)) || sc.kind === "ob" ? `<button type="button" data-act="obAdd" data-p="${sp}">+ OB below</button>` : ""}
+      <button type="button" data-act="secDel" data-p="${sp}">Remove</button>
+    </span>`;
+  const head = (block) => ed(sp + ".head", "sech", "HEADING:", block ? { single: true } : { inline: true, single: true });
+  const cls = `sec${sc.col ? " newcol" : ""}`;
+  switch (sc.kind) {
+    case "inline": return `<div class="${cls}">${head(false)} ${ed(sp + ".body", "body", sc.ph || "…", { inline: true })}${ctl}</div>`;
+    case "text": return `<div class="${cls} block">${head(true)}${ed(sp + ".body", "body", sc.ph || "…")}${ctl}</div>`;
+    case "bullets": return `<div class="${cls} block">${head(true)}${ed(sp + ".body", "body lines bul", sc.ph || "First item …  (Enter starts the next bullet.)", { lines: true })}${ctl}</div>`;
+    case "numbers": return `<div class="${cls} block">${head(true)}${ed(sp + ".body", "body lines num", sc.ph || "First rule …  (Enter starts the next rule.)", { lines: true })}${ctl}</div>`;
+    case "tables": return `<div class="${cls} block" data-sec="${sp}">${head(true)}${mtHTML(sp, sc.table)}${ctl}</div>`;
+    case "ob": return `<div class="${cls} block obs">
+      <div class="obh"><span class="obsw" title="Choose this OB's nationality symbol"><span class="sym">${symHTML(sc.nat)}</span><select aria-label="Nationality for this OB" data-nat="${sp}.nat">${nationOptions(sc.nat)}</select></span>${ed(sp + ".head", "sech", "FRIENDLY OB:", { inline: true, single: true })}</div>
+      <div class="grps">${sc.groups.map((g, gi) => groupHTML(`${sp}.groups.${gi}`, gi, g)).join("")}</div>${ctl}</div>`;
+    case "config": return `<div class="${cls}"><div class="cfg">${ed(sp + ".head", "cfgl", "Initial Mapboard Configuration:", { single: false })}<div class="north${sc.ndir === "right" ? " right" : ""}" data-act="nDir" data-p="${sp}" role="button" tabindex="0" title="Click to point the arrow ${sc.ndir === "right" ? "up" : "right"}" aria-label="North arrow, pointing ${sc.ndir === "right" ? "right" : "up"}. Click to change.">${sc.ndir === "right" ? NORTH_R : NORTH}</div>${zone(sp + ".img", "scfg", "Mapboard diagram", boardBtn(sp + ".img"))}</div>${ctl}</div>`;
+  }
+  return "";
+}
+function renderSasl() {
+  const s = state;
+  sheet.classList.add("sasl");
+  const pm = `<span class="pmark${s.pmark ? "" : " pmark-off"}"${s.pmark ? "" : ' style="display:none"'} aria-label="P">P</span>`;
+  const header = (withPhoto) => `<div class="hdrc">
+      <div class="icons">${zone("logo", "slogo", "Logo")}${zone("badge", "badge", "Badge")}</div>
+      <div class="mnum">${ed("num", "", "Mission ##", { single: true })}${pm}</div>
+      ${ed("title", "stitle", "Mission Title", { single: true })}
+      <div class="srule"></div>
+    </div>`;
+  const secs = s.sections.map(secHTML).join("");
+  sheet.innerHTML = s.showPhoto
+    ? `<div class="top">${header(true)}${zone("photo", "sphoto", "Drop the mission photo here")}</div><div class="sflow" id="sflow">${secs}</div>${WM}`
+    : `<div class="sflow" id="sflow" style="margin-top:0">${header(false)}${secs}</div>${WM}`;
+  sheet2.hidden = true; sheet2.innerHTML = "";
+  syncBarSasl(); fitStage(); palMark();
+  pages.querySelectorAll("img").forEach(im => { if (!im.complete) im.addEventListener("load", queueFit, { once: true }); });
+  checkFit();
+}
+function syncBarSasl() {
+  $("sPhoto").checked = !!state.showPhoto; $("sP").checked = !!state.pmark; $("secAdd").value = "";
+}
+
+/* give the symbols in the Balance lines (and in the turn-record rows) one shared width,
+   centred, so the text beside them starts at the same place in every row */
+function alignSyms() {
+  for (const sel of [".balrow > .sym", ".trr > .sym"]) {
+    const els = [...pages.querySelectorAll(sel)];
+    els.forEach(el => { el.style.width = ""; });
+    const w = Math.max(0, ...els.map(el => el.offsetWidth));
+    els.forEach(el => { el.style.width = w + "px"; });
+  }
+}
+function syncMirrors() {
+  pages.querySelectorAll("[data-mirror]").forEach(el => { el.textContent = htmlToText(state[el.dataset.mirror]).trim(); });
+}
+function backOptions() {
+  const opts = [`<option value="">None (one page)</option>`];
+  state.panels.forEach((p, i) => opts.push(`<option value="${i}">OB panel ${i + 1} (${esc(sideLabel(p.side))}) and below</option>`));
+  opts.push(`<option value="${state.panels.length}">Special Rules &amp; Aftermath</option>`);
+  return opts.join("");
+}
+function syncBar() {
+  if (isSasl()) { syncBarSasl(); return; }
+  const bs = $("backSel"); bs.innerHTML = backOptions(); bs.value = state.backFrom === null ? "" : String(state.backFrom);
+  for (const side of ["A", "B"]) {
+    const sel = $("sel" + side);
+    sel.innerHTML = nationOptions(state.sides[side]);
+  }
+  $("tCount").textContent = state.trc.turns.length;
+  $("amCol").checked = !!state.amNewCol && !state.ssrSplit;
+  $("amCol").disabled = !!state.ssrSplit;
+  $("ssrCol").checked = !!state.ssrSplit;
+  $("ssrAtW").hidden = !state.ssrSplit;
+  if (state.ssrSplit) { $("ssrAt").value = state.ssrSplit; $("ssrAt").max = Math.max(2, ssrCount()); }
+}
+function ssrCount() {
+  const d = document.createElement("div"); d.innerHTML = state.ssr || "";
+  return d.querySelectorAll(":scope > div").length || 1;
+}
+
+/* ---------- fit check ---------- */
+let fitT = 0;
+function queueFit() { clearTimeout(fitT); fitT = setTimeout(checkFit, 120); }
+/* Order of precedence for the band above the turn record chart:
+   1. the photo + Victory Conditions column sets the band's height (so it decides where the TRC sits);
+   2. the mini map then gets the largest SQUARE that fits between the "Board Configuration" heading
+      and the bottom of the band (less padding), and the map image is fitted inside that square;
+   3. the board note wraps to the map's width (wider for a tall map). */
+const BOARD_SIDEWAYS_H = 48 /* 0.5 in at 96 px/in */, BOARD_SIDEWAYS_AR = 2, BOARD_PAD = 6, BOARD_SQ_MIN = 70, BOARD_SQ_MAX = 400, BAL_MIN_W = 150, NOTE_TALL_MIN = 160;
+function sizeNote() {
+  const z = sheet.querySelector(".zone.board"), n = sheet.querySelector(".boardw .bnote"); if (!z || !n) return;
+  const tall = z.offsetHeight > z.offsetWidth;   /* narrower than tall */
+  z.classList.toggle("tall", tall);
+  z.closest(".boardw")?.classList.toggle("tallmap", tall);   /* tall maps: centre the map + note vertically */              /* tall maps sit centred over the note; others are right-justified */
+  n.style.width = (tall ? Math.max(z.offsetWidth, NOTE_TALL_MIN) : z.offsetWidth) + "px";
+  /* keep the N arrow beside the map: when the map is centred over a wider note, slide the arrow in by the gap */
+  const north = z.closest(".boardw")?.querySelector(".north");
+  if (north) { const gap = tall ? Math.max(0, (n.offsetWidth - z.offsetWidth) / 2) : 0; north.style.transform = gap ? `translateX(${gap}px)` : ""; }
+}
+function fitBoard() {
+  const bl = sheet.querySelector(".band > .bl"), br = sheet.querySelector(".band > .br");
+  const bcg = br && br.querySelector(".bcg"), bw = br && br.querySelector(".boardw");
+  const z = sheet.querySelector(".zone.board"), n = bw && bw.querySelector(".bnote");
+  if (!bl || !br || !bcg || !z) return;
+  br.style.minHeight = bl.offsetHeight + "px";               /* left column wins */
+  const img = z.classList.contains("has") ? z.querySelector("img") : null;
+  if (!img || !img.naturalWidth) { z.style.width = ""; z.style.height = ""; sizeNote(); return; }
+  const ar = img.naturalWidth / img.naturalHeight;
+  const k = br.offsetHeight / (br.getBoundingClientRect().height || 1);   /* undo the preview zoom */
+  for (let pass = 0; pass < 3; pass++) {
+    const top = bcg.getBoundingClientRect().top, bottom = br.getBoundingClientRect().top + bl.offsetHeight / k;
+    const padTop = parseFloat(getComputedStyle(bw).paddingTop) || 0;
+    const noteH = n ? n.offsetHeight + (parseFloat(getComputedStyle(n).marginTop) || 0) : 0;
+    let side = (bottom - top) * k - padTop - noteH - BOARD_PAD;
+    side = Math.min(side, bcg.offsetWidth - BAL_MIN_W - 26);  /* leave room for the Balance text and N arrow */
+    side = Math.max(BOARD_SQ_MIN, Math.min(BOARD_SQ_MAX, Math.floor(side)));
+    let w = ar >= 1 ? side : Math.round(side * ar), h = ar >= 1 ? Math.round(side / ar) : side;
+    if (ar >= BOARD_SIDEWAYS_AR) {                       /* a board on its side: fixed 0.5" tall */
+      const wMax = bcg.offsetWidth - BAL_MIN_W - 26;
+      h = BOARD_SIDEWAYS_H; w = Math.round(h * ar);
+      if (w > wMax) { w = Math.floor(wMax); h = Math.round(w / ar); }
+    }
+    z.style.width = w + "px"; z.style.height = h + "px";
+    sizeNote();
+  }
+}
+function checkFit() {
+  if (isSasl()) {
+    pages.querySelectorAll(".over").forEach(e => e.classList.remove("over"));
+    const issues = [], fl = $("sflow");
+    if (fl && (fl.scrollWidth > fl.clientWidth + 2 || fl.scrollHeight > fl.clientHeight + 2)) {
+      /* name the section where the page runs out, and outline what is cut off */
+      const box = fl.getBoundingClientRect(), cut = (el) => { const r = el.getBoundingClientRect(); return r.right > box.right + 2 || r.bottom > box.bottom + 2; };
+      const secs = [...fl.querySelectorAll(":scope > .sec")], first = secs.find(cut);
+      if (first) {
+        secs.slice(secs.indexOf(first)).forEach(x => x.classList.add("over"));
+        const name = htmlToText(state.sections[secs.indexOf(first)]?.head || "").replace(/:\s*$/, "").trim() || "a section";
+        const lines = [...first.querySelectorAll("[data-lines] > div")], li = lines.findIndex(cut);
+        const from = li > 0 ? (first.querySelector(".lines.num") ? ` from rule ${li + 1}` : ` from item ${li + 1}`) : "";
+        issues.push(`${name}${from} is cut off at the bottom of the page`);
+      } else { fl.classList.add("over"); issues.push("the mission text"); }
+    }
+    pages.querySelectorAll(".stitle, .mnum .ed").forEach(e => { if (e.scrollWidth > e.clientWidth + 2) { e.classList.add("over"); issues.push("the title"); } });
+    const f = $("fit");
+    if (issues.length) { f.className = "fit bad"; f.textContent = "Too much text: " + [...new Set(issues)].join(", "); }
+    else { f.className = "fit"; f.textContent = "Fits on the page"; }
+    return;
+  }
+  fitBoard();
+  pages.querySelectorAll(".over").forEach(e => e.classList.remove("over"));
+  const issues = [];
+  const flow = $("flow");
+  if (flow) {
+    const over = flow.scrollWidth > flow.clientWidth + 2 || flow.scrollHeight > flow.clientHeight + 2 || flow.clientHeight < 30;
+    if (over) {
+      flow.classList.add("over");
+      const box = flow.getBoundingClientRect(), rules = [...flow.querySelectorAll(".ssr > div")];
+      const i = rules.findIndex(el => { const r = el.getBoundingClientRect(); return r.right > box.right + 2 || r.bottom > box.bottom + 2; });
+      issues.push(i >= 0 ? `special rules from rule ${i + 1} are cut off` : "special rules / aftermath");
+    }
+  }
+  if (sheet.scrollHeight > sheet.clientHeight + 2) issues.push("front page");
+  if (!sheet2.hidden && sheet2.scrollHeight > sheet2.clientHeight + 2) issues.push("back page");
+  pages.querySelectorAll(".ttl, .trr .ed, .tend").forEach(e => { if (e.scrollWidth > e.clientWidth + 2) { e.classList.add("over"); issues.push("a one-line field"); } });
+  const f = $("fit");
+  if (issues.length) { f.className = "fit bad"; f.textContent = "Too much text: " + [...new Set(issues)].join(", "); }
+  else { f.className = "fit"; f.textContent = sheet2.hidden ? "Fits on the page" : "Fits on both pages"; }
+}
+
+/* ---------- scaling ---------- */
+function fitStage() {
+  const cs = getComputedStyle(stage);
+  const avail = stage.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  const s = Math.min(1, avail / W);
+  scaler.style.transform = s < 1 ? `scale(${s})` : "";
+  const n = sheet2.hidden ? 1 : 2;
+  fitbox.style.width = W * s + "px"; fitbox.style.height = (H * n + 28 * (n - 1)) * s + "px";
+}
+window.addEventListener("resize", fitStage);
+
+/* ---------- images ---------- */
+const MAXDIM = { photo: 1600, board: 1100, logo: 400, badge: 500, gut: 500, img: 1000 };
+function maxFor(path) { const k = path.split(".").pop(); return MAXDIM[k] || 800; }
+function readImage(file, maxDim) {
+  return new Promise((res, rej) => {
+    if (!file || !/^image\//.test(file.type)) { rej(new Error("That file isn't an image.")); return; }
+    const fr = new FileReader();
+    fr.onerror = () => rej(new Error("The file couldn't be read."));
+    fr.onload = () => {
+      const img = new Image();
+      img.onerror = () => rej(new Error("This browser can't read that image format."));
+      img.onload = () => {
+        const sc = Math.min(1, maxDim / Math.max(img.naturalWidth || 1, img.naturalHeight || 1));
+        if (sc === 1 && file.size < 350000) { res(fr.result); return; }
+        const c = document.createElement("canvas");
+        c.width = Math.max(1, Math.round(img.naturalWidth * sc)); c.height = Math.max(1, Math.round(img.naturalHeight * sc));
+        const x = c.getContext("2d");
+        const alpha = /png|gif|webp|svg/.test(file.type);
+        if (!alpha) { x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); }
+        x.drawImage(img, 0, 0, c.width, c.height);
+        res(alpha ? c.toDataURL("image/png") : c.toDataURL("image/jpeg", 0.88));
+      };
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+async function setImage(path, file) {
+  try { set(path, await readImage(file, maxFor(path))); const m = path.match(/^(.*\.slots\.\d+)\.img$/); if (m) delete get(m[1]).v; render(); queueSave(); }
+  catch (e) { toast(e.message); }
+}
+async function placeFiles(groupPath, idx, files, replaceAt) {
+  const g = get(groupPath); if (!g) return;
+  try {
+    const urls = [];
+    for (const f of files) urls.push(await readImage(f, 360));   /* counters */
+    urls.forEach((u, k) => {
+      if (replaceAt && k === 0) { g.slots[idx].img = u; delete g.slots[idx].v; }
+      else { const at = replaceAt ? idx + k : idx + k; g.slots.splice(at, 0, Object.assign(blankSlot(), { img: u })); }
+    });
+    render(); queueSave();
+  } catch (e) { toast(e.message); }
+}
+const imageFiles = (dt) => [...(dt?.files || [])].filter(f => /^image\//.test(f.type));
+
+let pickPath = null;
+function pickFor(path) { pickPath = path; const fp = $("filePick"); fp.value = ""; fp.multiple = /\.slots\.\d+\.img$/.test(path); fp.click(); }
+$("filePick").addEventListener("change", (e) => {
+  const files = [...e.target.files]; if (!files.length || !pickPath) return;
+  const m = pickPath.match(/^(.*)\.slots\.(\d+)\.img$/);
+  if (m) placeFiles(m[1], +m[2], files, true); else setImage(pickPath, files[0]);
+});
+
+/* ---------- editing ---------- */
+function ensureRuleLine(el) {
+  if (!el.dataset.lines) return;
+  if (!el.firstElementChild || el.firstChild.nodeType === 3) {
+    const text = el.textContent;
+    el.innerHTML = `<div>${text ? esc(text) : "<br>"}</div>`;
+    const r = document.createRange(); r.selectNodeContents(el.firstChild); r.collapse(false);
+    const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+  }
+}
+/* in a numbered or bulleted section a table never gets its own number or bullet:
+   it belongs to the item above it (e.g. a rule ending "… with the following:" and its table) */
+function attachTables(el) {
+  if (!el.dataset.lines) return;
+  const sel = getSelection(), an = sel.anchorNode, ao = sel.anchorOffset;
+  /* lines nested inside a line (Chrome does this after a table) become lines of their own */
+  for (const d of [...el.children]) {
+    if (d.tagName !== "DIV") continue;
+    const inner = [...d.children].filter(c => c.tagName === "DIV");
+    for (const c of inner.reverse()) d.after(c);
+  }
+  for (const n of [...el.childNodes]) {
+    if (n.nodeType !== 1) continue;
+    const isTbl = n.tagName === "TABLE";
+    const tblOnly = n.tagName === "DIV" && n.querySelector(":scope > table") && ![...n.childNodes].some(c => c.nodeName !== "TABLE" && c.nodeName !== "BR" && !(c.nodeType === 3 && !c.nodeValue.trim()));
+    if (!isTbl && !tblOnly) continue;
+    const prev = n.previousElementSibling;
+    if (!prev || prev.tagName !== "DIV") { if (isTbl) { const d = document.createElement("div"); n.before(d); d.appendChild(n); } continue; }
+    if (prev.lastChild?.nodeName === "BR") prev.lastChild.remove();
+    if (isTbl) prev.appendChild(n); else { [...n.childNodes].forEach(c => { if (c.nodeName === "TABLE") prev.appendChild(c); }); n.remove(); }
+  }
+  if (an && an.isConnected && el.contains(an) && sel.anchorNode !== an) { try { const r = document.createRange(); r.setStart(an, ao); r.collapse(true); sel.removeAllRanges(); sel.addRange(r); } catch (_) {} }
+}
+pages.addEventListener("focusin", (e) => { const el = e.target.closest?.("[data-lines]"); if (el && !el.innerHTML) ensureRuleLine(el); });
+pages.addEventListener("focusout", (e) => {
+  const el = e.target.closest?.("[data-lines]"); if (!el) return;
+  if (!el.textContent.trim() && !el.querySelector("table, li")) { el.innerHTML = ""; set(el.dataset.bind, ""); queueSave(); return; }
+  /* drop empty items left at the end, so no stray number or bullet prints */
+  let last = el.lastElementChild, changed = false;
+  while (last && last.tagName === "DIV" && !last.textContent.trim() && !last.querySelector("table,img,li") && last.previousElementSibling) { const p = last.previousElementSibling; last.remove(); last = p; changed = true; }
+  attachTables(el);
+  if (changed) { set(el.dataset.bind, el.innerHTML); amendNext = true; queueSave(); queueFit(); }
+});
+pages.addEventListener("input", (e) => {
+  const el = e.target.closest("[data-bind]"); if (!el) return;
+  if (el.dataset.lines) {
+    ensureRuleLine(el); attachTables(el);
+    set(el.dataset.bind, el.textContent.trim() || el.querySelector("table, li") ? el.innerHTML : ""); queueSave(); queueFit(); return;
+  }
+  let v;
+  if (el.dataset.plain) v = el.textContent;
+  else {
+    if (el.textContent.trim() === "" && !el.querySelector("img, table, li")) { if (el.innerHTML !== "") el.innerHTML = ""; v = ""; }
+    else v = el.innerHTML;
+    /* Chrome leaves font-size spans behind when it moves list items; drop them from what is saved */
+    if (isSasl()) v = v.replace(/<span style="font-size:[^"]*">([^<]*)<\/span>/g, "$1");
+  }
+  set(el.dataset.bind, v); queueSave(); queueFit();
+  if (!isSasl() && (el.dataset.bind === "sid" || el.dataset.bind === "title")) syncMirrors();
+});
+pages.addEventListener("keydown", (e) => {
+  const el = e.target.closest?.("[data-single]");
+  if (el && e.key === "Enter") { e.preventDefault(); el.blur(); return; }
+  const inl = e.target.closest?.("[data-inline]");
+  if (inl && e.key === "Enter" && !curLi(inl)) { e.preventDefault(); document.execCommand("insertLineBreak"); return; }
+  const z = e.target.closest?.("[data-zone]");
+  if (z && e.target === z && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); pickFor(z.dataset.zone); }
+  const ab = e.target.closest?.('div[data-act][role="button"]');
+  if (ab && e.target === ab && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); ab.click(); }
+});
+pages.addEventListener("paste", (e) => {
+  const files = imageFiles(e.clipboardData);
+  const z = document.activeElement?.closest?.("[data-zone]");
+  if (files.length && z) { e.preventDefault(); const m = z.dataset.zone.match(/^(.*)\.slots\.(\d+)\.img$/); if (m) placeFiles(m[1], +m[2], files, true); else setImage(z.dataset.zone, files[0]); return; }
+  const edt = e.target.closest?.("[contenteditable]");
+  if (edt) {
+    e.preventDefault();
+    const h = e.clipboardData.getData("text/html");
+    if (h && isSasl() && !edt.dataset.single && !edt.dataset.plain) {
+      const clean = cleanPaste(h, !!edt.dataset.lines);
+      if (clean && edt.dataset.lines) { pasteLines(edt, clean); return; }
+      if (clean) { document.execCommand("insertHTML", false, clean); edt.querySelectorAll("span[style]").forEach(x => { if (!x.closest("td,th")) x.replaceWith(...x.childNodes); }); edt.dispatchEvent(new Event("input", { bubbles: true })); return; }
+    }
+    const t = e.clipboardData.getData("text/plain"); document.execCommand("insertText", false, edt.dataset.single ? t.replace(/\s*\n\s*/g, " ") : t);
+  }
+});
+pages.addEventListener("change", (e) => {
+  const nat = e.target.closest("select[data-nat]");
+  if (nat) { set(nat.dataset.nat, nat.value); render(); queueSave(); return; }
+  const sel = e.target.closest("select[data-side]"); if (!sel) return;
+  state.sides[sel.dataset.side] = sel.value; render(); queueSave();
+});
+pages.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-act]");
+  if (b) { e.preventDefault(); e.stopPropagation(); act(b.dataset.act, b.dataset.p, b); return; }
+  if (e.target.closest("[contenteditable]") || e.target.closest("select")) return;
+  const z = e.target.closest("[data-zone]");
+  if (z) pickFor(z.dataset.zone);
+});
+
+function confirmTwice(btn, label, fn) {
+  if (btn.dataset.armed === "1") { fn(); return; }
+  const prev = btn.textContent; btn.dataset.armed = "1"; btn.classList.add("armed"); btn.textContent = label;
+  setTimeout(() => { if (btn.isConnected) { btn.dataset.armed = ""; btn.classList.remove("armed"); btn.textContent = prev; } }, 3000);
+}
+function act(a, p, btn) {
+  switch (a) {
+    case "clearImg": set(p, null); break;
+    case "addSlot": get(p).slots.push(blankSlot()); break;
+    case "delSlot": { const { arr, idx } = parentOf(p); get(arr).splice(idx, 1); break; }
+    case "size": { const sl = get(p); sl.size = sl.size === "l" ? "s" : "l"; break; }
+    case "addGroup": { const g = blankGroup(); if (get(p).groups.length) g.indent = 1; get(p).groups.push(g); break; }
+    case "delGroup": {
+      const { arr, idx } = parentOf(p); const g = get(p);
+      const hasContent = g.html || g.slots.some(s => s.img);
+      const run = () => { const list = get(arr); list.splice(idx, 1); if (!list.length) list.push(blankGroup()); render(); queueSave(); };
+      if (hasContent) { confirmTwice(btn, "Click again to remove", run); return; }
+      run(); return;
+    }
+    case "indent": { const g = get(p); g.indent = (g.indent + 1) % 3; break; }
+    case "inline": { const g = get(p); g.inline = !g.inline; break; }
+    case "panelSide": { const pn = get(p); pn.side = pn.side === "A" ? "B" : "A"; break; }
+    case "delPanel": {
+      const { idx } = parentOf(p);
+      confirmTwice(btn, "Click again to remove", () => {
+        state.panels.splice(idx, 1);
+        if (state.backFrom !== null && idx < state.backFrom) state.backFrom--;
+        render(); queueSave();
+      });
+      return;
+    }
+    case "swapRows": state.trc.rows.reverse(); break;
+    case "secUp": case "secDown": {
+      const i = parentOf(p).idx, j = a === "secUp" ? i - 1 : i + 1, L = state.sections;
+      if (j < 0 || j >= L.length) return; [L[i], L[j]] = [L[j], L[i]]; break;
+    }
+    case "secCol": { const sc = get(p); sc.col = !sc.col; break; }
+    case "nDir": { const sc = get(p); sc.ndir = sc.ndir === "right" ? "up" : "right"; break; }
+    case "secInl": { const sc = get(p); sc.kind = sc.kind === "inline" ? "text" : "inline"; break; }
+    case "secDel": {
+      const i = parentOf(p).idx, sc = get(p);
+      const has = (sc.body && htmlToText(sc.body).trim()) || sc.img || (sc.table && sc.table.rows.some(r => r.some(Boolean))) || (sc.groups && sc.groups.some(g => g.form || g.html || g.slots.some(t => t.img)));
+      const run = () => { state.sections.splice(i, 1); render(); queueSave(); };
+      if (has) { confirmTwice(btn, "Click again to remove", run); return; }
+      run(); return;
+    }
+    case "palFor": openPal(p); return;
+    case "boardsFor": openBoards(p); return;
+    case "obAdd": { const i = parentOf(p).idx; state.sections.splice(i + 1, 0, newOB()); break; }
+    case "mtRow+": { const t = get(p).table; t.rows.push(Array(t.cols.length * 2).fill("")); break; }
+    case "mtRow-": { const t = get(p).table; if (t.rows.length > 1) t.rows.pop(); break; }
+    case "mtCol+": { const t = get(p).table, last = t.cols[t.cols.length - 1] || {}; t.cols.push({ h: "", c1: last.c1 || "dr", c2: "Level" }); t.rows.forEach(r => r.push("", "")); break; }
+    case "mtCol-": { const t = get(p).table; if (t.cols.length > 1) { t.cols.pop(); t.rows.forEach(r => r.splice(-2, 2)); } break; }
+    case "turn": openTurnPop(+btn.dataset.i, btn); return;
+    case "backHere": { const i = +btn.dataset.i; state.backFrom = i > state.panels.length ? null : i; break; }
+    default: return;
+  }
+  render(); queueSave();
+}
+
+/* drag counters to reorder; drop image files on counters, rows or the + tile */
+let dragFrom = null;
+pages.addEventListener("dragstart", (e) => {
+  const sl = e.target.closest?.(".slot");
+  if (!sl || !get(sl.dataset.slot)?.img) { return; }
+  dragFrom = sl.dataset.slot; sl.classList.add("dragging");
+  e.dataTransfer.effectAllowed = "move";
+  try { e.dataTransfer.setData("text/plain", "counter"); } catch (_) {}
+});
+pages.addEventListener("dragend", () => { dragFrom = null; pages.querySelectorAll(".dragging,.dropbefore,.dragover").forEach(x => x.classList.remove("dragging", "dropbefore", "dragover")); });
+function dropTarget(e) { return e.target.closest?.(".slot") || e.target.closest?.(".addslot") || e.target.closest?.("[data-strip]") || e.target.closest?.("[data-zone]"); }
+pages.addEventListener("dragover", (e) => {
+  const t = dropTarget(e); if (!t) return;
+  const hasFiles = [...(e.dataTransfer?.types || [])].includes("Files");
+  if (!hasFiles && !dragFrom && !palDrag) return;
+  e.preventDefault();
+  pages.querySelectorAll(".dropbefore,.dragover").forEach(x => x.classList.remove("dropbefore", "dragover"));
+  if (dragFrom && t.classList.contains("slot")) t.classList.add("dropbefore");
+  else if (t.matches("[data-zone]") && !t.closest(".slot")) t.classList.add("dragover");
+  else (t.closest("[data-strip]") || t).classList.add("dragover");
+});
+pages.addEventListener("dragleave", (e) => { if (!pages.contains(e.relatedTarget)) pages.querySelectorAll(".dropbefore,.dragover").forEach(x => x.classList.remove("dropbefore", "dragover")); });
+pages.addEventListener("drop", (e) => {
+  const t = dropTarget(e); if (!t) return;
+  e.preventDefault();
+  pages.querySelectorAll(".dropbefore,.dragover").forEach(x => x.classList.remove("dropbefore", "dragover"));
+  const slotEl = t.closest(".slot");
+  const stripEl = t.closest("[data-strip]");
+  if (dragFrom) {
+    if (!stripEl) return;
+    const from = parentOf(dragFrom); const item = get(dragFrom);
+    const toArr = stripEl.dataset.strip + ".slots";
+    let toIdx = slotEl ? parentOf(slotEl.dataset.slot).idx : get(toArr).length;
+    get(from.arr).splice(from.idx, 1);
+    if (from.arr === toArr && from.idx < toIdx) toIdx--;
+    get(toArr).splice(toIdx, 0, item);
+    dragFrom = null; render(); queueSave(); return;
+  }
+  if (palDrag) {
+    const c = palDrag; palDrag = null;
+    if (stripEl) { const at = slotEl ? parentOf(slotEl.dataset.slot).idx : null; addVaslCounter(c, stripEl.dataset.strip, at); }
+    return;
+  }
+  const files = imageFiles(e.dataTransfer); if (!files.length) return;
+  if (slotEl) { placeFiles(stripEl.dataset.strip, parentOf(slotEl.dataset.slot).idx, files, true); return; }
+  if (stripEl) { placeFiles(stripEl.dataset.strip, get(stripEl.dataset.strip + ".slots").length, files, false); return; }
+  if (t.matches("[data-zone]")) setImage(t.dataset.zone, files[0]);
+});
+
+/* ---------- turn popover ---------- */
+let popTurn = -1;
+function placePop(pop, anchor) {
+  pop.hidden = false;
+  const r = anchor.getBoundingClientRect(), pw = pop.offsetWidth, ph = pop.offsetHeight;
+  let x = Math.min(Math.max(8, r.left + r.width / 2 - pw / 2), window.innerWidth - pw - 8);
+  let y = r.bottom + 8; if (y + ph > window.innerHeight - 8) y = Math.max(8, r.top - ph - 8);
+  pop.style.left = x + "px"; pop.style.top = y + "px";
+}
+function openTurnPop(i, anchor) {
+  popTurn = i; $("popN").textContent = i + 1;
+  drawTurnPop(); placePop($("turnPop"), anchor);
+  $("popMarks").querySelector("button")?.focus();
+}
+function drawTurnPop() {
+  const t = state.trc.turns[popTurn]; if (!t) return;
+  $("popMarks").innerHTML = ["A", "B"].map(sd => `<button type="button" class="btn btnsym" data-mark="${sd}" aria-pressed="${t.mark.includes(sd)}"><span class="sym">${sideSym(sd)}</span>${esc(sideLabel(sd))}</button>`).join("");
+  $("popFill").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String((t.fill || "") === b.dataset.fill)));
+  $("popHalf").setAttribute("aria-pressed", String(!!t.half));
+}
+$("turnPop").addEventListener("click", (e) => {
+  const t = state.trc.turns[popTurn]; if (!t) return;
+  const m = e.target.closest("[data-mark]"), f = e.target.closest("[data-fill]");
+  if (e.target.closest("#popHalf")) { const on = !t.half; state.trc.turns.forEach(x => x.half = false); t.half = on; }
+  else if (m) { const sd = m.dataset.mark; t.mark = t.mark.includes(sd) ? t.mark.filter(x => x !== sd) : [...t.mark, sd].sort(); }
+  else if (f) t.fill = f.dataset.fill;
+  else return;
+  render(); drawTurnPop(); queueSave();
+});
+function closePops() { $("turnPop").hidden = true; $("symPop").hidden = true; $("tblPop").hidden = true; }
+document.addEventListener("mousedown", (e) => {
+  if (!e.target.closest(".pop") && !e.target.closest(".turn") && !e.target.closest("#bSym") && !e.target.closest("#bSym2")) closePops();
+});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closePops(); });
+
+/* ---------- tool rail ---------- */
+document.querySelectorAll("[data-cmd],[data-ins]").forEach(b => {
+  b.addEventListener("mousedown", (e) => e.preventDefault());
+  b.addEventListener("click", () => {
+    const a = document.activeElement;
+    if (!a || !a.closest?.(".sheet [contenteditable]")) { toast("Click into a text field on the card first."); return; }
+    if (b.dataset.cmd) { if (a.dataset.plain) return; document.execCommand(b.dataset.cmd, false, null); }
+    else document.execCommand("insertText", false, b.dataset.ins);
+  });
+});
+/* footnote-size text */
+$("bSmall").addEventListener("mousedown", (e) => e.preventDefault());
+$("bSmall").addEventListener("click", () => {
+  const a = document.activeElement;
+  if (!a || !a.closest?.(".sheet [contenteditable]") || a.dataset.plain) { toast("Select some text on the card first."); return; }
+  const inSmall = getSelection().anchorNode?.parentElement?.closest?.('font[size="1"]');
+  document.execCommand("fontSize", false, inSmall ? "3" : "1");
+  a.querySelectorAll('font[size="3"]').forEach(f => f.replaceWith(...f.childNodes));
+  a.dispatchEvent(new Event("input", { bubbles: true }));
+});
+/* outline bullets: add/remove, and move a level in or out */
+function curLi(a) { const n = getSelection().anchorNode; const li = (n?.nodeType === 1 ? n : n?.parentElement)?.closest?.("li"); return li && a.contains(li) ? li : null; }
+function tagLists(a) { a.querySelectorAll("ul").forEach(u => u.classList.add("ol")); a.querySelectorAll("ul[style], li[style]").forEach(x => x.removeAttribute("style")); }
+function outline(op) {
+  const a = document.activeElement;
+  if (!a || !a.closest?.(".sheet [contenteditable]") || a.dataset.plain || a.dataset.single) { toast("Click into the text of a section first."); return; }
+  const li = curLi(a);
+  if (op === "toggle") document.execCommand("insertUnorderedList");
+  else if (!li) { toast("Put the cursor on a bulleted line first (• Bullet adds one)."); return; }
+  else if (op === "in") { if (!li.previousElementSibling) { toast("The first bullet in a list can't move in. Add a bullet above it first."); return; } document.execCommand("indent"); }
+  else document.execCommand("outdent");
+  a.querySelectorAll("blockquote").forEach(b => b.replaceWith(...b.childNodes));
+  tagLists(a);
+  a.dispatchEvent(new Event("input", { bubbles: true }));
+}
+document.querySelectorAll("[data-ol]").forEach(b => {
+  b.addEventListener("mousedown", (e) => e.preventDefault());
+  b.addEventListener("click", () => outline(b.dataset.ol));
+});
+/* Enter after a table inside a numbered/bulleted item starts the next item */
+pages.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter" || e.shiftKey) return;
+  const el = e.target.closest?.("[data-lines]"); if (!el) return;
+  const sel = getSelection(); if (!sel.rangeCount) return;
+  const an = sel.anchorNode; if ((an?.nodeType === 1 ? an : an?.parentElement)?.closest?.("td,th,li")) return;
+  const line = (an?.nodeType === 1 ? an : an?.parentElement)?.closest?.("[data-lines] > div"); if (!line) return;
+  const tbls = [...line.querySelectorAll(":scope > table")]; if (!tbls.length) return;
+  const r = sel.getRangeAt(0), last = tbls[tbls.length - 1];
+  const after = document.createRange(); after.setStartAfter(last); after.collapse(true);
+  if (r.compareBoundaryPoints(Range.START_TO_START, after) < 0) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  const tail = document.createRange(); tail.setStart(r.startContainer, r.startOffset); tail.setEnd(line, line.childNodes.length);
+  const frag = tail.extractContents();
+  const d = document.createElement("div"); d.appendChild(frag); if (!d.textContent.trim()) d.innerHTML = "<br>";
+  line.after(d);
+  const c = document.createRange(); c.setStart(d, 0); c.collapse(true); sel.removeAllRanges(); sel.addRange(c);
+  el.dispatchEvent(new Event("input", { bubbles: true }));
+}, true);
+/* Enter on a bulleted line starts the next bullet; Enter on an empty bullet steps out a level */
+pages.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter" || e.shiftKey || !isSasl()) return;
+  const a = e.target.closest?.("[contenteditable]"); const li = a && curLi(a); if (!li) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  if (!li.textContent.trim() && !li.querySelector("li")) { outline("out"); return; }
+  const sel = getSelection(); const r = sel.getRangeAt(0); r.deleteContents();
+  const tail = document.createRange(); tail.setStart(r.startContainer, r.startOffset);
+  const sub = [...li.children].find(c => c.tagName === "UL");
+  if (sub) tail.setEndBefore(sub); else tail.setEnd(li, li.childNodes.length);
+  const frag = tail.extractContents();
+  const n = document.createElement("li"); n.appendChild(frag);
+  if (!n.textContent && !n.querySelector("br")) n.innerHTML = "<br>";
+  if (!li.textContent.trim() && !li.querySelector("br, ul")) li.insertBefore(document.createElement("br"), sub || null);
+  if (sub) n.appendChild(sub);
+  li.after(n);
+  const c = document.createRange(); c.setStart(n, 0); c.collapse(true); sel.removeAllRanges(); sel.addRange(c);
+  a.dispatchEvent(new Event("input", { bubbles: true }));
+}, true);
+pages.addEventListener("keydown", (e) => {
+  if (e.key !== "Tab" || !isSasl()) return;
+  const a = e.target.closest?.("[contenteditable]"); if (!a || !curLi(a)) return;
+  e.preventDefault(); outline(e.shiftKey ? "out" : "in");
+}, true);
+/* paste into a bulleted / numbered section: each pasted paragraph becomes its own item,
+   and a table (or other block) stays with the item above it */
+function pasteLines(edt, html) {
+  ensureRuleLine(edt);
+  const box = document.createElement("div"); box.innerHTML = html;
+  const items = []; let cur = null;
+  for (const n of [...box.childNodes]) {
+    if (n.nodeType === 1 && n.tagName === "DIV") { cur = n; items.push(n); continue; }
+    if (n.nodeType === 3 && !n.nodeValue.trim()) continue;
+    if (!cur) { cur = document.createElement("div"); items.push(cur); }
+    cur.appendChild(n);
+  }
+  if (!items.length) return;
+  const sel = getSelection(); const an = sel.anchorNode;
+  let line = (an?.nodeType === 1 ? an : an?.parentElement)?.closest?.("[data-lines] > div");
+  if (!line || !edt.contains(line)) line = edt.lastElementChild;
+  let first = 0;
+  if (line && !line.textContent.trim() && !line.querySelector("table,img")) { line.replaceWith(items[0]); line = items[0]; first = 1; }
+  else if (line && items[0].firstChild?.nodeName === "TABLE") {
+    /* only a table was copied: it belongs to the rule the cursor is on ("1. Replace … with the following:") */
+    line.append(...items[0].childNodes); first = 1;
+  }
+  let after = line;
+  for (let i = first; i < items.length; i++) { after ? after.after(items[i]) : edt.appendChild(items[i]); after = items[i]; }
+  const r = document.createRange(); r.selectNodeContents(after); r.collapse(false); sel.removeAllRanges(); sel.addRange(r);
+  edt.dispatchEvent(new Event("input", { bubbles: true }));
+}
+/* pasted HTML (Word, Excel, web pages, another card): keep tables, bold/italic/super/subscript, bullets and line breaks; drop everything else */
+function cleanPaste(html, linesMode) {
+  const doc = new DOMParser().parseFromString(html.replace(/<!--[\s\S]*?-->/g, ""), "text/html");
+  const body = doc.body; if (!body) return "";
+  body.querySelectorAll("style,script,meta,link,title,xml,o\\:p").forEach(n => n.remove());
+  const st = (el, k) => (el.getAttribute?.("style") || "").match(new RegExp("(?:^|;)\\s*" + k + "\\s*:\\s*([^;]+)", "i"))?.[1]?.trim().toLowerCase() || "";
+  const colorish = (v) => { const m = v.match(/#[0-9a-f]{3,6}|rgb\([^)]*\)/i); if (!m) return false; const c = m[0].toLowerCase(); return !/^#fff(fff)?$|rgb\(255,\s*255,\s*255\)/.test(c) && c !== "windowtext"; };
+  const walk = (n, inCell) => {
+    if (n.nodeType === 3) return esc(n.nodeValue.replace(/[\r\n]+/g, " "));
+    if (n.nodeType !== 1) return "";
+    const t = n.tagName, kids = () => [...n.childNodes].map(c => walk(c, inCell || t === "TD" || t === "TH")).join("");
+    let inner;
+    switch (t) {
+      case "TABLE": {
+        const rows = [...n.querySelectorAll("tr")].filter(r => r.closest("table") === n);
+        return `<table class="gt"><tbody>${rows.map(r => `<tr>${[...r.children].filter(c => /^T[DH]$/.test(c.tagName)).map(c => {
+          const cls = [];
+          const al = (c.getAttribute("align") || st(c, "text-align") || c.querySelector("p,div")?.getAttribute?.("align") || st(c.querySelector("p,div") || c, "text-align"));
+          if (/center/.test(al)) cls.push("c"); else if (/right/.test(al)) cls.push("r");
+          if (/top/.test(c.getAttribute("valign") || st(c, "vertical-align"))) cls.push("t");
+          if (colorish(st(c, "background") || st(c, "background-color") || c.getAttribute("bgcolor") || "")) cls.push("sh");
+          const sides = ["top", "left", "right", "bottom"].map(k => st(c, "border-" + k)).join(" ");
+          if (/^none/.test(st(c, "border")) && !/solid|dotted|dashed|double/.test(sides)) cls.push("nb");
+          const cs = +c.getAttribute("colspan") || 1, rs = +c.getAttribute("rowspan") || 1;
+          let txt = [...c.childNodes].map(k => walk(k, true)).join("").replace(/^(<br>)+|(<br>)+$/g, "");
+          return `<td${cs > 1 ? ` colspan="${cs}"` : ""}${rs > 1 ? ` rowspan="${rs}"` : ""}${cls.length ? ` class="${cls.join(" ")}"` : ""}>${txt || "&nbsp;"}</td>`;
+        }).join("")}</tr>`).join("")}</tbody></table>`;
+      }
+      case "B": case "STRONG": inner = kids(); return inner.trim() ? `<b>${inner}</b>` : inner;
+      case "I": case "EM": inner = kids(); return inner.trim() ? `<i>${inner}</i>` : inner;
+      case "U": return `<u>${kids()}</u>`;
+      case "SUP": return `<sup>${kids()}</sup>`;
+      case "SUB": return `<sub>${kids()}</sub>`;
+      case "BR": return "<br>";
+      case "UL": case "OL": return linesMode && !inCell ? kids() : `<ul class="ol">${kids()}</ul>`;
+      case "LI": return linesMode && !inCell ? `<div>${kids()}</div>` : `<li>${kids()}</li>`;
+      case "P": case "DIV": case "H1": case "H2": case "H3": case "H4": case "H5": case "H6": {
+        inner = kids(); if (/^H/.test(t)) inner = `<b>${inner}</b>`;
+        if (/mso-list/i.test(n.getAttribute("style") || "") || /MsoListParagraph/i.test(n.className)) {
+          inner = inner.replace(/^(\s|&nbsp;|·|•|§|o|-)+(?=\S)/, ""); return linesMode && !inCell ? `<div>${inner}</div>` : `<ul class="ol"><li>${inner}</li></ul>`;
+        }
+        if (inCell) return inner + "<br>";
+        return `<div>${inner || "<br>"}</div>`;
+      }
+      default: {
+        inner = kids();
+        const fw = st(n, "font-weight"), fs = st(n, "font-style"), va = st(n, "vertical-align");
+        if (/bold|[6-9]00/.test(fw)) inner = `<b>${inner}</b>`;
+        if (/italic/.test(fs)) inner = `<i>${inner}</i>`;
+        if (/super/.test(va)) inner = `<sup>${inner}</sup>`; else if (/sub/.test(va)) inner = `<sub>${inner}</sub>`;
+        if (/mso-list:\s*ignore/i.test(n.getAttribute?.("style") || "")) return "";
+        return inner;
+      }
+    }
+  };
+  let out = [...body.childNodes].map(c => walk(c, false)).join("").replace(/<\/ul><ul class="ol">/g, "").replace(/(&nbsp;|\s)+<\/div>/g, "</div>");
+  out = out.replace(/<div>(<br>)?<\/div>$/g, "");
+  if (!linesMode) out = out.replace(/^<div>([\s\S]*?)<\/div>/, "$1");
+  return out.trim();
+}
+/* small tables inside any text field (e.g. a dr / result table inside a special rule) */
+/* table builder */
+let tblTarget = null;
+function openTblPop(ed, anchor) {
+  const sel = getSelection(); tblTarget = { ed, range: sel.rangeCount ? sel.getRangeAt(0).cloneRange() : null };
+  closePops(); placePop($("tblPop"), anchor); $("tpRows").focus(); $("tpRows").select();
+}
+function buildTable(o) {
+  const nr = Math.max(1, Math.min(40, o.rows | 0)), nc = Math.max(1, Math.min(10, o.cols | 0));
+  const cc = o.center ? ' class="c"' : "";
+  const cls = (r, extra = "") => { const k = []; if (o.center) k.push("c"); if (o.shade && r % 2 === 0) k.push("sh"); if (extra) k.push(extra); return k.length ? ` class="${k.join(" ")}"` : ""; };
+  const head = o.head !== false ? `<tr>${Array.from({ length: nc }, (_, i) => `<td${cc}>${o.heads?.[i] ?? "Heading"}</td>`).join("")}${o.side ? `<td class="nb">&nbsp;</td><td>${o.sideHead ?? "Notes:"}</td>` : ""}</tr>` : "";
+  const rows = Array.from({ length: nr }, (_, r) => `<tr>${Array.from({ length: nc }, (_, i) => `<td${cls(r)}>${o.col0 && i === 0 ? o.col0[r] ?? "&nbsp;" : "&nbsp;"}</td>`).join("")}${o.side ? `<td class="nb">&nbsp;</td>` + (r === 0 ? `<td class="t" rowspan="${nr}">${o.sideBody ?? "&nbsp;"}</td>` : "") : ""}</tr>`).join("");
+  return `<table class="gt${o.head === false ? " nohdr" : ""}"><tbody>${head}${rows}</tbody></table>`;
+}
+function insertTable(html) {
+  const t = tblTarget; $("tblPop").hidden = true; if (!t) return;
+  t.ed.focus(); const sel = getSelection();
+  if (t.range && t.ed.contains(t.range.startContainer)) { sel.removeAllRanges(); sel.addRange(t.range); }
+  document.execCommand("insertHTML", false, html + "<div><br></div>");
+  t.ed.dispatchEvent(new Event("input", { bubbles: true })); tblTarget = null;
+}
+$("tpGo").addEventListener("click", () => insertTable(buildTable({ rows: +$("tpRows").value, cols: +$("tpCols").value, head: $("tpHead").checked, shade: $("tpShade").checked, center: $("tpCenter").checked, side: $("tpSide").checked })));
+$("tpMsr").addEventListener("click", () => insertTable(buildTable({
+  rows: 14, cols: 2, head: true, shade: true, center: true, side: true,
+  heads: ["Final DR", "Item(s) Activated"], col0: ["≤ 1", ...Array.from({ length: 12 }, (_, i) => String(i + 2)), "≥ 14"],
+  sideHead: "Cumulative DRM:", sideBody: "<b>Footnotes:</b><br>1. …",
+})));
+$("tpCancel").addEventListener("click", () => { $("tblPop").hidden = true; tblTarget?.ed?.focus(); tblTarget = null; });
+$("tblPop").addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.matches("input")) { e.preventDefault(); $("tpGo").click(); } });
+/* map of a table's cells by row/column, so merged cells can be found */
+function tableGrid(tbl) {
+  const g = [];
+  [...tbl.rows].forEach((tr, r) => {
+    g[r] = g[r] || []; let c = 0;
+    for (const cell of tr.cells) {
+      while (g[r][c]) c++;
+      for (let i = 0; i < (cell.rowSpan || 1); i++) for (let j = 0; j < (cell.colSpan || 1); j++) { (g[r + i] = g[r + i] || [])[c + j] = cell; }
+      c += cell.colSpan || 1;
+    }
+  });
+  return g;
+}
+function gridPos(g, cell) { for (let r = 0; r < g.length; r++) { const c = (g[r] || []).indexOf(cell); if (c >= 0) return { r, c }; } return { r: -1, c: -1 }; }
+document.querySelectorAll("[data-tbl]").forEach(b => {
+  b.addEventListener("mousedown", (e) => e.preventDefault());
+  b.addEventListener("click", () => {
+    const a = document.activeElement, sel = getSelection();
+    /* in the Mission Tables, +R / −R / +C / −C add or remove whole rows and columns of that table */
+    const mtSec = a?.closest?.(".mtw")?.closest("[data-sec]");
+    if (mtSec && ["row+", "row-", "col+", "col-"].includes(b.dataset.tbl)) {
+      act({ "row+": "mtRow+", "row-": "mtRow-", "col+": "mtCol+", "col-": "mtCol-" }[b.dataset.tbl], mtSec.dataset.sec, b); return;
+    }
+    if (!a || !a.closest?.(".sheet [contenteditable]") || a.dataset.plain) { toast("Click into a text field on the card first."); return; }
+    const node = sel.anchorNode; const cellEl = (node?.nodeType === 1 ? node : node?.parentElement)?.closest?.("td, th");
+    const tbl = cellEl?.closest("table.it, table.gt");
+    const op = b.dataset.tbl;
+    if (op === "grid") { openTblPop(a, b); return; }
+    if (["shade", "center", "border", "mergeD", "mergeR", "split", "merge", "top", "head"].includes(op)) {
+      if (!tbl || !a.contains(tbl)) { toast("Put the cursor inside a table first."); return; }
+      const cells = [...tbl.querySelectorAll("td,th")].filter(c => sel.rangeCount && sel.getRangeAt(0).intersectsNode(c));
+      const list = cells.length ? cells : [cellEl];
+      if (op === "shade") { const on = !list[0].classList.contains("sh"); list.forEach(c => c.classList.toggle("sh", on)); }
+      if (op === "center") { const on = !list[0].classList.contains("c"); list.forEach(c => { c.classList.remove("r"); c.classList.toggle("c", on); }); }
+      if (op === "border") { const on = !list[0].classList.contains("nb"); list.forEach(c => c.classList.toggle("nb", on)); }
+      if (op === "top") { const on = !list[0].classList.contains("t"); list.forEach(c => c.classList.toggle("t", on)); }
+      if (op === "head") tbl.classList.toggle("nohdr");
+      if (op === "merge") {
+        /* the rectangle runs from the cell where the selection starts to the cell where it ends */
+        const rg = sel.rangeCount ? sel.getRangeAt(0) : null, cellOf = (n) => (n?.nodeType === 1 ? n : n?.parentElement)?.closest?.("td,th");
+        const ends = rg ? [cellOf(rg.startContainer), cellOf(rg.endContainer)].filter(c => c && tbl.contains(c)) : [];
+        if (ends.length < 2 || ends[0] === ends[1]) { toast("Drag across two or more cells first, then click Merge."); return; }
+        const grid = tableGrid(tbl), ps = ends.map(c => { const q = gridPos(grid, c); return { c, r0: q.r, c0: q.c, r1: q.r + (c.rowSpan || 1) - 1, c1: q.c + (c.colSpan || 1) - 1 }; });
+        const r0 = Math.min(...ps.map(x => x.r0)), r1 = Math.max(...ps.map(x => x.r1)), c0 = Math.min(...ps.map(x => x.c0)), c1 = Math.max(...ps.map(x => x.c1));
+        const inBox = new Set(); for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) { const cell = grid[r]?.[c]; if (!cell) { toast("Those cells don't make a rectangle."); return; } inBox.add(cell); }
+        for (const cell of inBox) { const q = gridPos(grid, cell); if (q.r < r0 || q.c < c0 || q.r + (cell.rowSpan || 1) - 1 > r1 || q.c + (cell.colSpan || 1) - 1 > c1) { toast("Those cells don't make a rectangle."); return; } }
+        const keep = grid[r0][c0], text = [...inBox].filter(c => c !== keep && c.textContent.trim()).map(c => c.innerHTML);
+        if (text.length) keep.insertAdjacentHTML("beforeend", "<br>" + text.join("<br>"));
+        [...inBox].forEach(c => { if (c !== keep) c.remove(); });
+        keep.rowSpan = r1 - r0 + 1; keep.colSpan = c1 - c0 + 1;
+      }
+      if (op === "mergeR") {
+        const nx = cellEl.nextElementSibling; if (!nx) { toast("There's no cell to the right to merge."); return; }
+        if ((nx.rowSpan || 1) !== (cellEl.rowSpan || 1)) { toast("Those cells are different heights; unmerge first."); return; }
+        if (nx.textContent.trim()) cellEl.insertAdjacentHTML("beforeend", " " + nx.innerHTML);
+        cellEl.colSpan = (cellEl.colSpan || 1) + (nx.colSpan || 1); nx.remove();
+      }
+      if (op === "mergeD") {
+        /* find the cell in the row just below this cell's span that starts at the same column */
+        const grid = tableGrid(tbl), pos = gridPos(grid, cellEl); const below = grid[pos.r + (cellEl.rowSpan || 1)]?.[pos.c];
+        if (!below || gridPos(grid, below).c !== pos.c || (below.colSpan || 1) !== (cellEl.colSpan || 1)) { toast("There's no matching cell below to merge."); return; }
+        if (below.textContent.trim()) cellEl.insertAdjacentHTML("beforeend", "<br>" + below.innerHTML);
+        cellEl.rowSpan = (cellEl.rowSpan || 1) + (below.rowSpan || 1); below.remove();
+      }
+      if (op === "split") {
+        const grid = tableGrid(tbl), pos = gridPos(grid, cellEl), cs = cellEl.colSpan || 1, rs = cellEl.rowSpan || 1;
+        if (cs === 1 && rs === 1) { toast("That cell isn't merged."); return; }
+        cellEl.colSpan = 1; cellEl.rowSpan = 1;
+        for (let k = 1; k < cs; k++) { const n = document.createElement("td"); n.className = cellEl.className; n.innerHTML = "&nbsp;"; cellEl.after(n); }
+        for (let r = 1; r < rs; r++) {
+          const tr = tbl.rows[pos.r + r]; if (!tr) break;
+          const next = [...tr.children].find(c => gridPos(grid, c).c > pos.c);
+          for (let k = 0; k < cs; k++) { const n = document.createElement("td"); n.className = cellEl.className; n.innerHTML = "&nbsp;"; tr.insertBefore(n, next || null); }
+        }
+      }
+      a.dispatchEvent(new Event("input", { bubbles: true })); return;
+    }
+    if (op === "insert") {
+      document.execCommand("insertHTML", false, `<table class="it"><tbody><tr><th>dr</th><th>result</th></tr><tr><td>≤ 2</td><td>No effect</td></tr><tr><td>3-4</td><td>…</td></tr><tr><td>≥ 5</td><td>…</td></tr></tbody></table><div><br></div>`);
+    } else {
+      if (!tbl || !a.contains(tbl)) { toast("Put the cursor inside a table first."); return; }
+      const row = cellEl.parentElement, ci = [...row.children].indexOf(cellEl);
+      if (op === "row+") { const r = row.cloneNode(true); r.querySelectorAll("th").forEach(th => { const td = document.createElement("td"); td.innerHTML = "&nbsp;"; th.replaceWith(td); }); r.querySelectorAll("td").forEach(td => td.innerHTML = "&nbsp;"); row.after(r); }
+      if (op === "row-") { if (tbl.rows.length > 1) row.remove(); else tbl.remove(); }
+      if (op === "col+") [...tbl.rows].forEach(r => { const c = r.children[ci]; const n = document.createElement(c?.tagName === "TH" ? "th" : "td"); n.innerHTML = "&nbsp;"; (c ? c.after(n) : r.appendChild(n)); });
+      if (op === "col-") { if (tbl.rows[0].children.length > 1) [...tbl.rows].forEach(r => r.children[ci]?.remove()); else tbl.remove(); }
+    }
+    a.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+});
+$("secAdd").addEventListener("change", (e) => {
+  const k = e.target.value; if (!k) return;
+  const head = { tables: "MISSION TABLES (12.32):", config: "Initial Mapboard Configuration:", numbers: "MISSION SPECIAL RULES:", bullets: "HEADING:", text: "HEADING:", inline: "HEADING:" }[k];
+  if (k === "ob") {
+    /* OBs go after SEQUENCE (and any OBs already there), before MISSION END */
+    const L = state.sections, hd = (x) => htmlToText(x.head).trim();
+    let at = -1;
+    L.forEach((x, i) => { if (/^SEQUENCE/i.test(hd(x)) || (x.kind === "ob" && at >= 0 && i === at + 1)) at = i; });
+    if (at < 0) { const me = L.findIndex(x => /^MISSION END/i.test(hd(x))); at = me >= 0 ? me - 1 : L.length - 1; }
+    L.splice(at + 1, 0, newOB()); render(); queueSave();
+    toast("Added an OB below SEQUENCE. Drop counter images on its row.");
+    return;
+  }
+  state.sections.push(blankSection(k, head)); render(); queueSave();
+  toast("Added a section at the end. Hover it to move it.");
+});
+$("sPhoto").addEventListener("change", (e) => { state.showPhoto = e.target.checked; render(); queueSave(); });
+$("sP").addEventListener("change", (e) => { state.pmark = e.target.checked; render(); queueSave(); });
+const held = { asl: null, sasl: null };   /* the other template's card, kept while you switch back and forth */
+$("tplSel").addEventListener("change", async (e) => {
+  const to = e.target.value, from = isSasl() ? "sasl" : "asl"; if (to === from) return;
+  clearTimeout(saveT); saveNow(); held[from] = state;
+  const saved = held[to] || await idb.get(STORE_KEY[to]);
+  const keep = state.custom;
+  state = to === "sasl" ? (saved ? normalizeSasl(saved) : blankSasl()) : (saved && !(saved.sid === SAMPLE.sid && saved.title === SAMPLE.title) ? normalize(saved) : blankCard());
+  state.custom = keep.length ? keep : state.custom;
+  idb.set("lastTpl", to); render(); mergeLibrary(); histStart();
+});
+$("bUndo").addEventListener("mousedown", (e) => e.preventDefault());
+$("bRedo").addEventListener("mousedown", (e) => e.preventDefault());
+$("bUndo").addEventListener("click", () => undoRedo(-1));
+$("bRedo").addEventListener("click", () => undoRedo(1));
+document.addEventListener("keydown", (e) => {
+  if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if (e.target.closest?.("input, select, textarea")) return;
+  if (k === "z") { e.preventDefault(); e.stopPropagation(); undoRedo(e.shiftKey ? 1 : -1); }
+  else if (k === "y") { e.preventDefault(); e.stopPropagation(); undoRedo(1); }
+}, true);
+for (const side of ["A", "B"]) $("sel" + side).addEventListener("change", (e) => { state.sides[side] = e.target.value; render(); queueSave(); });
+$("tMinus").addEventListener("click", () => { if (state.trc.turns.length > 1) { state.trc.turns.pop(); render(); queueSave(); } });
+$("tPlus").addEventListener("click", () => { if (state.trc.turns.length < 12) { state.trc.turns.push({ mark: [], fill: "", half: false }); render(); queueSave(); } else toast("12 turns is the most that fits on the chart."); });
+$("backSel").addEventListener("change", (e) => { state.backFrom = e.target.value === "" ? null : +e.target.value; render(); queueSave(); });
+$("bPanel").addEventListener("click", () => { if (state.backFrom === state.panels.length) state.backFrom++; state.panels.push({ side: state.panels.length % 2 ? "B" : "A", gut: null, groups: [blankGroup()] }); render(); queueSave(); });
+$("amCol").addEventListener("change", (e) => { state.amNewCol = e.target.checked; render(); queueSave(); });
+$("ssrCol").addEventListener("change", (e) => {
+  state.ssrSplit = e.target.checked ? Math.max(2, Math.ceil(ssrCount() / 2) + 1) : null;
+  render(); syncBar(); queueSave();
+});
+$("ssrAt").addEventListener("change", (e) => {
+  const v = Math.max(2, Math.round(+e.target.value || 2));
+  state.ssrSplit = v; render(); syncBar(); queueSave();
+});
+$("bNew").addEventListener("click", (e) => confirmTwice(e.currentTarget, "Click again to clear the card", () => {
+  const keep = state.custom;
+  state = isSasl() ? blankSasl() : blankCard(); state.custom = keep; render(); queueSave(); toast("Started a blank card.");
+  const b = $("bNew"); b.dataset.armed = ""; b.classList.remove("armed"); b.textContent = "New card";
+}));
+$("bOpen").addEventListener("click", () => { const c = $("cardPick"); c.value = ""; c.click(); });
+$("cardPick").addEventListener("change", async (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const o = JSON.parse(await f.text());
+    if (!o || !(Array.isArray(o.panels) || (o.tpl === "sasl" && Array.isArray(o.sections)))) throw new Error();
+    clearTimeout(saveT); saveNow();
+    const keep = state.custom;
+    state = o.tpl === "sasl" ? normalizeSasl(o) : normalize(o);
+    if (!state.custom.length) state.custom = keep;
+    idb.set("lastTpl", isSasl() ? "sasl" : "asl");
+    mergeLibrary(); render(); queueSave(); toast("Opened " + f.name + (isSasl() ? " (SASL mission)" : ""));
+  } catch (_) { toast("That file isn't a saved scenario card."); }
+});
+
+/* custom symbols */
+function fillSymList() {
+  $("symListW").hidden = !state.custom.length;
+  $("symList").innerHTML = state.custom.map(c => `<li><img src="${c.img}" alt=""><span class="nm">${esc(c.name)}</span><button type="button" data-del="${c.id}" aria-label="Delete ${esc(c.name)}">Delete</button></li>`).join("");
+}
+$("bSym2").addEventListener("click", (e) => { const p = $("symPop"); $("symName").value = ""; fillSymList(); placePop(p, e.currentTarget); $("symName").focus(); });
+$("bSym").addEventListener("click", (e) => { const p = $("symPop"); $("symName").value = ""; fillSymList(); placePop(p, e.currentTarget); $("symName").focus(); });
+$("symList").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-del]"); if (!b) return;
+  e.stopPropagation();
+  const id = b.dataset.del, c = state.custom.find(x => x.id === id); if (!c) return;
+  state.custom = state.custom.filter(x => x.id !== id);
+  const lib = ((await idb.get("nations")) || []).filter(x => x && x.id !== id); idb.set("nations", lib);
+  const swapped = [];
+  if (state.sides) for (const side of ["A", "B"]) if (state.sides[side] === id) { state.sides[side] = ""; swapped.push(side === "A" ? "Side 1" : "Side 2"); }
+  (state.sections || []).forEach(x => { if (x.nat === id) { x.nat = ""; if (!swapped.includes("an OB")) swapped.push("an OB"); } });
+  fillSymList(); render(); saveNow();
+  toast(`Deleted ${c.name}.` + (swapped.length ? ` ${swapped.join(" and ")} now ${swapped.length > 1 ? "have" : "has"} no symbol.` : ""));
+});
+$("symCancel").addEventListener("click", closePops);
+$("symPick").addEventListener("click", () => {
+  if (!$("symName").value.trim()) { toast("Give the symbol a name first."); $("symName").focus(); return; }
+  const f = $("symFile"); f.value = ""; f.click();
+});
+$("symFile").addEventListener("change", async (e) => {
+  const file = e.target.files[0]; if (!file) return;
+  try {
+    const img = await readImage(file, 300);
+    const name = $("symName").value.trim() || "Custom";
+    const c = { id: "c" + Date.now().toString(36), name, img };
+    state.custom.push(c);
+    const lib = (await idb.get("nations")) || []; lib.push(c); idb.set("nations", lib);
+    closePops(); render(); queueSave(); toast(isSasl() ? `Added ${name}. Click an OB's symbol box to pick it.` : `Added ${name}. Pick it from the Side 1 or Side 2 list.`);
+  } catch (err) { toast(err.message); }
+});
+async function mergeLibrary() {
+  const lib = (await idb.get("nations")) || [];
+  let added = false;
+  for (const c of lib) if (c && c.id && !state.custom.some(x => x.id === c.id)) { state.custom.push(c); added = true; }
+  if (added) render();
+}
+
+/* ---------- files out (needs the downloads capability) ---------- */
+let downloads = null;
+function setSaveUI() {
+  const ok = true;
+  for (const id of ["bSave", "bPng", "bPdf"]) { const b = $(id); b.disabled = !ok; b.title = ok ? "" : "Saving files isn't available in this view."; }
+}
+setSaveUI();
+(async () => {
+  try { downloads = (await window.claude?.use?.("downloads")) || null; } catch (_) { downloads = null; }
+  setSaveUI();
+})();
+function baseName() {
+  const t = (el) => { const d = document.createElement("div"); d.innerHTML = el || ""; return d.textContent.trim(); };
+  const raw = (isSasl() ? [t(state.num), t(state.title)] : [t(state.sid).replace(/^ASL\s+SCENARIO\s+/i, ""), t(state.title)]).filter(Boolean).join(" ") || (isSasl() ? "sasl-mission" : "scenario-card");
+  return raw.replace(/[’'"]/g, "").replace(/[^\w\-]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "").slice(0, 80) || "scenario-card";
+}
+async function offer(filename, data) {
+  if (!downloads) {
+    try {
+      const blob = data instanceof Blob ? data : new Blob([data], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      toast("Downloaded " + filename);
+    } catch (_) { toast("Couldn't save the file here."); }
+    return;
+  }
+  try { await downloads.save({ filename, data }); toast("Saved " + filename); }
+  catch (e) {
+    const c = e?.code;
+    toast(c === "declined" ? "Save cancelled." : c === "rate_limited" ? "A save is already waiting for your answer." : "Couldn't save the file here.");
+  }
+}
+async function snapshot(target = sheet) {
+  if (!window.html2canvas) throw new Error("The export tools didn't load. Reload the page and try again.");
+  closePops(); document.activeElement?.blur?.();
+  const sx = window.scrollX, sy = window.scrollY, prev = scaler.style.transform;
+  target.classList.add("exporting"); scaler.style.transform = ""; window.scrollTo(0, 0);
+  try {
+    await document.fonts.ready;
+    return await window.html2canvas(target, { scale: 3, backgroundColor: "#ffffff", logging: false, useCORS: true });
+  } finally { target.classList.remove("exporting"); scaler.style.transform = prev; window.scrollTo(sx, sy); }
+}
+async function busy(btn, fn) { const t = btn.textContent; btn.disabled = true; btn.textContent = "Working…"; try { await fn(); } catch (e) { toast(e.message || "Export failed."); } finally { btn.textContent = t; setSaveUI(); } }
+const APP_VERSION = "1.4";
+$("bSave").addEventListener("click", (e) => busy(e.currentTarget, () => offer(baseName() + ".json", JSON.stringify({ ...state, appVersion: APP_VERSION }))));
+$("bPng").addEventListener("click", (e) => busy(e.currentTarget, async () => {
+  const two = !sheet2.hidden;
+  const c = await snapshot(sheet);
+  await offer(baseName() + (two ? "-front" : "") + ".png", await new Promise(r => c.toBlob(r, "image/png")));
+  if (two) {
+    const c2 = await snapshot(sheet2);
+    await offer(baseName() + "-back.png", await new Promise(r => c2.toBlob(r, "image/png")));
+  }
+}));
+$("bPdf").addEventListener("click", (e) => busy(e.currentTarget, async () => {
+  if (!window.jspdf) throw new Error("The export tools didn't load. Reload the page and try again.");
+  const pdf = new window.jspdf.jsPDF({ unit: "in", format: "letter", compress: true });
+  const c = await snapshot(sheet);
+  pdf.addImage(c.toDataURL("image/jpeg", 0.93), "JPEG", 0, 0, 8.5, 11);
+  if (!sheet2.hidden) {
+    const c2 = await snapshot(sheet2);
+    pdf.addPage("letter", "portrait");
+    pdf.addImage(c2.toDataURL("image/jpeg", 0.93), "JPEG", 0, 0, 8.5, 11);
+  }
+  await offer(baseName() + ".pdf", pdf.output("blob"));
+}));
+
+/* ---------- boot ---------- */
+try { document.execCommand("defaultParagraphSeparator", false, "div"); } catch (_) {}
+/* ---------- VASL counter palette ---------- */
+const NAT_TO_VASL = {
+  soviet: "Russian", american: "American", usmc: "American", british: "British", canadian: "British", anzac: "British",
+  french: "French", freefrench: "French", polish: "Allied Minor", belgian: "Allied Minor", dutch: "Allied Minor", norwegian: "Allied Minor",
+  danish: "Allied Minor", greek: "Allied Minor", yugoslav: "Allied Minor", partisan: "Allied Minor", chinese: "Chinese", chicom: "Chinese",
+  german: "German", italian: "Italian", japanese: "Japanese", finnish: "Finnish", hungarian: "Hungarian",
+  romanian: "Axis Minor", bulgarian: "Axis Minor", slovakian: "Axis Minor", croatian: "Axis Minor", nkorean: "North Korean", skorean: "South Korean",
+};
+const vasl = { cat: null, blob: null, nat: "", cat1: "", q: "", list: [] };
+let palTarget = null, palDrag = null, palObs = null;
+async function vaslReady() {
+  if (vasl.cat && vasl.blob) return true;
+  const [cat, blob] = await Promise.all([idb.get("vasl_cat"), idb.get("vasl_blob")]);
+  if (cat && blob) { vasl.cat = cat; vasl.blob = blob; }
+  return !!(vasl.cat && vasl.blob);
+}
+function rowNation(gp) {
+  /* the nationality of the side or OB that owns this row */
+  const m = gp && gp.match(/^(panels|sections)\.(\d+)\./); if (!m) return "";
+  const owner = get(m[1] + "." + m[2]);
+  const id = m[1] === "panels" ? state.sides?.[owner?.side] : owner?.nat;
+  return NAT_TO_VASL[id] || "";
+}
+function rowLabel(gp) {
+  const g = get(gp); if (!g) return "";
+  const t = htmlToText((g.form || "") + " " + (g.html || "")).replace(/\s+/g, " ").trim();
+  return t ? (t.length > 60 ? t.slice(0, 57) + "…" : t) : "an untitled counter row";
+}
+function setPalTarget(gp) {
+  palTarget = gp && get(gp) ? gp : null;
+  pages.querySelectorAll(".grp.paltarget").forEach(x => x.classList.remove("paltarget"));
+  if (palTarget && !$("pal").hidden) pages.querySelector(`.grp[data-g="${palTarget}"]`)?.classList.add("paltarget");
+  $("palTgt").innerHTML = palTarget ? `Adding to: <b>${esc(rowLabel(palTarget))}</b>. Click a counter (or drag it onto any row).` : "Click a counter row on the card (or its <b>Counters…</b> button) to choose where counters go.";
+}
+async function openPal(gp) {
+  const wasOpen = !$("pal").hidden;
+  $("pal").hidden = false; document.body.classList.add("palopen"); document.documentElement.style.setProperty("--barH", document.querySelector(".bar").offsetHeight + "px");
+  if (!wasOpen) fitStage();
+  const ok = await vaslReady();
+  $("palEmpty").hidden = ok; $("palBody").hidden = !ok; $("palBody").style.display = ok ? "flex" : "none";
+  $("palVer").textContent = ok ? "VASL " + (vasl.cat.version || "") : "";
+  $("palLoad").hidden = !ok;
+  if (gp) setPalTarget(gp); else setPalTarget(palTarget);
+  if (!ok) return;
+  const want = gp ? rowNation(gp) : "";
+  if (!$("palNat").options.length || $("palNat").dataset.v !== vasl.cat.version) {
+    $("palNat").dataset.v = vasl.cat.version;
+    const by = (sd) => vasl.cat.nations.filter(n => n.side === sd).map(n => `<option value="${esc(n.name)}">${esc(n.name)}</option>`).join("");
+    $("palNat").innerHTML = `<optgroup label="Allied">${by("Allied")}</optgroup><optgroup label="Axis">${by("Axis")}</optgroup>`;
+  }
+  if (want && vasl.cat.nations.some(n => n.name === want)) vasl.nat = want;
+  if (!vasl.nat || !vasl.cat.nations.some(n => n.name === vasl.nat)) vasl.nat = vasl.cat.nations[0].name;
+  $("palNat").value = vasl.nat;
+  drawPal();
+}
+function palMark() { if (palTarget && !get(palTarget)) palTarget = null; if (!$("pal").hidden && palTarget) pages.querySelector(`.grp[data-g="${palTarget}"]`)?.classList.add("paltarget"); }
+function closePal() { $("pal").hidden = true; document.body.classList.remove("palopen"); fitStage(); pages.querySelectorAll(".grp.paltarget").forEach(x => x.classList.remove("paltarget")); }
+function drawPal() {
+  const nat = vasl.cat.nations.find(n => n.name === vasl.nat); if (!nat) return;
+  const top = (c) => c.g.split(" › ")[0] || "Other";
+  const cats = [...new Set(nat.counters.map(top))].sort((a, b) => (a === "Other") - (b === "Other"));
+  if (vasl.cat1 && !cats.includes(vasl.cat1)) vasl.cat1 = "";
+  $("palCats").innerHTML = [["", "All"], ...cats.map(c => [c, c])].map(([v, l]) => `<button type="button" data-cat="${esc(v)}" aria-pressed="${vasl.cat1 === v}">${esc(l)}</button>`).join("");
+  const q = vasl.q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const pool = q.length ? nat.counters : nat.counters.filter(c => !vasl.cat1 || top(c) === vasl.cat1);
+  vasl.list = pool.filter(c => !q.length || q.every(w => (c.n + " " + c.a + " " + c.g).toLowerCase().includes(w)));
+  let last = null, html = "";
+  vasl.list.forEach((c, i) => {
+    const sub = c.g || "Other";
+    if (sub !== last) { html += `<div class="palsub">${esc(sub)}</div>`; last = sub; }
+    html += `<button type="button" class="tile" draggable="true" data-i="${i}" title="${esc(c.n)}${c.g ? " — " + esc(c.g) : ""}"><span class="th wait"></span><span class="nm">${esc(c.n)}</span></button>`;
+  });
+  $("palGrid").innerHTML = html || `<div class="palmsg">No counters match "${esc(vasl.q)}" in ${esc(nat.name)}.</div>`;
+  $("palGrid").scrollTop = 0;
+  palObs?.disconnect();
+  palObs = new IntersectionObserver((ents) => ents.forEach(en => { if (en.isIntersecting) { palObs.unobserve(en.target); thumbQueue.push(en.target); pumpThumbs(); } }), { root: $("palGrid"), rootMargin: "200px" });
+  $("palGrid").querySelectorAll(".tile").forEach(t => palObs.observe(t));
+}
+const thumbQueue = []; let thumbBusy = 0; const thumbCache = new Map();
+async function pumpThumbs() {
+  while (thumbBusy < 4 && thumbQueue.length) {
+    const t = thumbQueue.shift(); if (!t.isConnected) continue;
+    const c = vasl.list[+t.dataset.i]; if (!c) continue;
+    thumbBusy++;
+    (async () => {
+      const key = vasl.nat + "|" + c.id + "|" + c.n;
+      let r = thumbCache.get(key);
+      if (!r) { try { r = await VASL.render(vasl.blob, c.L, 1.5); } catch (_) { r = null; } thumbCache.set(key, r); }
+      const th = t.querySelector(".th"); th.classList.remove("wait");
+      th.innerHTML = r ? `<img src="${r.url}" alt="" draggable="false" style="width:${Math.round(r.w * 1.15)}px">` : "?";
+    })().finally(() => { thumbBusy--; pumpThumbs(); });
+  }
+}
+/* put a counter into a row: into the first empty box, or at a given position, or on the end */
+async function addVaslCounter(c, gp, at = null) {
+  const g = get(gp); if (!g) { toast("Choose a counter row first."); return; }
+  try {
+    const r = await VASL.render(vasl.blob, c.L, 3.25);
+    if (!r) { toast("That counter's picture isn't in the module."); return; }
+    const sl = Object.assign(blankSlot(r.w >= 56 ? "l" : "s"), { img: r.url, v: 1 });
+    if (at !== null && at !== undefined) g.slots.splice(at, 0, sl);
+    else { const e = g.slots.findIndex(x => !x.img); if (e >= 0) { sl.qty = g.slots[e].qty; g.slots[e] = sl; } else g.slots.push(sl); }
+    render(); queueSave(); setPalTarget(gp);
+    toast(`Added ${c.n}.`);
+  } catch (e) { toast("Couldn't draw that counter: " + e.message); }
+}
+async function loadVmod(file) {
+  if (!file) return;
+  if (typeof JSZip === "undefined") { toast("The zip reader didn't load (are you offline?). Try again with an internet connection."); return; }
+  toast("Reading " + file.name + " …");
+  try {
+    const cat = await VASL.load(file);
+    await idb.set("vasl_blob", file); await idb.set("vasl_cat", cat);
+    vasl.cat = cat; vasl.blob = file; thumbCache.clear(); $("palNat").innerHTML = "";
+    const n = cat.nations.reduce((a, x) => a + x.counters.length, 0);
+    toast(`Loaded VASL ${cat.version}: ${n.toLocaleString()} counters in ${cat.nations.length} nationalities.`);
+    openPal(palTarget);
+  } catch (e) { toast(e.message || "That file couldn't be read."); }
+}
+$("bPal").addEventListener("click", () => $("pal").hidden ? openPal(palTarget) : closePal());
+$("palClose").addEventListener("click", closePal);
+for (const id of ["palLoad", "palLoad2"]) $(id).addEventListener("click", () => { const f = $("vmodPick"); f.value = ""; f.click(); });
+$("vmodPick").addEventListener("change", (e) => loadVmod(e.target.files[0]));
+$("palNat").addEventListener("change", (e) => { vasl.nat = e.target.value; vasl.cat1 = ""; drawPal(); });
+$("palQ").addEventListener("input", (e) => { vasl.q = e.target.value; drawPal(); });
+$("palCats").addEventListener("click", (e) => { const b = e.target.closest("[data-cat]"); if (!b) return; vasl.cat1 = b.dataset.cat; drawPal(); });
+$("palGrid").addEventListener("click", (e) => {
+  const t = e.target.closest(".tile"); if (!t) return;
+  if (!palTarget) { toast("Click a counter row on the card first, then the counter."); return; }
+  addVaslCounter(vasl.list[+t.dataset.i], palTarget);
+});
+$("palGrid").addEventListener("dragstart", (e) => {
+  const t = e.target.closest(".tile"); if (!t) return;
+  palDrag = vasl.list[+t.dataset.i]; e.dataTransfer.effectAllowed = "copy";
+  try { e.dataTransfer.setData("text/plain", palDrag.n); } catch (_) {}
+});
+$("palGrid").addEventListener("dragend", () => { palDrag = null; });
+/* clicking in a counter row makes it the palette's target */
+pages.addEventListener("click", (e) => { if ($("pal").hidden) return; const g = e.target.closest?.(".grp[data-g]"); if (g) setPalTarget(g.dataset.g); }, true);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("pal").hidden && !document.querySelector(".pop:not([hidden])")) closePal(); });
+
+/* ---------- board layout wiring ---------- */
+$("bBoards").addEventListener("click", () => {
+  if (!isSasl()) { openBoards("board"); return; }
+  const i = state.sections.findIndex(x => x.kind === "config");
+  if (i < 0) { toast("Add an Initial Mapboard Configuration section first (Add section)."); return; }
+  openBoards(`sections.${i}.img`);
+});
+for (const id of ["blLoad", "blLoad2"]) $(id).addEventListener("click", () => { const f = $("boardsPick"); f.value = ""; f.click(); });
+$("boardsPick").addEventListener("change", async (e) => {
+  const files = e.target.files; if (!files || !files.length) return;
+  if (typeof JSZip === "undefined") { toast("The zip reader didn't load (are you offline?)."); return; }
+  try {
+    const n = await BOARDS.loadFolder(files, (d, t) => { $("blCount").textContent = `Reading boards… ${d} of ${t}`; });
+    BOARDS._idx = await BOARDS.getIndex(); blDrawList(); blDraw();
+    toast(n ? `Loaded ${n} boards.` : "No VASL boards were found in that folder.");
+  } catch (err) { toast("The boards couldn't be read: " + err.message); }
+});
+$("blQ").addEventListener("input", (e) => { BL.q = e.target.value; blDrawList(); });
+$("blList").addEventListener("click", (e) => { const t = e.target.closest(".bltile"); if (t) blAdd(t.dataset.key); });
+$("blList").addEventListener("dragstart", (e) => { const t = e.target.closest(".bltile"); if (!t) return; BL.dragKey = t.dataset.key; e.dataTransfer.effectAllowed = "copy"; try { e.dataTransfer.setData("text/plain", t.dataset.key); } catch (_) {} });
+$("blWs").addEventListener("dragover", (e) => { if (BL.dragKey) e.preventDefault(); });
+$("blWs").addEventListener("drop", (e) => { if (!BL.dragKey) return; e.preventDefault(); const k = BL.dragKey; BL.dragKey = null; blAdd(k, blToLayout(e)); });
+$("blWsIn").addEventListener("pointerdown", blPointerDown);
+$("blWsIn").addEventListener("pointermove", blPointerMove);
+$("blWsIn").addEventListener("pointerup", blPointerUp);
+$("blWsIn").addEventListener("pointercancel", blPointerUp);
+function blTurn(by) {
+  const s = BL.sel; if (s?.t !== "b") return; const b = BL.layout.boards[s.i], info = blInfo(b.key); if (!info) return;
+  /* turning keeps the board's top-left corner where it was, so it stays against its neighbours */
+  b.rot = ((b.rot || 0) + by) % 360;
+  blSnap(s.i); blDraw();
+}
+$("blRot").addEventListener("click", () => blTurn(90));
+$("blRev").addEventListener("click", () => blTurn(180));
+$("blDel").addEventListener("click", () => {
+  const s = BL.sel; if (!s) return;
+  (s.t === "b" ? BL.layout.boards : BL.layout.shades).splice(s.i, 1); BL.sel = null; blDraw();
+});
+$("blShade").addEventListener("click", () => {
+  if (!BL.layout.boards.length) { toast("Add a board first."); return; }
+  const ext = blExtent(), w = (ext.x1 - ext.x0) / 4, g = blHexAt(ext.x1 - 2, ext.y0 + 2);
+  const r = { x: blSnapTo(ext.x1 - w, g.ox, g.sx), y: ext.y0, w: 0, h: ext.y1 - ext.y0 }; r.w = ext.x1 - r.x;
+  BL.layout.shades.push(r); BL.sel = { t: "s", i: BL.layout.shades.length - 1 }; blDraw();
+});
+$("blLabels").addEventListener("change", (e) => { BL.layout.labels = e.target.checked; blDraw(); });
+$("blNote").addEventListener("click", () => {
+  if (!BL.layout.boards.length) return;
+  BL.note = true; toast("The board list will go into the board note when you click Place on card.");
+});
+$("blCancel").addEventListener("click", blClose);
+$("blOk").addEventListener("click", blDone);
+document.addEventListener("keydown", (e) => {
+  if ($("blDlg").hidden) return;
+  if (e.target.closest?.("input, textarea, select")) return;
+  if (e.key === "Escape") { blClose(); e.stopPropagation(); }
+  else if ((e.key === "Delete" || e.key === "Backspace") && BL.sel) { e.preventDefault(); $("blDel").click(); }
+  else if ((e.key === "r" || e.key === "R") && BL.sel?.t === "b") { e.preventDefault(); blTurn(90); }
+}, true);
+window.addEventListener("resize", () => { if (!$("blDlg").hidden) blDraw(); });
+
+async function boot(data) {
+  await histLoad();
+  const last = data?.state?.tpl || (await idb.get("lastTpl")) || "asl";
+  if (last === "sasl") {
+    const saved = data?.state || await idb.get(STORE_KEY.sasl);
+    state = saved ? normalizeSasl(saved) : blankSasl();
+    if (saved) toast("Reopened your last SASL mission. Use New card to start fresh.");
+  } else {
+    const saved = data?.state || await idb.get("card");
+    /* open on a blank card; only reopen saved work if it is a card you have actually worked on
+       (an untouched copy of the old KF1 sample counts as nothing saved) */
+    const isSample = saved && saved.sid === SAMPLE.sid && saved.title === SAMPLE.title;
+    state = (saved && !isSample) ? normalize(saved) : blankCard();
+    if (saved && !isSample) toast("Reopened your last card. Use New card to start fresh.");
+  }
+  render(); fitStage(); mergeLibrary(); histStart();
+  document.fonts?.ready?.then(checkFit);
+}
+const hot = window.claude?.hot;
+if (hot?.snapshot) { try { hot.snapshot(() => ({ state })); } catch (_) {} }
+const start = (d) => boot(d);
+if (hot?.ready) hot.ready(start); else start(hot?.data ?? {});
+})();
+</script>
+
+</body></html>
