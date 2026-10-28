@@ -5,6 +5,14 @@ The version number shows next to the title in the app's toolbar, and cards saved
 
 Numbering: the second number goes up for each set of changes (1.0 → 1.1 → 1.2 …); the first number goes up for a big change such as a new template.
 
+## v1.5 — 2026-10-28
+- **Overlays in the board layout.** Loading the boards folder now also reads its `overlays` folder (and bundles such as Standard_overlays.zip). In the Board layout panel, switch the list from **Boards** to **Overlays** (with search).
+  - Click an overlay to put it on the selected board (or drag it onto any board). It snaps exactly onto the board's hexes, and moves to another board if you drag it there.
+  - **Turn 60°** (R; Shift+R turns back) steps the overlay through orientations a–f about the hex it sits on; **Reverse** turns it 180°. Orientations VASL doesn't supply a picture for are drawn by turning picture "a".
+  - Overlays turn and move with their board, are removed with it, and are drawn on the card under any red shading.
+  - **Overlay IDs** are shown on each overlay in the editor (a small tag on the edge of its reference hex) and, with **Board & overlay IDs on the card** ticked, on the card too.
+  - The "In use" line names each overlay with its board hex and orientation, VASL style, e.g. "X11 on 24P5 (a)"; **Put list in board note** includes them.
+
 ## v1.4 — 2026-10-28
 - Board layout: shaded (out-of-play) areas are now **red** instead of grey, in the editor and on the card.
 - Board layout: each board's number now sits in the **corner where the board's own ID is printed** (lower-left on an unturned geomorphic board), and moves with the board when it is rotated or reversed (a reversed board's number goes to its upper-right).

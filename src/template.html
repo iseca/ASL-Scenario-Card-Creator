@@ -433,7 +433,19 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 .blws { flex: 1; min-height: 0; position: relative; overflow: hidden; background: repeating-conic-gradient(#0000000a 0 25%, transparent 0 50%) 0 0 / 24px 24px; }
 .blwsin { position: absolute; inset: 0; touch-action: none; }
 .blb { position: absolute; overflow: hidden; cursor: move; box-shadow: 0 0 0 1px #0006; background: #fff; }
-.blb img { position: absolute; left: 50%; top: 50%; transform-origin: 50% 50%; pointer-events: none; }
+.blin { position: absolute; left: 50%; top: 50%; transform-origin: 50% 50%; }
+.blin > .bimg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
+.blo { position: absolute; cursor: move; z-index: 1; }
+.blo.sel { outline: 2px solid var(--edit); outline-offset: 1px; z-index: 2; }
+.blot { position: absolute; z-index: 3; background: #fffffff0; border: 1px solid #333; padding: 0 5px; border-radius: 2px; font: 700 11px var(--f-ui); white-space: nowrap; cursor: move; }
+.blot.sel { background: var(--edit); color: #fff; border-color: var(--edit); }
+.bltabs { display: flex; gap: 4px; margin: 10px 12px 0; }
+.bltabs button { all: unset; cursor: pointer; flex: 1; text-align: center; padding: 5px 8px; border: 1px solid var(--line); border-radius: 4px; font-weight: 600; font-size: 12px; }
+.bltabs button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.bltabs button:focus-visible { outline: 2px solid var(--accent); }
+.bllist.ovl { grid-template-columns: repeat(3, 1fr); }
+.bllist.ovl .bltile img { max-height: 70px; object-position: center; border: none; background: repeating-conic-gradient(#0000000d 0 25%, transparent 0 50%) 0 0 / 10px 10px; }
+.bllist.ovl .bltile span { text-align: center; }
 .blb.sel { box-shadow: 0 0 0 3px var(--edit); z-index: 2; }
 .blb.missing { display: flex; align-items: center; justify-content: center; background: #f4d7d7; color: #6d1b1b; font-weight: 600; }
 .bll { position: absolute; background: #ffffffd9; padding: 1px 7px; border-radius: 2px; font-weight: 700; font-size: 13px; pointer-events: none; white-space: nowrap; }
@@ -552,7 +564,7 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
     </div>
   </div>
   <p class="hint only-sasl">Click any text on the card to edit it, including the section headings. Drop images onto the logo, badge, photo and mapboard boxes. Hover a section for its controls (move it, start it in the right column, remove it); hover the mission tables to add or remove rows and columns. Press Enter in a bulleted or numbered section to start the next item. In any text, Outline • Bullet adds or removes a bullet; Tab / Shift+Tab (or → / ←) move it a level in or out. <b>Counter palette</b> adds counters from your VASL module to an OB row (hover the row, click <b>Counters…</b>); <b>Board layout</b> builds the mapboard diagram from your VASL boards.</p>
-  <p class="hint only-asl">Click any text on the card to edit it. Drop images onto the photo, counter boxes, board box, logo and side art, or click a box to choose a file. Hover a counter, counter row or OB panel for its controls; drag counters to reorder them. Click a turn box to mark reinforcements, shading or a half-turn game end. <b>Counter palette</b> adds counters straight from your VASL module: hover a counter row and click <b>Counters…</b>, then click or drag counters into it. <b>Board layout</b> (or hover the board box) builds the board configuration from your VASL boards.</p>
+  <p class="hint only-asl">Click any text on the card to edit it. Drop images onto the photo, counter boxes, board box, logo and side art, or click a box to choose a file. Hover a counter, counter row or OB panel for its controls; drag counters to reorder them. Click a turn box to mark reinforcements, shading or a half-turn game end. <b>Counter palette</b> adds counters straight from your VASL module: hover a counter row and click <b>Counters…</b>, then click or drag counters into it. <b>Board layout</b> (or hover the board box) builds the board configuration from your VASL boards and overlays.</p>
 </header>
 
 <main class="stage" id="stage">
@@ -615,7 +627,7 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
         <p>When you get new or updated boards, load the folder again.</p>
         <button type="button" class="btn primary" id="blLoad2">Load boards folder…</button>
       </div>
-      <div id="blListW" hidden><input type="search" id="blQ" placeholder="Search boards, e.g. 24 or RB" aria-label="Search boards"><div class="bllist" id="blList"></div></div>
+      <div id="blListW" hidden><div class="bltabs" role="group" aria-label="Show"><button type="button" id="blTabB" aria-pressed="true">Boards</button><button type="button" id="blTabO" aria-pressed="false">Overlays</button></div><input type="search" id="blQ" placeholder="Search boards, e.g. 24 or RB" aria-label="Search boards"><div class="bllist" id="blList"></div></div>
     </div>
     <div class="blright">
       <div class="bltools">
@@ -623,7 +635,7 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
         <button type="button" class="btn" id="blRev" title="Turn the selected board end for end">Reverse</button>
         <button type="button" class="btn" id="blShade" title="Add a shaded area to show what is out of play; drag it, and drag its corner to size it">+ Shaded area</button>
         <button type="button" class="btn" id="blDel" title="Remove the selected board or shaded area (Delete)">Remove</button>
-        <label><input type="checkbox" id="blLabels"> Board numbers</label>
+        <label><input type="checkbox" id="blLabels"> Board &amp; overlay IDs on the card</label>
         <span class="sp"></span>
         <button type="button" class="btn" id="blNote" title="Write the list of boards into the card's board note">Put list in board note</button>
       </div>
@@ -2234,15 +2246,21 @@ $("boardsPick").addEventListener("change", async (e) => {
   if (typeof JSZip === "undefined") { toast("The zip reader didn't load (are you offline?)."); return; }
   try {
     const n = await BOARDS.loadFolder(files, (d, t) => { $("blCount").textContent = `Reading boards… ${d} of ${t}`; });
-    BOARDS._idx = await BOARDS.getIndex(); blDrawList(); blDraw();
-    toast(n ? `Loaded ${n} boards.` : "No VASL boards were found in that folder.");
+    BOARDS._idx = await BOARDS.getIndex(); BOARDS._ovl = await BOARDS.getOverlays(); blDrawList(); blDraw();
+    toast(n ? `Loaded ${n} boards and ${BOARDS._ovl.length} overlays.` : "No VASL boards were found in that folder.");
   } catch (err) { toast("The boards couldn't be read: " + err.message); }
 });
 $("blQ").addEventListener("input", (e) => { BL.q = e.target.value; blDrawList(); });
-$("blList").addEventListener("click", (e) => { const t = e.target.closest(".bltile"); if (t) blAdd(t.dataset.key); });
-$("blList").addEventListener("dragstart", (e) => { const t = e.target.closest(".bltile"); if (!t) return; BL.dragKey = t.dataset.key; e.dataTransfer.effectAllowed = "copy"; try { e.dataTransfer.setData("text/plain", t.dataset.key); } catch (_) {} });
-$("blWs").addEventListener("dragover", (e) => { if (BL.dragKey) e.preventDefault(); });
-$("blWs").addEventListener("drop", (e) => { if (!BL.dragKey) return; e.preventDefault(); const k = BL.dragKey; BL.dragKey = null; blAdd(k, blToLayout(e)); });
+$("blTabB").addEventListener("click", () => { BL.tab = "boards"; blDrawList(); });
+$("blTabO").addEventListener("click", () => { BL.tab = "overlays"; blDrawList(); });
+$("blList").addEventListener("click", (e) => { const t = e.target.closest(".bltile"); if (!t) return; if (t.dataset.ovl) blAddOverlay(t.dataset.ovl); else blAdd(t.dataset.key); });
+$("blList").addEventListener("dragstart", (e) => { const t = e.target.closest(".bltile"); if (!t) return; BL.dragKey = t.dataset.key || null; BL.dragOvl = t.dataset.ovl || null; e.dataTransfer.effectAllowed = "copy"; try { e.dataTransfer.setData("text/plain", t.dataset.key || t.dataset.ovl); } catch (_) {} });
+$("blWs").addEventListener("dragover", (e) => { if (BL.dragKey || BL.dragOvl) e.preventDefault(); });
+$("blWs").addEventListener("drop", (e) => {
+  if (!BL.dragKey && !BL.dragOvl) return; e.preventDefault();
+  const at = blToLayout(e), k = BL.dragKey, o = BL.dragOvl; BL.dragKey = BL.dragOvl = null;
+  if (o) blAddOverlay(o, at); else blAdd(k, at);
+});
 $("blWsIn").addEventListener("pointerdown", blPointerDown);
 $("blWsIn").addEventListener("pointermove", blPointerMove);
 $("blWsIn").addEventListener("pointerup", blPointerUp);
@@ -2253,11 +2271,14 @@ function blTurn(by) {
   b.rot = ((b.rot || 0) + by) % 360;
   blSnap(s.i); blDraw();
 }
-$("blRot").addEventListener("click", () => blTurn(90));
-$("blRev").addEventListener("click", () => blTurn(180));
+$("blRot").addEventListener("click", () => BL.sel?.t === "o" ? blTurnOverlay(1) : blTurn(90));
+$("blRev").addEventListener("click", () => BL.sel?.t === "o" ? blTurnOverlay(3) : blTurn(180));
 $("blDel").addEventListener("click", () => {
-  const s = BL.sel; if (!s) return;
-  (s.t === "b" ? BL.layout.boards : BL.layout.shades).splice(s.i, 1); BL.sel = null; blDraw();
+  const s = BL.sel; if (!s) return; const L = BL.layout;
+  if (s.t === "b") { const id = L.boards[s.i].id; L.boards.splice(s.i, 1); L.overlays = L.overlays.filter(o => o.bid !== id); }
+  else if (s.t === "o") L.overlays.splice(s.i, 1);
+  else L.shades.splice(s.i, 1);
+  BL.sel = null; blDraw();
 });
 $("blShade").addEventListener("click", () => {
   if (!BL.layout.boards.length) { toast("Add a board first."); return; }
@@ -2278,6 +2299,7 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") { blClose(); e.stopPropagation(); }
   else if ((e.key === "Delete" || e.key === "Backspace") && BL.sel) { e.preventDefault(); $("blDel").click(); }
   else if ((e.key === "r" || e.key === "R") && BL.sel?.t === "b") { e.preventDefault(); blTurn(90); }
+  else if ((e.key === "r" || e.key === "R") && BL.sel?.t === "o") { e.preventDefault(); blTurnOverlay(e.shiftKey ? -1 : 1); }
 }, true);
 window.addEventListener("resize", () => { if (!$("blDlg").hidden) blDraw(); });
 
