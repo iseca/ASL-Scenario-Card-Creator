@@ -453,7 +453,7 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 .bllist.ovl .bltile span { text-align: center; }
 .blb.sel { box-shadow: 0 0 0 3px var(--edit); z-index: 2; }
 .blb.missing { display: flex; align-items: center; justify-content: center; background: #f4d7d7; color: #6d1b1b; font-weight: 600; }
-.bll { position: absolute; background: #ffffffd9; padding: 1px 7px; border-radius: 2px; font-weight: 700; font-size: 13px; pointer-events: none; white-space: nowrap; }
+.bll { position: absolute; z-index: 5; background: #ffffffd9; padding: 1px 7px; border-radius: 2px; font-weight: 700; font-size: 13px; pointer-events: none; white-space: nowrap; }
 .bls { position: absolute; background: rgba(205,25,25,.38); outline: 1px dashed #fff8; cursor: move; z-index: 3; }
 .bls.sel { outline: 2px solid var(--edit); }
 .blh { position: absolute; right: -6px; bottom: -6px; width: 12px; height: 12px; background: #fff; border: 2px solid var(--edit); border-radius: 2px; cursor: nwse-resize; }
@@ -1247,7 +1247,9 @@ async function blDraw() {
     }
     parts.push(`<div class="blb${sel ? " sel" : ""}" data-i="${i}" style="left:${X(b.x)}px;top:${Y(b.y)}px;width:${bx.w * s}px;height:${bx.h * s}px">
       <div class="blin" style="width:${info.w * s}px;height:${info.h * s}px;transform:translate(-50%,-50%) rotate(${b.rot || 0}deg)"><img class="bimg" src="${BOARDS.urlSync(b.key) || info.thumb}" alt="" draggable="false"></div>
-      ${L.labels ? (() => { const p = blLabelSpot(b, info); return `<span class="bll" style="left:${(p.x - b.x) * s}px;top:${(p.y - b.y) * s}px;transform:translate(${-p.ax * 100}%,${-p.ay * 100}%)">${esc(b.name)}</span>`; })() : ""}</div>`);
+      </div>`);
+    /* board numbers float above the red shading, like the overlay IDs */
+    if (L.labels) { const p = blLabelSpot(b, info); top.push(`<span class="bll" style="left:${X(p.x)}px;top:${Y(p.y)}px;transform:translate(${-p.ax * 100}%,${-p.ay * 100}%)">${esc(b.name)}</span>`); }
   });
   parts.push(...mid);
   L.shades.forEach((r, i) => {

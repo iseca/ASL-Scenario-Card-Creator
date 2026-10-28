@@ -379,7 +379,9 @@ async function blDraw() {
     }
     parts.push(`<div class="blb${sel ? " sel" : ""}" data-i="${i}" style="left:${X(b.x)}px;top:${Y(b.y)}px;width:${bx.w * s}px;height:${bx.h * s}px">
       <div class="blin" style="width:${info.w * s}px;height:${info.h * s}px;transform:translate(-50%,-50%) rotate(${b.rot || 0}deg)"><img class="bimg" src="${BOARDS.urlSync(b.key) || info.thumb}" alt="" draggable="false"></div>
-      ${L.labels ? (() => { const p = blLabelSpot(b, info); return `<span class="bll" style="left:${(p.x - b.x) * s}px;top:${(p.y - b.y) * s}px;transform:translate(${-p.ax * 100}%,${-p.ay * 100}%)">${esc(b.name)}</span>`; })() : ""}</div>`);
+      </div>`);
+    /* board numbers float above the red shading, like the overlay IDs */
+    if (L.labels) { const p = blLabelSpot(b, info); top.push(`<span class="bll" style="left:${X(p.x)}px;top:${Y(p.y)}px;transform:translate(${-p.ax * 100}%,${-p.ay * 100}%)">${esc(b.name)}</span>`); }
   });
   parts.push(...mid);
   L.shades.forEach((r, i) => {
