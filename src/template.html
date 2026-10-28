@@ -236,6 +236,7 @@ output.count { min-width: 22px; text-align: center; font: 700 15px var(--f-num);
 .grp:hover > .gctl, .grp:focus-within > .gctl,
 .ob:hover > .pctl, .ob:focus-within > .pctl,
 .trl:hover > .swap, .trl:focus-within > .swap,
+.zone:hover > .zb, .zone:focus-within > .zb,
 .zone:hover > .zx, .zone:focus-within > .zx { opacity: 1; visibility: visible; transition-delay: 0s; z-index: 7; }
 .sctl { top: -26px; left: 50%; transform: translateX(-50%); padding: 0 4px 8px; }
 .sctl button { padding: 4px 7px; font-size: 11.5px; }
@@ -243,6 +244,7 @@ output.count { min-width: 22px; text-align: center; font: 700 15px var(--f-num);
 .pctl { bottom: -13px; right: 8px; padding-top: 6px; }
 .swap { right: 4px; top: 50%; transform: translateY(-50%); }
 .zx { top: 2px; right: 2px; }
+.zone .zb { position: absolute; left: 2px; bottom: 2px; }
 .zone .zx { position: absolute; }
 .addslot.ctl-like { opacity: 0; }
 .grp:hover .addslot, .grp:focus-within .addslot, .addslot:focus-visible, .strip.dragover .addslot, .strip.empty .addslot { opacity: 1; }
@@ -410,6 +412,35 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 .palmsg { padding: 14px; color: var(--muted); }
 .grp.paltarget { outline: 2px solid var(--edit); outline-offset: 3px; border-radius: 2px; }
 .sheet.exporting .grp.paltarget { outline: none; }
+/* ---------- board layout editor ---------- */
+.bldlg { position: fixed; inset: 0; z-index: 40; background: var(--desk); display: flex; flex-direction: column; font: 13px var(--f-ui); color: var(--ink); }
+.bldlg[hidden] { display: none; }
+.blhd { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--rail); border-bottom: 1px solid var(--line); }
+.blhd b { font-size: 15px; } .blhd .ver { color: var(--muted); font-size: 12px; } .blhd .sp, .bltools .sp { flex: 1; }
+.blmain { flex: 1; min-height: 0; display: grid; grid-template-columns: 290px minmax(0, 1fr); }
+.blside { border-right: 1px solid var(--line); background: var(--rail); display: flex; flex-direction: column; min-height: 0; }
+#blListW { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+#blListW[hidden] { display: none; }
+#blQ { margin: 10px 12px; height: 30px; border: 1px solid var(--line); border-radius: 4px; padding: 0 8px; font: 13px var(--f-ui); }
+.bllist { flex: 1; overflow: auto; padding: 0 12px 16px; display: grid; grid-template-columns: 1fr; gap: 8px; align-content: start; }
+.bltile { all: unset; box-sizing: border-box; cursor: grab; display: flex; flex-direction: column; gap: 3px; padding: 4px; border-radius: 6px; }
+.bltile:hover { background: rgba(0,0,0,.06); } .bltile:focus-visible { outline: 2px solid var(--accent); }
+.bltile img { width: 100%; height: auto; max-height: 160px; object-fit: contain; object-position: left; border: 1px solid #0003; background: #fff; }
+.bltile span { font-weight: 600; font-size: 12px; }
+.blright { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.bltools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+.bltools label { display: flex; gap: 6px; align-items: center; margin-left: 6px; }
+.blws { flex: 1; min-height: 0; position: relative; overflow: hidden; background: repeating-conic-gradient(#0000000a 0 25%, transparent 0 50%) 0 0 / 24px 24px; }
+.blwsin { position: absolute; inset: 0; touch-action: none; }
+.blb { position: absolute; overflow: hidden; cursor: move; box-shadow: 0 0 0 1px #0006; background: #fff; }
+.blb img { position: absolute; left: 50%; top: 50%; transform-origin: 50% 50%; pointer-events: none; }
+.blb.sel { box-shadow: 0 0 0 3px var(--edit); z-index: 2; }
+.blb.missing { display: flex; align-items: center; justify-content: center; background: #f4d7d7; color: #6d1b1b; font-weight: 600; }
+.bll { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: #ffffffd9; padding: 1px 8px; border-radius: 3px; font-weight: 700; font-size: 14px; pointer-events: none; }
+.bls { position: absolute; background: rgba(40,40,40,.45); outline: 1px dashed #fff8; cursor: move; z-index: 3; }
+.bls.sel { outline: 2px solid var(--edit); }
+.blh { position: absolute; right: -6px; bottom: -6px; width: 12px; height: 12px; background: #fff; border: 2px solid var(--edit); border-radius: 2px; cursor: nwse-resize; }
+.blused { padding: 8px 12px; border-top: 1px solid var(--line); background: var(--rail); font-weight: 600; }
 #tblPop { width: 360px; }
 #tblPop .note { max-width: none; }
 .pop .grid2 { display: grid; grid-template-columns: auto 64px; gap: 6px 10px; align-items: center; }
@@ -437,6 +468,7 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
     </div>
     <div class="tg" role="group" aria-label="Counters">
       <button type="button" class="btn" id="bPal" title="Pick counters from your VASL module and add them to an OB row">Counter palette</button>
+      <button type="button" class="btn" id="bBoards" title="Lay out VASL boards for the board configuration">Board layout</button>
     </div>
     <div class="tg" role="group" aria-label="Card file">
       <button type="button" class="btn" id="bUndo" title="Undo (⌘Z / Ctrl+Z)" disabled>↶ Undo</button>
@@ -519,8 +551,8 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
       <button type="button" class="btn only-sasl" data-tbl="border" title="Hide or show the border lines of the cell(s), e.g. a blank spacer column">Lines</button>
     </div>
   </div>
-  <p class="hint only-sasl">Click any text on the card to edit it, including the section headings. Drop images onto the logo, badge, photo and mapboard boxes. Hover a section for its controls (move it, start it in the right column, remove it); hover the mission tables to add or remove rows and columns. Press Enter in a bulleted or numbered section to start the next item. In any text, Outline • Bullet adds or removes a bullet; Tab / Shift+Tab (or → / ←) move it a level in or out. <b>Counter palette</b> adds counters from your VASL module to an OB row (hover the row, click <b>Counters…</b>).</p>
-  <p class="hint only-asl">Click any text on the card to edit it. Drop images onto the photo, counter boxes, board box, logo and side art, or click a box to choose a file. Hover a counter, counter row or OB panel for its controls; drag counters to reorder them. Click a turn box to mark reinforcements, shading or a half-turn game end. <b>Counter palette</b> adds counters straight from your VASL module: hover a counter row and click <b>Counters…</b>, then click or drag counters into it.</p>
+  <p class="hint only-sasl">Click any text on the card to edit it, including the section headings. Drop images onto the logo, badge, photo and mapboard boxes. Hover a section for its controls (move it, start it in the right column, remove it); hover the mission tables to add or remove rows and columns. Press Enter in a bulleted or numbered section to start the next item. In any text, Outline • Bullet adds or removes a bullet; Tab / Shift+Tab (or → / ←) move it a level in or out. <b>Counter palette</b> adds counters from your VASL module to an OB row (hover the row, click <b>Counters…</b>); <b>Board layout</b> builds the mapboard diagram from your VASL boards.</p>
+  <p class="hint only-asl">Click any text on the card to edit it. Drop images onto the photo, counter boxes, board box, logo and side art, or click a box to choose a file. Hover a counter, counter row or OB panel for its controls; drag counters to reorder them. Click a turn box to mark reinforcements, shading or a half-turn game end. <b>Counter palette</b> adds counters straight from your VASL module: hover a counter row and click <b>Counters…</b>, then click or drag counters into it. <b>Board layout</b> (or hover the board box) builds the board configuration from your VASL boards.</p>
 </header>
 
 <main class="stage" id="stage">
@@ -572,6 +604,34 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 <input type="file" id="cardPick" accept=".json,application/json" hidden>
 <input type="file" id="symFile" accept="image/*" hidden>
 <input type="file" id="vmodPick" accept=".vmod,.zip,application/zip" hidden>
+<input type="file" id="boardsPick" webkitdirectory directory multiple hidden>
+<div class="bldlg" id="blDlg" hidden role="dialog" aria-label="Board layout">
+  <div class="blhd"><b>Board layout</b><span class="ver" id="blCount"></span><span class="sp"></span>
+    <button type="button" class="btn" id="blLoad">Load boards folder…</button><button type="button" class="btn" id="blCancel">Cancel</button><button type="button" class="btn primary" id="blOk">Place on card</button></div>
+  <div class="blmain">
+    <div class="blside">
+      <div class="palempty" id="blEmpty">
+        <p>Choose your VASL <b>boards</b> folder (for example <b>VASSAL Mods/VASL/boards</b>). Each board's picture is read here in your browser and kept with your saved cards; nothing is uploaded.</p>
+        <p>When you get new or updated boards, load the folder again.</p>
+        <button type="button" class="btn primary" id="blLoad2">Load boards folder…</button>
+      </div>
+      <div id="blListW" hidden><input type="search" id="blQ" placeholder="Search boards, e.g. 24 or RB" aria-label="Search boards"><div class="bllist" id="blList"></div></div>
+    </div>
+    <div class="blright">
+      <div class="bltools">
+        <button type="button" class="btn" id="blRot" title="Turn the selected board a quarter turn (R)">Rotate 90°</button>
+        <button type="button" class="btn" id="blRev" title="Turn the selected board end for end">Reverse</button>
+        <button type="button" class="btn" id="blShade" title="Add a shaded area to show what is out of play; drag it, and drag its corner to size it">+ Shaded area</button>
+        <button type="button" class="btn" id="blDel" title="Remove the selected board or shaded area (Delete)">Remove</button>
+        <label><input type="checkbox" id="blLabels"> Board numbers</label>
+        <span class="sp"></span>
+        <button type="button" class="btn" id="blNote" title="Write the list of boards into the card's board note">Put list in board note</button>
+      </div>
+      <div class="blws" id="blWs"><div class="blwsin" id="blWsIn"></div></div>
+      <div class="blused" id="blUsed"></div>
+    </div>
+  </div>
+</div>
 <aside class="pal" id="pal" hidden aria-label="Counter palette">
   <div class="palh"><b>Counter palette</b><span class="ver" id="palVer"></span><span class="sp"></span><button type="button" class="btn" id="palLoad">Load VASL module…</button><button type="button" class="palx" id="palClose" aria-label="Close the counter palette">×</button></div>
   <div class="palempty" id="palEmpty">
@@ -594,6 +654,7 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 /*__VASL_JS__*/
 (() => {
 "use strict";
+/*__BOARDS_JS__*/
 const W = 816, H = 1056;
 const SAMPLE = __SAMPLE__;
 
@@ -933,11 +994,13 @@ const sideSym = (side) => symHTML(state.sides[side]);
 let toastT = 0;
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 2600); }
 
-function zone(path, cls, label) {
+function zone(path, cls, label, extra = "") {
   const img = get(path);
   return `<div class="zone ${cls}${img ? " has" : ""}" data-zone="${path}" tabindex="0" role="button" aria-label="${esc(label)}: drop an image or press Enter to choose one">${
-    img ? `<img src="${img}" alt="" draggable="false"><span class="ctl zx"><button type="button" data-act="clearImg" data-p="${path}" aria-label="Remove image">×</button></span>` : `<span class="zl">${esc(label)}</span>`}</div>`;
+    img ? `<img src="${img}" alt="" draggable="false"><span class="ctl zx"><button type="button" data-act="clearImg" data-p="${path}" aria-label="Remove image">×</button></span>` : `<span class="zl">${esc(label)}</span>`}${extra}</div>`;
 }
+/* the "Board layout…" button that sits on a board-configuration box */
+const boardBtn = (path) => `<span class="ctl zb"><button type="button" data-act="boardsFor" data-p="${path}" title="Lay out VASL boards and put the result here">Board layout…</button></span>`;
 function ed(path, cls, ph, opts = {}) {
   const v = get(path) ?? "";
   const tag = opts.inline ? "span" : "div";
@@ -1020,7 +1083,7 @@ function render() {
         </div>
         <div class="boardw">
           <div class="north">${NORTH}</div>
-          ${zone("board", "board", "Board configuration image")}
+          ${zone("board", "board", "Board configuration image", boardBtn("board"))}
           ${ed("boardNote", "bnote", "Board note (optional)")}
         </div>
       </div>
@@ -1080,7 +1143,7 @@ function secHTML(sc, i) {
     case "ob": return `<div class="${cls} block obs">
       <div class="obh"><span class="obsw" title="Choose this OB's nationality symbol"><span class="sym">${symHTML(sc.nat)}</span><select aria-label="Nationality for this OB" data-nat="${sp}.nat">${nationOptions(sc.nat)}</select></span>${ed(sp + ".head", "sech", "FRIENDLY OB:", { inline: true, single: true })}</div>
       <div class="grps">${sc.groups.map((g, gi) => groupHTML(`${sp}.groups.${gi}`, gi, g)).join("")}</div>${ctl}</div>`;
-    case "config": return `<div class="${cls}"><div class="cfg">${ed(sp + ".head", "cfgl", "Initial Mapboard Configuration:", { single: false })}<div class="north${sc.ndir === "right" ? " right" : ""}" data-act="nDir" data-p="${sp}" role="button" tabindex="0" title="Click to point the arrow ${sc.ndir === "right" ? "up" : "right"}" aria-label="North arrow, pointing ${sc.ndir === "right" ? "right" : "up"}. Click to change.">${sc.ndir === "right" ? NORTH_R : NORTH}</div>${zone(sp + ".img", "scfg", "Mapboard diagram")}</div>${ctl}</div>`;
+    case "config": return `<div class="${cls}"><div class="cfg">${ed(sp + ".head", "cfgl", "Initial Mapboard Configuration:", { single: false })}<div class="north${sc.ndir === "right" ? " right" : ""}" data-act="nDir" data-p="${sp}" role="button" tabindex="0" title="Click to point the arrow ${sc.ndir === "right" ? "up" : "right"}" aria-label="North arrow, pointing ${sc.ndir === "right" ? "right" : "up"}. Click to change.">${sc.ndir === "right" ? NORTH_R : NORTH}</div>${zone(sp + ".img", "scfg", "Mapboard diagram", boardBtn(sp + ".img"))}</div>${ctl}</div>`;
   }
   return "";
 }
@@ -1445,6 +1508,7 @@ function act(a, p, btn) {
       run(); return;
     }
     case "palFor": openPal(p); return;
+    case "boardsFor": openBoards(p); return;
     case "obAdd": { const i = parentOf(p).idx; state.sections.splice(i + 1, 0, newOB()); break; }
     case "mtRow+": { const t = get(p).table; t.rows.push(Array(t.cols.length * 2).fill("")); break; }
     case "mtRow-": { const t = get(p).table; if (t.rows.length > 1) t.rows.pop(); break; }
@@ -2156,6 +2220,66 @@ $("palGrid").addEventListener("dragend", () => { palDrag = null; });
 /* clicking in a counter row makes it the palette's target */
 pages.addEventListener("click", (e) => { if ($("pal").hidden) return; const g = e.target.closest?.(".grp[data-g]"); if (g) setPalTarget(g.dataset.g); }, true);
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("pal").hidden && !document.querySelector(".pop:not([hidden])")) closePal(); });
+
+/* ---------- board layout wiring ---------- */
+$("bBoards").addEventListener("click", () => {
+  if (!isSasl()) { openBoards("board"); return; }
+  const i = state.sections.findIndex(x => x.kind === "config");
+  if (i < 0) { toast("Add an Initial Mapboard Configuration section first (Add section)."); return; }
+  openBoards(`sections.${i}.img`);
+});
+for (const id of ["blLoad", "blLoad2"]) $(id).addEventListener("click", () => { const f = $("boardsPick"); f.value = ""; f.click(); });
+$("boardsPick").addEventListener("change", async (e) => {
+  const files = e.target.files; if (!files || !files.length) return;
+  if (typeof JSZip === "undefined") { toast("The zip reader didn't load (are you offline?)."); return; }
+  try {
+    const n = await BOARDS.loadFolder(files, (d, t) => { $("blCount").textContent = `Reading boards… ${d} of ${t}`; });
+    BOARDS._idx = await BOARDS.getIndex(); blDrawList(); blDraw();
+    toast(n ? `Loaded ${n} boards.` : "No VASL boards were found in that folder.");
+  } catch (err) { toast("The boards couldn't be read: " + err.message); }
+});
+$("blQ").addEventListener("input", (e) => { BL.q = e.target.value; blDrawList(); });
+$("blList").addEventListener("click", (e) => { const t = e.target.closest(".bltile"); if (t) blAdd(t.dataset.key); });
+$("blList").addEventListener("dragstart", (e) => { const t = e.target.closest(".bltile"); if (!t) return; BL.dragKey = t.dataset.key; e.dataTransfer.effectAllowed = "copy"; try { e.dataTransfer.setData("text/plain", t.dataset.key); } catch (_) {} });
+$("blWs").addEventListener("dragover", (e) => { if (BL.dragKey) e.preventDefault(); });
+$("blWs").addEventListener("drop", (e) => { if (!BL.dragKey) return; e.preventDefault(); const k = BL.dragKey; BL.dragKey = null; blAdd(k, blToLayout(e)); });
+$("blWsIn").addEventListener("pointerdown", blPointerDown);
+$("blWsIn").addEventListener("pointermove", blPointerMove);
+$("blWsIn").addEventListener("pointerup", blPointerUp);
+$("blWsIn").addEventListener("pointercancel", blPointerUp);
+function blTurn(by) {
+  const s = BL.sel; if (s?.t !== "b") return; const b = BL.layout.boards[s.i], info = blInfo(b.key); if (!info) return;
+  /* turning keeps the board's top-left corner where it was, so it stays against its neighbours */
+  b.rot = ((b.rot || 0) + by) % 360;
+  blSnap(s.i); blDraw();
+}
+$("blRot").addEventListener("click", () => blTurn(90));
+$("blRev").addEventListener("click", () => blTurn(180));
+$("blDel").addEventListener("click", () => {
+  const s = BL.sel; if (!s) return;
+  (s.t === "b" ? BL.layout.boards : BL.layout.shades).splice(s.i, 1); BL.sel = null; blDraw();
+});
+$("blShade").addEventListener("click", () => {
+  if (!BL.layout.boards.length) { toast("Add a board first."); return; }
+  const ext = blExtent(), w = (ext.x1 - ext.x0) / 4, g = blHexAt(ext.x1 - 2, ext.y0 + 2);
+  const r = { x: blSnapTo(ext.x1 - w, g.ox, g.sx), y: ext.y0, w: 0, h: ext.y1 - ext.y0 }; r.w = ext.x1 - r.x;
+  BL.layout.shades.push(r); BL.sel = { t: "s", i: BL.layout.shades.length - 1 }; blDraw();
+});
+$("blLabels").addEventListener("change", (e) => { BL.layout.labels = e.target.checked; blDraw(); });
+$("blNote").addEventListener("click", () => {
+  if (!BL.layout.boards.length) return;
+  BL.note = true; toast("The board list will go into the board note when you click Place on card.");
+});
+$("blCancel").addEventListener("click", blClose);
+$("blOk").addEventListener("click", blDone);
+document.addEventListener("keydown", (e) => {
+  if ($("blDlg").hidden) return;
+  if (e.target.closest?.("input, textarea, select")) return;
+  if (e.key === "Escape") { blClose(); e.stopPropagation(); }
+  else if ((e.key === "Delete" || e.key === "Backspace") && BL.sel) { e.preventDefault(); $("blDel").click(); }
+  else if ((e.key === "r" || e.key === "R") && BL.sel?.t === "b") { e.preventDefault(); blTurn(90); }
+}, true);
+window.addEventListener("resize", () => { if (!$("blDlg").hidden) blDraw(); });
 
 async function boot(data) {
   await histLoad();

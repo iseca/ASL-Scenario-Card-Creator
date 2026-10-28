@@ -10,6 +10,7 @@ import datetime, os
 ver = open('/home/claude/asl/src/VERSION').read().strip()
 date = os.environ.get('BUILD_DATE') or datetime.date.today().isoformat()
 tpl = tpl.replace('/*__VASL_JS__*/', open('/home/claude/asl/src/vasl.js', encoding='utf-8').read())
+tpl = tpl.replace('/*__BOARDS_JS__*/', open('/home/claude/asl/src/boards.js', encoding='utf-8').read())
 out = tpl.replace('__SAMPLE__', js).replace('__APP_VERSION__', ver).replace('__APP_DATE__', date)
 open('/home/claude/asl/asl-scenario-card-maker.html', 'w', encoding='utf-8').write(out)
 # the deliverable: a complete page, plus a copy named with its version

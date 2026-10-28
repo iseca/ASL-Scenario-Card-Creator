@@ -5,6 +5,16 @@ The version number shows next to the title in the app's toolbar, and cards saved
 
 Numbering: the second number goes up for each set of changes (1.0 → 1.1 → 1.2 …); the first number goes up for a big change such as a new template.
 
+## v1.3 — 2026-10-28
+- **Board layout from your VASL boards.** Click **Board layout** in the toolbar (or hover the board box on the card and click **Board layout…**). The first time, click **Load boards folder…** and choose your VASL `boards` folder; each board's picture is read in your browser and kept in its storage (nothing is uploaded). Load the folder again whenever you get new or updated boards.
+  - Board list with pictures and a search box (240 board files: geomorphic, Action Pack, HASL maps, bundles such as Festung Budapest).
+  - Click a board to add it beside the others, or drag it into place. Boards snap edge to edge.
+  - **Rotate 90°** (R) and **Reverse** (end for end); **Remove** (Delete).
+  - **+ Shaded area** darkens part of the layout to show it is out of play; drag it and drag its corner to size it. It snaps to half hexes and only darkens the boards.
+  - **Board numbers** printed on the boards (on/off). The bar along the bottom lists the boards in use, e.g. "Boards in use: 24, 3 (reversed), 44"; **Put list in board note** copies it into the ASL card's board note.
+  - **Place on card** draws the layout into the ASL board configuration box or the SASL Initial Mapboard Configuration. The layout is saved with the card, so the button reopens it for changes. Undo works on it.
+- Board names drop leading zeros ("01" shows as "1").
+
 ## v1.2 — 2026-10-28
 - **Counter palette from VASL.** Load your VASL module (.vmod) once with **Counter palette → Load VASL module…**; it is read in your browser and kept in the browser's storage (nothing is uploaded, and the counter art is not built into this file).
   - Counters are listed by nationality (the 20 VASL O/B tabs) and VASL's own groups (SQ, HS, SMC, SW, Gun, Veh, Air, Other), with a search box.

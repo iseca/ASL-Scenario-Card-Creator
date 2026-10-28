@@ -238,6 +238,7 @@ output.count { min-width: 22px; text-align: center; font: 700 15px var(--f-num);
 .grp:hover > .gctl, .grp:focus-within > .gctl,
 .ob:hover > .pctl, .ob:focus-within > .pctl,
 .trl:hover > .swap, .trl:focus-within > .swap,
+.zone:hover > .zb, .zone:focus-within > .zb,
 .zone:hover > .zx, .zone:focus-within > .zx { opacity: 1; visibility: visible; transition-delay: 0s; z-index: 7; }
 .sctl { top: -26px; left: 50%; transform: translateX(-50%); padding: 0 4px 8px; }
 .sctl button { padding: 4px 7px; font-size: 11.5px; }
@@ -245,6 +246,7 @@ output.count { min-width: 22px; text-align: center; font: 700 15px var(--f-num);
 .pctl { bottom: -13px; right: 8px; padding-top: 6px; }
 .swap { right: 4px; top: 50%; transform: translateY(-50%); }
 .zx { top: 2px; right: 2px; }
+.zone .zb { position: absolute; left: 2px; bottom: 2px; }
 .zone .zx { position: absolute; }
 .addslot.ctl-like { opacity: 0; }
 .grp:hover .addslot, .grp:focus-within .addslot, .addslot:focus-visible, .strip.dragover .addslot, .strip.empty .addslot { opacity: 1; }
@@ -412,6 +414,35 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 .palmsg { padding: 14px; color: var(--muted); }
 .grp.paltarget { outline: 2px solid var(--edit); outline-offset: 3px; border-radius: 2px; }
 .sheet.exporting .grp.paltarget { outline: none; }
+/* ---------- board layout editor ---------- */
+.bldlg { position: fixed; inset: 0; z-index: 40; background: var(--desk); display: flex; flex-direction: column; font: 13px var(--f-ui); color: var(--ink); }
+.bldlg[hidden] { display: none; }
+.blhd { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--rail); border-bottom: 1px solid var(--line); }
+.blhd b { font-size: 15px; } .blhd .ver { color: var(--muted); font-size: 12px; } .blhd .sp, .bltools .sp { flex: 1; }
+.blmain { flex: 1; min-height: 0; display: grid; grid-template-columns: 290px minmax(0, 1fr); }
+.blside { border-right: 1px solid var(--line); background: var(--rail); display: flex; flex-direction: column; min-height: 0; }
+#blListW { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+#blListW[hidden] { display: none; }
+#blQ { margin: 10px 12px; height: 30px; border: 1px solid var(--line); border-radius: 4px; padding: 0 8px; font: 13px var(--f-ui); }
+.bllist { flex: 1; overflow: auto; padding: 0 12px 16px; display: grid; grid-template-columns: 1fr; gap: 8px; align-content: start; }
+.bltile { all: unset; box-sizing: border-box; cursor: grab; display: flex; flex-direction: column; gap: 3px; padding: 4px; border-radius: 6px; }
+.bltile:hover { background: rgba(0,0,0,.06); } .bltile:focus-visible { outline: 2px solid var(--accent); }
+.bltile img { width: 100%; height: auto; max-height: 160px; object-fit: contain; object-position: left; border: 1px solid #0003; background: #fff; }
+.bltile span { font-weight: 600; font-size: 12px; }
+.blright { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.bltools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+.bltools label { display: flex; gap: 6px; align-items: center; margin-left: 6px; }
+.blws { flex: 1; min-height: 0; position: relative; overflow: hidden; background: repeating-conic-gradient(#0000000a 0 25%, transparent 0 50%) 0 0 / 24px 24px; }
+.blwsin { position: absolute; inset: 0; touch-action: none; }
+.blb { position: absolute; overflow: hidden; cursor: move; box-shadow: 0 0 0 1px #0006; background: #fff; }
+.blb img { position: absolute; left: 50%; top: 50%; transform-origin: 50% 50%; pointer-events: none; }
+.blb.sel { box-shadow: 0 0 0 3px var(--edit); z-index: 2; }
+.blb.missing { display: flex; align-items: center; justify-content: center; background: #f4d7d7; color: #6d1b1b; font-weight: 600; }
+.bll { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: #ffffffd9; padding: 1px 8px; border-radius: 3px; font-weight: 700; font-size: 14px; pointer-events: none; }
+.bls { position: absolute; background: rgba(40,40,40,.45); outline: 1px dashed #fff8; cursor: move; z-index: 3; }
+.bls.sel { outline: 2px solid var(--edit); }
+.blh { position: absolute; right: -6px; bottom: -6px; width: 12px; height: 12px; background: #fff; border: 2px solid var(--edit); border-radius: 2px; cursor: nwse-resize; }
+.blused { padding: 8px 12px; border-top: 1px solid var(--line); background: var(--rail); font-weight: 600; }
 #tblPop { width: 360px; }
 #tblPop .note { max-width: none; }
 .pop .grid2 { display: grid; grid-template-columns: auto 64px; gap: 6px 10px; align-items: center; }
@@ -432,13 +463,14 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 
 <header class="bar">
   <div class="bar-top">
-    <div class="brand"><span class="mark" id="brandMark">ASL</span><span>Scenario Card Maker</span><span class="ver" title="Version 1.2, built 2026-10-28">v1.2</span></div>
+    <div class="brand"><span class="mark" id="brandMark">ASL</span><span>Scenario Card Maker</span><span class="ver" title="Version 1.3, built 2026-10-28">v1.3</span></div>
     <div class="tg" role="group" aria-label="Template">
       <label class="lbl" for="tplSel">Template</label>
       <select id="tplSel" class="tplsel"><option value="asl">ASL scenario card</option><option value="sasl">SASL mission card</option></select>
     </div>
     <div class="tg" role="group" aria-label="Counters">
       <button type="button" class="btn" id="bPal" title="Pick counters from your VASL module and add them to an OB row">Counter palette</button>
+      <button type="button" class="btn" id="bBoards" title="Lay out VASL boards for the board configuration">Board layout</button>
     </div>
     <div class="tg" role="group" aria-label="Card file">
       <button type="button" class="btn" id="bUndo" title="Undo (⌘Z / Ctrl+Z)" disabled>↶ Undo</button>
@@ -521,8 +553,8 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
       <button type="button" class="btn only-sasl" data-tbl="border" title="Hide or show the border lines of the cell(s), e.g. a blank spacer column">Lines</button>
     </div>
   </div>
-  <p class="hint only-sasl">Click any text on the card to edit it, including the section headings. Drop images onto the logo, badge, photo and mapboard boxes. Hover a section for its controls (move it, start it in the right column, remove it); hover the mission tables to add or remove rows and columns. Press Enter in a bulleted or numbered section to start the next item. In any text, Outline • Bullet adds or removes a bullet; Tab / Shift+Tab (or → / ←) move it a level in or out. <b>Counter palette</b> adds counters from your VASL module to an OB row (hover the row, click <b>Counters…</b>).</p>
-  <p class="hint only-asl">Click any text on the card to edit it. Drop images onto the photo, counter boxes, board box, logo and side art, or click a box to choose a file. Hover a counter, counter row or OB panel for its controls; drag counters to reorder them. Click a turn box to mark reinforcements, shading or a half-turn game end. <b>Counter palette</b> adds counters straight from your VASL module: hover a counter row and click <b>Counters…</b>, then click or drag counters into it.</p>
+  <p class="hint only-sasl">Click any text on the card to edit it, including the section headings. Drop images onto the logo, badge, photo and mapboard boxes. Hover a section for its controls (move it, start it in the right column, remove it); hover the mission tables to add or remove rows and columns. Press Enter in a bulleted or numbered section to start the next item. In any text, Outline • Bullet adds or removes a bullet; Tab / Shift+Tab (or → / ←) move it a level in or out. <b>Counter palette</b> adds counters from your VASL module to an OB row (hover the row, click <b>Counters…</b>); <b>Board layout</b> builds the mapboard diagram from your VASL boards.</p>
+  <p class="hint only-asl">Click any text on the card to edit it. Drop images onto the photo, counter boxes, board box, logo and side art, or click a box to choose a file. Hover a counter, counter row or OB panel for its controls; drag counters to reorder them. Click a turn box to mark reinforcements, shading or a half-turn game end. <b>Counter palette</b> adds counters straight from your VASL module: hover a counter row and click <b>Counters…</b>, then click or drag counters into it. <b>Board layout</b> (or hover the board box) builds the board configuration from your VASL boards.</p>
 </header>
 
 <main class="stage" id="stage">
@@ -574,6 +606,34 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 <input type="file" id="cardPick" accept=".json,application/json" hidden>
 <input type="file" id="symFile" accept="image/*" hidden>
 <input type="file" id="vmodPick" accept=".vmod,.zip,application/zip" hidden>
+<input type="file" id="boardsPick" webkitdirectory directory multiple hidden>
+<div class="bldlg" id="blDlg" hidden role="dialog" aria-label="Board layout">
+  <div class="blhd"><b>Board layout</b><span class="ver" id="blCount"></span><span class="sp"></span>
+    <button type="button" class="btn" id="blLoad">Load boards folder…</button><button type="button" class="btn" id="blCancel">Cancel</button><button type="button" class="btn primary" id="blOk">Place on card</button></div>
+  <div class="blmain">
+    <div class="blside">
+      <div class="palempty" id="blEmpty">
+        <p>Choose your VASL <b>boards</b> folder (for example <b>VASSAL Mods/VASL/boards</b>). Each board's picture is read here in your browser and kept with your saved cards; nothing is uploaded.</p>
+        <p>When you get new or updated boards, load the folder again.</p>
+        <button type="button" class="btn primary" id="blLoad2">Load boards folder…</button>
+      </div>
+      <div id="blListW" hidden><input type="search" id="blQ" placeholder="Search boards, e.g. 24 or RB" aria-label="Search boards"><div class="bllist" id="blList"></div></div>
+    </div>
+    <div class="blright">
+      <div class="bltools">
+        <button type="button" class="btn" id="blRot" title="Turn the selected board a quarter turn (R)">Rotate 90°</button>
+        <button type="button" class="btn" id="blRev" title="Turn the selected board end for end">Reverse</button>
+        <button type="button" class="btn" id="blShade" title="Add a shaded area to show what is out of play; drag it, and drag its corner to size it">+ Shaded area</button>
+        <button type="button" class="btn" id="blDel" title="Remove the selected board or shaded area (Delete)">Remove</button>
+        <label><input type="checkbox" id="blLabels"> Board numbers</label>
+        <span class="sp"></span>
+        <button type="button" class="btn" id="blNote" title="Write the list of boards into the card's board note">Put list in board note</button>
+      </div>
+      <div class="blws" id="blWs"><div class="blwsin" id="blWsIn"></div></div>
+      <div class="blused" id="blUsed"></div>
+    </div>
+  </div>
+</div>
 <aside class="pal" id="pal" hidden aria-label="Counter palette">
   <div class="palh"><b>Counter palette</b><span class="ver" id="palVer"></span><span class="sp"></span><button type="button" class="btn" id="palLoad">Load VASL module…</button><button type="button" class="palx" id="palClose" aria-label="Close the counter palette">×</button></div>
   <div class="palempty" id="palEmpty">
@@ -791,6 +851,291 @@ const VASL = (() => {
 
 (() => {
 "use strict";
+/* ---------- VASL board layouts ----------
+   Reads the user's VASL "boards" folder (each board is a zip archive), keeps each board's image in this
+   browser, and lets the user lay boards out (move, rotate, reverse, snap), shade parts that are out of play,
+   then draws the result into the card's board-configuration box. */
+const BOARDS = (() => {
+  const idbKeyIndex = "boards_index", imgKey = (k) => "board_img:" + k;
+  let index = null;                                  /* [{ key, name, file, w, h, cols, rows, version, thumb }] */
+  const imgCache = new Map();                        /* key -> HTMLImageElement */
+
+  async function getIndex() { if (!index) index = (await idb.get(idbKeyIndex)) || []; return index; }
+
+  /* ---- reading the folder ---- */
+  const attr = (tag, a) => { const m = tag.match(new RegExp("\\b" + a + "\\s*=\\s*\"([^\"]*)\"", "i")); return m ? m[1].trim() : ""; };
+  async function openArchive(file) {
+    let z = await JSZip.loadAsync(file);
+    const names = Object.keys(z.files).filter(n => !z.files[n].dir);
+    /* some downloads wrap the board archive in another zip */
+    if (names.length === 1 && !/\.(gif|png|jpe?g|xml|txt)$/i.test(names[0])) {
+      try { z = await JSZip.loadAsync(await z.file(names[0]).async("blob")); } catch (_) {}
+    }
+    return z;
+  }
+  const dims = (blob) => new Promise((res) => { const u = URL.createObjectURL(blob); const im = new Image(); im.onload = () => { res({ w: im.naturalWidth, h: im.naturalHeight, im }); }; im.onerror = () => res(null); im.src = u; });
+  async function thumbOf(im, maxW = 260) {
+    const s = Math.min(1, maxW / im.naturalWidth), c = document.createElement("canvas");
+    c.width = Math.max(1, Math.round(im.naturalWidth * s)); c.height = Math.max(1, Math.round(im.naturalHeight * s));
+    c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+    return c.toDataURL("image/jpeg", 0.8);
+  }
+  /* a download can bundle several board archives (e.g. FBboards.zip holds the four Festung Budapest boards) */
+  async function readBoards(file) {
+    const z = await JSZip.loadAsync(file);
+    const inner = Object.keys(z.files).filter(n => !z.files[n].dir && /(^|\/)bd[^/.]+$/i.test(n));
+    const hasImg = Object.keys(z.files).some(n => /(^|\/)bd[^/]*\.(gif|png|jpe?g)$/i.test(n));
+    if (inner.length && !hasImg) {
+      const out = [];
+      for (const n of inner) {
+        try { const blob = await z.file(n).async("blob"); const f = new File([blob], n.split("/").pop()); const b = await readBoard(f, await JSZip.loadAsync(blob)); if (b) out.push(b); } catch (_) {}
+      }
+      return out;
+    }
+    const b = await readBoard(file); return b ? [b] : [];
+  }
+  async function readBoard(file, zz) {
+    const z = zz || await openArchive(file);
+    const names = Object.keys(z.files).filter(n => !z.files[n].dir);
+    const mdName = names.find(n => /^BoardMetadata(\.xml)?$/i.test(n.split("/").pop()));
+    const md = mdName ? await z.file(mdName).async("string") : "";
+    const tag = (md.match(/<boardMetadata[\s\S]*?>/i) || [""])[0];
+    const base = file.name.replace(/\.zip$/i, "").replace(/^ap_/i, "");
+    let name = attr(tag, "name") || base.replace(/^bd/i, "");
+    if (/^0+\d+$/.test(name)) name = String(+name);            /* "01" → "1", as players say it */
+    let imgName = attr(tag, "boardImageFileName");
+    if (!imgName || !z.file(imgName)) {
+      const want = ("bd" + name).toLowerCase();
+      imgName = names.find(n => /\.(gif|png|jpe?g)$/i.test(n) && n.toLowerCase().replace(/\.(gif|png|jpe?g)$/, "") === want)
+        || names.find(n => /^bd[^/]*\.(gif|png|jpe?g)$/i.test(n)) || "";
+    }
+    if (!imgName) return null;
+    const blob = await z.file(imgName).async("blob");
+    const typed = new Blob([blob], { type: /\.png$/i.test(imgName) ? "image/png" : /\.jpe?g$/i.test(imgName) ? "image/jpeg" : "image/gif" });
+    const d = await dims(typed); if (!d) return null;
+    const cols = +attr(tag, "width") || 33, rows = +attr(tag, "height") || 10;
+    const ap = /^ap_/i.test(file.name);
+    const thumb = await thumbOf(d.im); URL.revokeObjectURL(d.im.src);
+    return { name, label: ap ? name + " (Action Pack)" : name, file: file.name, w: d.w, h: d.h, cols, rows, version: attr(tag, "version"), blob: typed, thumb };
+  }
+  /* files: the folder's File list. onProgress(done, total). Returns the number of boards kept. */
+  async function loadFolder(files, onProgress) {
+    const list = [...files].filter(f => {
+      const rel = f.webkitRelativePath || f.name, parts = rel.split("/");
+      if (parts.length > 2) return false;                       /* skip sub-folders such as overlays */
+      return !/^\./.test(f.name) && !/\.(txt|md|pdf|xml|json|html?)$/i.test(f.name);
+    });
+    const out = new Map(); let done = 0;
+    for (const f of list) {
+      try {
+        for (const b of await readBoards(f)) {
+          const key = b.label.toLowerCase();
+          const prev = out.get(key);
+          /* the same board twice (e.g. "bd1b" and "bd1b.zip"): keep the newer version */
+          if (!prev || (parseFloat(b.version) || 0) > (parseFloat(prev.version) || 0)) {
+            await idb.set(imgKey(key), b.blob);                 /* store the picture now; keep only the details in memory */
+            out.set(key, { key, name: b.name, label: b.label, file: b.file, w: b.w, h: b.h, cols: b.cols, rows: b.rows, version: b.version, thumb: b.thumb });
+          }
+        }
+      } catch (_) { /* not a board archive */ }
+      onProgress?.(++done, list.length);
+    }
+    const next = [...out.values()];
+    next.sort((a, b) => natCmp(a.label, b.label));
+    index = next; imgCache.clear();
+    await idb.set(idbKeyIndex, next);
+    return next.length;
+  }
+  const natCmp = (a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
+  /* a full-size picture for the editor, as an object URL */
+  const urlCache = new Map();
+  async function url(key) {
+    if (urlCache.has(key)) return urlCache.get(key);
+    const p = idb.get(imgKey(key)).then(b => b ? URL.createObjectURL(b) : null); urlCache.set(key, p); return p;
+  }
+  const urlNow = new Map();
+  function urlSync(key) { if (urlNow.has(key)) return urlNow.get(key); url(key).then(u => { if (u && !urlNow.has(key)) { urlNow.set(key, u); if (!$("blDlg").hidden) blDraw(); } }); return null; }
+  async function image(key) {
+    if (imgCache.has(key)) return imgCache.get(key);
+    const p = (async () => { const blob = await idb.get(imgKey(key)); if (!blob) return null; const d = await dims(blob); return d && d.im; })();
+    imgCache.set(key, p); return p;
+  }
+  return { getIndex, loadFolder, image, natCmp, urlSync };
+})();
+
+/* ---------- the board layout editor ---------- */
+const BL = { target: null, layout: null, sel: null, scale: 1, drag: null, q: "" };
+const blBox = (b, info) => { const r = (b.rot || 0) % 180 !== 0; return { w: r ? info.h : info.w, h: r ? info.w : info.h }; };
+const blInfo = (key) => (BOARDS._idx || []).find(x => x.key === key);
+function layoutPathFor(imgPath) { return imgPath === "board" ? "boardLayout" : imgPath.replace(/\.img$/, ".layout"); }
+async function openBoards(imgPath) {
+  BL.target = imgPath;
+  const saved = get(layoutPathFor(imgPath));
+  BL.layout = saved && Array.isArray(saved.boards) ? JSON.parse(JSON.stringify(saved)) : { boards: [], shades: [], labels: true };
+  BL.sel = null; BL.note = false;
+  BOARDS._idx = await BOARDS.getIndex();
+  $("blDlg").hidden = false; document.body.classList.add("blopen");
+  blDrawList(); blDraw();
+}
+function blClose() { $("blDlg").hidden = true; document.body.classList.remove("blopen"); }
+function blDrawList() {
+  const idx = BOARDS._idx || [];
+  $("blCount").textContent = idx.length ? `${idx.length} boards` : "";
+  $("blEmpty").hidden = !!idx.length; $("blListW").hidden = !idx.length;
+  const q = BL.q.trim().toLowerCase();
+  const list = idx.filter(b => !q || (b.label + " " + b.file).toLowerCase().includes(q));
+  $("blList").innerHTML = list.map(b => `<button type="button" class="bltile" data-key="${esc(b.key)}" title="Add board ${esc(b.label)} (${b.cols}×${b.rows} hexes)"><img src="${b.thumb}" alt="" loading="lazy" draggable="false"><span>${esc(b.label)}</span></button>`).join("") || `<p class="palmsg">No boards match.</p>`;
+}
+/* place a new board to the right of the others, lined up with the top of the layout */
+function blAdd(key, at) {
+  const info = blInfo(key); if (!info) return;
+  const L = BL.layout, b = { key, name: info.label, x: 0, y: 0, rot: 0 };
+  if (at) { b.x = at.x - info.w / 2; b.y = at.y - info.h / 2; }
+  else if (L.boards.length) {
+    const ext = blExtent(); b.x = ext.x1; b.y = ext.y0;
+  }
+  L.boards.push(b); BL.sel = { t: "b", i: L.boards.length - 1 };
+  if (at) blSnap(BL.sel.i);
+  blDraw();
+}
+function blExtent() {
+  const L = BL.layout; let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const b of L.boards) { const info = blInfo(b.key); if (!info) continue; const bx = blBox(b, info); x0 = Math.min(x0, b.x); y0 = Math.min(y0, b.y); x1 = Math.max(x1, b.x + bx.w); y1 = Math.max(y1, b.y + bx.h); }
+  for (const s of L.shades) { x0 = Math.min(x0, s.x); y0 = Math.min(y0, s.y); x1 = Math.max(x1, s.x + s.w); y1 = Math.max(y1, s.y + s.h); }
+  if (!isFinite(x0)) return { x0: 0, y0: 0, x1: 1800, y1: 645 };
+  return { x0, y0, x1, y1 };
+}
+/* snap a board's edges to the edges of the other boards when they are close */
+function blSnap(i) {
+  const L = BL.layout, b = L.boards[i], info = blInfo(b.key); if (!info) return;
+  const me = blBox(b, info), tol = 60;
+  let bestX = null, bestY = null;
+  L.boards.forEach((o, j) => {
+    if (j === i) return; const oi = blInfo(o.key); if (!oi) return; const ob = blBox(o, oi);
+    for (const cx of [o.x, o.x + ob.w - me.w, o.x + ob.w, o.x - me.w]) { const d = Math.abs(cx - b.x); if (d < tol && (!bestX || d < bestX.d)) bestX = { v: cx, d }; }
+    for (const cy of [o.y, o.y + ob.h - me.h, o.y + ob.h, o.y - me.h]) { const d = Math.abs(cy - b.y); if (d < tol && (!bestY || d < bestY.d)) bestY = { v: cy, d }; }
+  });
+  if (bestX) b.x = bestX.v; if (bestY) b.y = bestY.v;
+}
+/* shaded areas snap to half hexes of the board underneath (standard boards: 56.25 × 64.5 px hexes) */
+function blHexAt(x, y) {
+  const L = BL.layout;
+  for (const b of L.boards) { const info = blInfo(b.key); if (!info) continue; const bx = blBox(b, info); if (x >= b.x - 1 && x <= b.x + bx.w + 1 && y >= b.y - 1 && y <= b.y + bx.h + 1) {
+    const hw = info.w / Math.max(1, info.cols - 1), hh = info.h / Math.max(1, info.rows); const r = (b.rot || 0) % 180 !== 0;
+    return { ox: b.x, oy: b.y, sx: (r ? hh : hw) / 2, sy: (r ? hw : hh) / 2 };
+  } }
+  return { ox: 0, oy: 0, sx: 28.125, sy: 32.25 };
+}
+const blSnapTo = (v, o, s) => o + Math.round((v - o) / s) * s;
+function blFit() {
+  const ws = $("blWs"), ext = blExtent(), pad = 40;
+  const W = Math.max(1, ext.x1 - ext.x0 + pad * 2), H = Math.max(1, ext.y1 - ext.y0 + pad * 2);
+  BL.scale = Math.min((ws.clientWidth - 8) / W, (ws.clientHeight - 8) / H, 0.6);
+  BL.ox = ext.x0 - pad; BL.oy = ext.y0 - pad;
+}
+function blUsed() {
+  return BL.layout.boards.map(b => b.name + (b.rot === 180 ? " (reversed)" : b.rot === 90 || b.rot === 270 ? " (turned)" : "")).join(", ");
+}
+async function blDraw() {
+  blFit();
+  const L = BL.layout, s = BL.scale, X = (v) => (v - BL.ox) * s, Y = (v) => (v - BL.oy) * s;
+  const parts = [];
+  L.boards.forEach((b, i) => {
+    const info = blInfo(b.key);
+    if (!info) { parts.push(`<div class="blb missing" data-i="${i}" style="left:${X(b.x)}px;top:${Y(b.y)}px;width:${1800 * s}px;height:${645 * s}px">Board ${esc(b.name)} isn't loaded</div>`); return; }
+    const bx = blBox(b, info), sel = BL.sel?.t === "b" && BL.sel.i === i;
+    parts.push(`<div class="blb${sel ? " sel" : ""}" data-i="${i}" style="left:${X(b.x)}px;top:${Y(b.y)}px;width:${bx.w * s}px;height:${bx.h * s}px">
+      <img src="${BOARDS.urlSync(b.key) || info.thumb}" alt="" draggable="false" style="width:${info.w * s}px;height:${info.h * s}px;transform:translate(-50%,-50%) rotate(${b.rot || 0}deg)">
+      ${L.labels ? `<span class="bll">${esc(b.name)}</span>` : ""}</div>`);
+  });
+  L.shades.forEach((r, i) => {
+    const sel = BL.sel?.t === "s" && BL.sel.i === i;
+    parts.push(`<div class="bls${sel ? " sel" : ""}" data-s="${i}" style="left:${X(r.x)}px;top:${Y(r.y)}px;width:${r.w * s}px;height:${r.h * s}px"><span class="blh" data-h="${i}"></span></div>`);
+  });
+  $("blWsIn").innerHTML = parts.join("") || `<p class="palmsg">Click a board on the left to start the layout. Boards snap together when their edges meet.</p>`;
+  $("blUsed").textContent = L.boards.length ? "Boards in use: " + blUsed() : "No boards yet.";
+  $("blRot").disabled = $("blRev").disabled = BL.sel?.t !== "b"; $("blDel").disabled = !BL.sel;
+  $("blNote").hidden = BL.target !== "board"; $("blNote").disabled = !L.boards.length;
+  $("blLabels").checked = !!L.labels;
+}
+/* pointer handling in the workspace: drag boards and shaded areas, resize shaded areas */
+function blToLayout(e) { const r = $("blWsIn").getBoundingClientRect(); return { x: (e.clientX - r.left) / BL.scale + BL.ox, y: (e.clientY - r.top) / BL.scale + BL.oy }; }
+function blPointerDown(e) {
+  const h = e.target.closest(".blh"), sh = e.target.closest(".bls"), bd = e.target.closest(".blb");
+  const p = blToLayout(e);
+  if (h) { const i = +h.dataset.h; BL.sel = { t: "s", i }; BL.drag = { t: "resize", i, p }; }
+  else if (sh) { const i = +sh.dataset.s, r = BL.layout.shades[i]; BL.sel = { t: "s", i }; BL.drag = { t: "s", i, dx: p.x - r.x, dy: p.y - r.y }; }
+  else if (bd) { const i = +bd.dataset.i, b = BL.layout.boards[i]; BL.sel = { t: "b", i }; BL.drag = { t: "b", i, dx: p.x - b.x, dy: p.y - b.y }; }
+  else { BL.sel = null; BL.drag = null; blDraw(); return; }
+  BL.drag.moved = false; BL.drag.scale = BL.scale; BL.drag.ox = BL.ox; BL.drag.oy = BL.oy;
+  $("blWsIn").setPointerCapture?.(e.pointerId);
+  e.preventDefault(); blDraw();
+}
+function blPointerMove(e) {
+  const d = BL.drag; if (!d) return;
+  /* keep the view still while dragging */
+  BL.scale = d.scale; BL.ox = d.ox; BL.oy = d.oy;
+  const r = $("blWsIn").getBoundingClientRect(), p = { x: (e.clientX - r.left) / d.scale + d.ox, y: (e.clientY - r.top) / d.scale + d.oy };
+  const L = BL.layout; d.moved = true;
+  if (d.t === "b") { const b = L.boards[d.i]; b.x = p.x - d.dx; b.y = p.y - d.dy; }
+  if (d.t === "s") { const s = L.shades[d.i]; s.x = p.x - d.dx; s.y = p.y - d.dy; }
+  if (d.t === "resize") { const s = L.shades[d.i]; s.w = Math.max(20, p.x - s.x); s.h = Math.max(20, p.y - s.y); }
+  const el = d.t === "b" ? $("blWsIn").querySelector(`.blb[data-i="${d.i}"]`) : $("blWsIn").querySelector(`.bls[data-s="${d.i}"]`);
+  const o = d.t === "b" ? L.boards[d.i] : L.shades[d.i];
+  if (el) { el.style.left = (o.x - d.ox) * d.scale + "px"; el.style.top = (o.y - d.oy) * d.scale + "px"; if (d.t === "resize") { el.style.width = o.w * d.scale + "px"; el.style.height = o.h * d.scale + "px"; } }
+}
+function blPointerUp() {
+  const d = BL.drag; BL.drag = null; if (!d) return;
+  const L = BL.layout;
+  if (d.t === "b") blSnap(d.i);
+  if (d.t === "s" || d.t === "resize") {
+    const s = L.shades[d.i], g = blHexAt(s.x + 1, s.y + 1);
+    const x1 = blSnapTo(s.x + s.w, g.ox, g.sx), y1 = blSnapTo(s.y + s.h, g.oy, g.sy);
+    s.x = blSnapTo(s.x, g.ox, g.sx); s.y = blSnapTo(s.y, g.oy, g.sy); s.w = Math.max(g.sx, x1 - s.x); s.h = Math.max(g.sy, y1 - s.y);
+  }
+  blDraw();
+}
+/* draw the finished layout into an image for the card */
+async function blRender(maxSide = 1600) {
+  const L = BL.layout; if (!L.boards.length) return null;
+  const ext = blExtent(), W = ext.x1 - ext.x0, H = ext.y1 - ext.y0, s = Math.min(1, maxSide / Math.max(W, H));
+  const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(W * s)); c.height = Math.max(1, Math.round(H * s));
+  const g = c.getContext("2d"); g.imageSmoothingQuality = "high";
+  for (const b of L.boards) {
+    const info = blInfo(b.key), im = info && await BOARDS.image(b.key); if (!im) continue;
+    const bx = blBox(b, info), cx = (b.x - ext.x0 + bx.w / 2) * s, cy = (b.y - ext.y0 + bx.h / 2) * s;
+    g.save(); g.translate(cx, cy); g.rotate((b.rot || 0) * Math.PI / 180); g.drawImage(im, -info.w * s / 2, -info.h * s / 2, info.w * s, info.h * s); g.restore();
+  }
+  /* shading only darkens the boards, never the empty space around them */
+  g.save(); g.beginPath();
+  for (const b of L.boards) { const info = blInfo(b.key); if (!info) continue; const bx = blBox(b, info); g.rect((b.x - ext.x0) * s, (b.y - ext.y0) * s, bx.w * s, bx.h * s); }
+  g.clip(); g.fillStyle = "rgba(40,40,40,.45)";
+  for (const r of L.shades) g.fillRect((r.x - ext.x0) * s, (r.y - ext.y0) * s, r.w * s, r.h * s);
+  g.restore();
+  if (L.labels) {
+    for (const b of L.boards) {
+      const info = blInfo(b.key); if (!info) continue; const bx = blBox(b, info);
+      const fs = Math.max(14, Math.round(Math.min(bx.w, bx.h) * s * 0.16));
+      g.font = `700 ${fs}px Barlow, Arial, sans-serif`; g.textAlign = "center"; g.textBaseline = "middle";
+      const cx = (b.x - ext.x0 + bx.w / 2) * s, cy = (b.y - ext.y0 + bx.h / 2) * s, tw = g.measureText(b.name).width;
+      g.fillStyle = "rgba(255,255,255,.82)"; g.fillRect(cx - tw / 2 - fs * 0.3, cy - fs * 0.62, tw + fs * 0.6, fs * 1.24);
+      g.fillStyle = "#111"; g.fillText(b.name, cx, cy + fs * 0.04);
+    }
+  }
+  /* WebP keeps the see-through corners of odd-shaped layouts at a fraction of PNG's size (PNG where WebP isn't available) */
+  const w = c.toDataURL("image/webp", 0.92);
+  return /^data:image\/webp/.test(w) ? w : c.toDataURL("image/png");
+}
+async function blDone() {
+  const t = BL.target; if (!t) return blClose();
+  if (!BL.layout.boards.length) { set(t, null); set(layoutPathFor(t), null); blClose(); render(); queueSave(); return; }
+  const url = await blRender();
+  if (!url) { toast("The board pictures couldn't be drawn. Try loading the boards folder again."); return; }
+  set(t, url); set(layoutPathFor(t), JSON.parse(JSON.stringify(BL.layout)));
+  if (BL.note && t === "board") state.boardNote = esc("Boards " + blUsed());
+  blClose(); render(); queueSave(); toast("Board layout placed: " + blUsed() + ".");
+}
+
 const W = 816, H = 1056;
 const SAMPLE = {"sid": "ASL SCENARIO KF1", "title": "Fick’s Cycles"};
 
@@ -1130,11 +1475,13 @@ const sideSym = (side) => symHTML(state.sides[side]);
 let toastT = 0;
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 2600); }
 
-function zone(path, cls, label) {
+function zone(path, cls, label, extra = "") {
   const img = get(path);
   return `<div class="zone ${cls}${img ? " has" : ""}" data-zone="${path}" tabindex="0" role="button" aria-label="${esc(label)}: drop an image or press Enter to choose one">${
-    img ? `<img src="${img}" alt="" draggable="false"><span class="ctl zx"><button type="button" data-act="clearImg" data-p="${path}" aria-label="Remove image">×</button></span>` : `<span class="zl">${esc(label)}</span>`}</div>`;
+    img ? `<img src="${img}" alt="" draggable="false"><span class="ctl zx"><button type="button" data-act="clearImg" data-p="${path}" aria-label="Remove image">×</button></span>` : `<span class="zl">${esc(label)}</span>`}${extra}</div>`;
 }
+/* the "Board layout…" button that sits on a board-configuration box */
+const boardBtn = (path) => `<span class="ctl zb"><button type="button" data-act="boardsFor" data-p="${path}" title="Lay out VASL boards and put the result here">Board layout…</button></span>`;
 function ed(path, cls, ph, opts = {}) {
   const v = get(path) ?? "";
   const tag = opts.inline ? "span" : "div";
@@ -1217,7 +1564,7 @@ function render() {
         </div>
         <div class="boardw">
           <div class="north">${NORTH}</div>
-          ${zone("board", "board", "Board configuration image")}
+          ${zone("board", "board", "Board configuration image", boardBtn("board"))}
           ${ed("boardNote", "bnote", "Board note (optional)")}
         </div>
       </div>
@@ -1277,7 +1624,7 @@ function secHTML(sc, i) {
     case "ob": return `<div class="${cls} block obs">
       <div class="obh"><span class="obsw" title="Choose this OB's nationality symbol"><span class="sym">${symHTML(sc.nat)}</span><select aria-label="Nationality for this OB" data-nat="${sp}.nat">${nationOptions(sc.nat)}</select></span>${ed(sp + ".head", "sech", "FRIENDLY OB:", { inline: true, single: true })}</div>
       <div class="grps">${sc.groups.map((g, gi) => groupHTML(`${sp}.groups.${gi}`, gi, g)).join("")}</div>${ctl}</div>`;
-    case "config": return `<div class="${cls}"><div class="cfg">${ed(sp + ".head", "cfgl", "Initial Mapboard Configuration:", { single: false })}<div class="north${sc.ndir === "right" ? " right" : ""}" data-act="nDir" data-p="${sp}" role="button" tabindex="0" title="Click to point the arrow ${sc.ndir === "right" ? "up" : "right"}" aria-label="North arrow, pointing ${sc.ndir === "right" ? "right" : "up"}. Click to change.">${sc.ndir === "right" ? NORTH_R : NORTH}</div>${zone(sp + ".img", "scfg", "Mapboard diagram")}</div>${ctl}</div>`;
+    case "config": return `<div class="${cls}"><div class="cfg">${ed(sp + ".head", "cfgl", "Initial Mapboard Configuration:", { single: false })}<div class="north${sc.ndir === "right" ? " right" : ""}" data-act="nDir" data-p="${sp}" role="button" tabindex="0" title="Click to point the arrow ${sc.ndir === "right" ? "up" : "right"}" aria-label="North arrow, pointing ${sc.ndir === "right" ? "right" : "up"}. Click to change.">${sc.ndir === "right" ? NORTH_R : NORTH}</div>${zone(sp + ".img", "scfg", "Mapboard diagram", boardBtn(sp + ".img"))}</div>${ctl}</div>`;
   }
   return "";
 }
@@ -1642,6 +1989,7 @@ function act(a, p, btn) {
       run(); return;
     }
     case "palFor": openPal(p); return;
+    case "boardsFor": openBoards(p); return;
     case "obAdd": { const i = parentOf(p).idx; state.sections.splice(i + 1, 0, newOB()); break; }
     case "mtRow+": { const t = get(p).table; t.rows.push(Array(t.cols.length * 2).fill("")); break; }
     case "mtRow-": { const t = get(p).table; if (t.rows.length > 1) t.rows.pop(); break; }
@@ -2187,7 +2535,7 @@ async function snapshot(target = sheet) {
   } finally { target.classList.remove("exporting"); scaler.style.transform = prev; window.scrollTo(sx, sy); }
 }
 async function busy(btn, fn) { const t = btn.textContent; btn.disabled = true; btn.textContent = "Working…"; try { await fn(); } catch (e) { toast(e.message || "Export failed."); } finally { btn.textContent = t; setSaveUI(); } }
-const APP_VERSION = "1.2";
+const APP_VERSION = "1.3";
 $("bSave").addEventListener("click", (e) => busy(e.currentTarget, () => offer(baseName() + ".json", JSON.stringify({ ...state, appVersion: APP_VERSION }))));
 $("bPng").addEventListener("click", (e) => busy(e.currentTarget, async () => {
   const two = !sheet2.hidden;
@@ -2353,6 +2701,66 @@ $("palGrid").addEventListener("dragend", () => { palDrag = null; });
 /* clicking in a counter row makes it the palette's target */
 pages.addEventListener("click", (e) => { if ($("pal").hidden) return; const g = e.target.closest?.(".grp[data-g]"); if (g) setPalTarget(g.dataset.g); }, true);
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("pal").hidden && !document.querySelector(".pop:not([hidden])")) closePal(); });
+
+/* ---------- board layout wiring ---------- */
+$("bBoards").addEventListener("click", () => {
+  if (!isSasl()) { openBoards("board"); return; }
+  const i = state.sections.findIndex(x => x.kind === "config");
+  if (i < 0) { toast("Add an Initial Mapboard Configuration section first (Add section)."); return; }
+  openBoards(`sections.${i}.img`);
+});
+for (const id of ["blLoad", "blLoad2"]) $(id).addEventListener("click", () => { const f = $("boardsPick"); f.value = ""; f.click(); });
+$("boardsPick").addEventListener("change", async (e) => {
+  const files = e.target.files; if (!files || !files.length) return;
+  if (typeof JSZip === "undefined") { toast("The zip reader didn't load (are you offline?)."); return; }
+  try {
+    const n = await BOARDS.loadFolder(files, (d, t) => { $("blCount").textContent = `Reading boards… ${d} of ${t}`; });
+    BOARDS._idx = await BOARDS.getIndex(); blDrawList(); blDraw();
+    toast(n ? `Loaded ${n} boards.` : "No VASL boards were found in that folder.");
+  } catch (err) { toast("The boards couldn't be read: " + err.message); }
+});
+$("blQ").addEventListener("input", (e) => { BL.q = e.target.value; blDrawList(); });
+$("blList").addEventListener("click", (e) => { const t = e.target.closest(".bltile"); if (t) blAdd(t.dataset.key); });
+$("blList").addEventListener("dragstart", (e) => { const t = e.target.closest(".bltile"); if (!t) return; BL.dragKey = t.dataset.key; e.dataTransfer.effectAllowed = "copy"; try { e.dataTransfer.setData("text/plain", t.dataset.key); } catch (_) {} });
+$("blWs").addEventListener("dragover", (e) => { if (BL.dragKey) e.preventDefault(); });
+$("blWs").addEventListener("drop", (e) => { if (!BL.dragKey) return; e.preventDefault(); const k = BL.dragKey; BL.dragKey = null; blAdd(k, blToLayout(e)); });
+$("blWsIn").addEventListener("pointerdown", blPointerDown);
+$("blWsIn").addEventListener("pointermove", blPointerMove);
+$("blWsIn").addEventListener("pointerup", blPointerUp);
+$("blWsIn").addEventListener("pointercancel", blPointerUp);
+function blTurn(by) {
+  const s = BL.sel; if (s?.t !== "b") return; const b = BL.layout.boards[s.i], info = blInfo(b.key); if (!info) return;
+  /* turning keeps the board's top-left corner where it was, so it stays against its neighbours */
+  b.rot = ((b.rot || 0) + by) % 360;
+  blSnap(s.i); blDraw();
+}
+$("blRot").addEventListener("click", () => blTurn(90));
+$("blRev").addEventListener("click", () => blTurn(180));
+$("blDel").addEventListener("click", () => {
+  const s = BL.sel; if (!s) return;
+  (s.t === "b" ? BL.layout.boards : BL.layout.shades).splice(s.i, 1); BL.sel = null; blDraw();
+});
+$("blShade").addEventListener("click", () => {
+  if (!BL.layout.boards.length) { toast("Add a board first."); return; }
+  const ext = blExtent(), w = (ext.x1 - ext.x0) / 4, g = blHexAt(ext.x1 - 2, ext.y0 + 2);
+  const r = { x: blSnapTo(ext.x1 - w, g.ox, g.sx), y: ext.y0, w: 0, h: ext.y1 - ext.y0 }; r.w = ext.x1 - r.x;
+  BL.layout.shades.push(r); BL.sel = { t: "s", i: BL.layout.shades.length - 1 }; blDraw();
+});
+$("blLabels").addEventListener("change", (e) => { BL.layout.labels = e.target.checked; blDraw(); });
+$("blNote").addEventListener("click", () => {
+  if (!BL.layout.boards.length) return;
+  BL.note = true; toast("The board list will go into the board note when you click Place on card.");
+});
+$("blCancel").addEventListener("click", blClose);
+$("blOk").addEventListener("click", blDone);
+document.addEventListener("keydown", (e) => {
+  if ($("blDlg").hidden) return;
+  if (e.target.closest?.("input, textarea, select")) return;
+  if (e.key === "Escape") { blClose(); e.stopPropagation(); }
+  else if ((e.key === "Delete" || e.key === "Backspace") && BL.sel) { e.preventDefault(); $("blDel").click(); }
+  else if ((e.key === "r" || e.key === "R") && BL.sel?.t === "b") { e.preventDefault(); blTurn(90); }
+}, true);
+window.addEventListener("resize", () => { if (!$("blDlg").hidden) blDraw(); });
 
 async function boot(data) {
   await histLoad();
