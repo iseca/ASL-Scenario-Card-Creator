@@ -230,13 +230,15 @@ const OVL_TERRAIN = {
   rr: "Railroads", s: "Sand", sd: "Sand dunes", sh: "Shellholes", sr: "Rubble", st: "Streams", surr: "Sunken railroads",
   rv: "Rivers", sw: "Swamp", v: "Vineyards", w: "Wadis", wd: "Woods", wr: "Wrecks", wt: "Water", x: "Buildings",
 };
-const HASL_MAPS = new Set(["abtf", "brt", "cdp", "dae", "dinant", "er", "fa", "fb", "hc", "ht", "lg", "ls", "ne", "ng", "pb", "pbr", "rbv2", "rileys", "ro", "sa", "sap", "sc", "sg", "st", "votg"]);
+const HASL_MAPS = new Set(["abtf", "brt", "cdp", "dae", "dinant", "er", "fa", "fb", "gt", "hc", "ht", "lg", "ls", "ne", "ng", "pb", "pbr", "rbv2", "rileys", "ro", "sa", "sap", "sc", "sg", "st", "votg"]);
 function blBoardGroup(b) {
   const n = String(b.name);
   if (/^\d+$/.test(n)) return [0, "ASL boards"];
-  if (/dx/i.test(n)) return [1, "Deluxe boards"];
+  /* Deluxe: the large boards a–i, and any "dx" board */
+  if (/dx/i.test(n) || /^[a-i]$/i.test(n)) return [1, "Deluxe boards"];
   if (/^\d+[ab]$/i.test(n)) return [2, "Fortenberry boards"];
-  if (/^[a-z](sk)?$/i.test(n)) return [3, "ASL Starter Kit boards"];
+  /* Starter Kit: j–z, plus the SK versions of lettered boards (gSK, iSK) */
+  if (/^[j-z]$/i.test(n) || /^[a-z]sk$/i.test(n)) return [3, "ASL Starter Kit boards"];
   /* Historical ASL maps; Festung Budapest comes as FB_NE, FB_NW …, and SAP as SaPC, SaPF, SaPN */
   if (HASL_MAPS.has(n.toLowerCase()) || /^fb_/i.test(n) || /^sap[a-z]?$/i.test(n)) return [4, "Historical ASL maps"];
   return [5, "Third-party boards"];
