@@ -185,6 +185,9 @@ output.count { min-width: 22px; text-align: center; font: 700 15px var(--f-num);
 .strip.dragover { outline: 2px dashed var(--edit); outline-offset: 2px; }
 .slot { position: relative; display: flex; flex-direction: column; align-items: center; margin-left: -1px; }
 .slot .cimg { width: 46px; height: 46px; border: 1px solid #111; }
+/* counters taken from VASL already have their own edge */
+.slot .cimg.vasl.has { border: none; }
+.slot .cimg.vasl.has img { object-fit: contain; }
 .slot.l .cimg { width: 58px; height: 58px; }
 .slot .cimg:not(.has) { border: 1px dashed #8f8f8f; }
 .slot .cimg .zl { font-size: 16px; }
@@ -374,6 +377,39 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 .symlist .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .symlist button { all: unset; cursor: pointer; font-size: 12px; color: #b3261e; padding: 2px 6px; border-radius: 4px; }
 .symlist button:hover, .symlist button:focus-visible { background: #fbe9e7; outline: none; }
+/* ---------- VASL counter palette (side drawer) ---------- */
+@media (min-width: 900px) { body.palopen .stage { padding-right: calc(min(420px, 100vw) + 16px); } }
+.pal { position: fixed; right: 0; top: var(--barH, 120px); bottom: 0; width: min(420px, 100vw); z-index: 25; background: var(--rail); border-left: 1px solid var(--line); box-shadow: -6px 0 24px rgba(0,0,0,.18); display: flex; flex-direction: column; font: 13px var(--f-ui); color: var(--ink); }
+.pal[hidden] { display: none; }
+.palh { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.palh b { font-size: 14px; letter-spacing: .03em; }
+.palh .sp { flex: 1; }
+.palh .ver { color: var(--muted); font-size: 12px; }
+.palx { all: unset; cursor: pointer; font: 600 18px/1 var(--f-ui); padding: 2px 6px; border-radius: 4px; }
+.palx:hover { background: rgba(0,0,0,.08); }
+.palx:focus-visible { outline: 2px solid var(--accent); }
+.palctl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px 12px 6px; }
+.palctl select, .palctl input { height: 30px; border: 1px solid var(--line); border-radius: 4px; padding: 0 8px; background: var(--paper-ui, #fff); color: var(--ink); font: 13px var(--f-ui); min-width: 0; }
+.palcats { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 12px 8px; }
+.palcats button { all: unset; cursor: pointer; padding: 3px 8px; border: 1px solid var(--line); border-radius: 12px; font-size: 12px; }
+.palcats button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.palcats button:focus-visible { outline: 2px solid var(--accent); }
+.paltgt { margin: 0 12px 8px; padding: 6px 8px; border-radius: 4px; background: rgba(0,0,0,.05); font-size: 12px; color: var(--muted); }
+.paltgt b { color: var(--ink); }
+.palgrid { flex: 1; overflow: auto; padding: 4px 12px 16px; display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 8px 6px; align-content: start; }
+.palsub { grid-column: 1 / -1; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-top: 6px; }
+.tile { all: unset; box-sizing: border-box; cursor: grab; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px 2px; border-radius: 6px; text-align: center; }
+.tile:hover { background: rgba(0,0,0,.06); }
+.tile:focus-visible { outline: 2px solid var(--accent); }
+.tile .th { width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; }
+.tile .th img { max-width: 60px; max-height: 60px; }
+.tile .th.wait { background: rgba(0,0,0,.05); border-radius: 4px; }
+.tile .nm { font-size: 11px; line-height: 1.2; word-break: break-word; }
+.palempty { padding: 16px 14px; line-height: 1.45; }
+.palempty p { margin: 0 0 10px; }
+.palmsg { padding: 14px; color: var(--muted); }
+.grp.paltarget { outline: 2px solid var(--edit); outline-offset: 3px; border-radius: 2px; }
+.sheet.exporting .grp.paltarget { outline: none; }
 #tblPop { width: 360px; }
 #tblPop .note { max-width: none; }
 .pop .grid2 { display: grid; grid-template-columns: auto 64px; gap: 6px 10px; align-items: center; }
@@ -398,6 +434,9 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
     <div class="tg" role="group" aria-label="Template">
       <label class="lbl" for="tplSel">Template</label>
       <select id="tplSel" class="tplsel"><option value="asl">ASL scenario card</option><option value="sasl">SASL mission card</option></select>
+    </div>
+    <div class="tg" role="group" aria-label="Counters">
+      <button type="button" class="btn" id="bPal" title="Pick counters from your VASL module and add them to an OB row">Counter palette</button>
     </div>
     <div class="tg" role="group" aria-label="Card file">
       <button type="button" class="btn" id="bUndo" title="Undo (⌘Z / Ctrl+Z)" disabled>↶ Undo</button>
@@ -480,8 +519,8 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
       <button type="button" class="btn only-sasl" data-tbl="border" title="Hide or show the border lines of the cell(s), e.g. a blank spacer column">Lines</button>
     </div>
   </div>
-  <p class="hint only-sasl">Click any text on the card to edit it, including the section headings. Drop images onto the logo, badge, photo and mapboard boxes. Hover a section for its controls (move it, start it in the right column, remove it); hover the mission tables to add or remove rows and columns. Press Enter in a bulleted or numbered section to start the next item. In any text, Outline • Bullet adds or removes a bullet; Tab / Shift+Tab (or → / ←) move it a level in or out.</p>
-  <p class="hint only-asl">Click any text on the card to edit it. Drop images onto the photo, counter boxes, board box, logo and side art, or click a box to choose a file. Hover a counter, counter row or OB panel for its controls; drag counters to reorder them. Click a turn box to mark reinforcements, shading or a half-turn game end.</p>
+  <p class="hint only-sasl">Click any text on the card to edit it, including the section headings. Drop images onto the logo, badge, photo and mapboard boxes. Hover a section for its controls (move it, start it in the right column, remove it); hover the mission tables to add or remove rows and columns. Press Enter in a bulleted or numbered section to start the next item. In any text, Outline • Bullet adds or removes a bullet; Tab / Shift+Tab (or → / ←) move it a level in or out. <b>Counter palette</b> adds counters from your VASL module to an OB row (hover the row, click <b>Counters…</b>).</p>
+  <p class="hint only-asl">Click any text on the card to edit it. Drop images onto the photo, counter boxes, board box, logo and side art, or click a box to choose a file. Hover a counter, counter row or OB panel for its controls; drag counters to reorder them. Click a turn box to mark reinforcements, shading or a half-turn game end. <b>Counter palette</b> adds counters straight from your VASL module: hover a counter row and click <b>Counters…</b>, then click or drag counters into it.</p>
 </header>
 
 <main class="stage" id="stage">
@@ -532,10 +571,27 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 <input type="file" id="filePick" accept="image/*" hidden>
 <input type="file" id="cardPick" accept=".json,application/json" hidden>
 <input type="file" id="symFile" accept="image/*" hidden>
+<input type="file" id="vmodPick" accept=".vmod,.zip,application/zip" hidden>
+<aside class="pal" id="pal" hidden aria-label="Counter palette">
+  <div class="palh"><b>Counter palette</b><span class="ver" id="palVer"></span><span class="sp"></span><button type="button" class="btn" id="palLoad">Load VASL module…</button><button type="button" class="palx" id="palClose" aria-label="Close the counter palette">×</button></div>
+  <div class="palempty" id="palEmpty">
+    <p>The palette uses the counters in your own copy of VASL. Choose your VASL module file (for example <b>vasl-6.7.3.vmod</b>) once; it is read here in your browser and kept with your saved cards, nothing is uploaded.</p>
+    <p>When a new VASL comes out, load the new file the same way and the palette is rebuilt from it. Counters already on your cards don't change.</p>
+    <button type="button" class="btn primary" id="palLoad2">Load VASL module…</button>
+  </div>
+  <div id="palBody" hidden style="display:flex;flex-direction:column;min-height:0;flex:1">
+    <div class="palctl"><select id="palNat" aria-label="Nationality"></select><input type="search" id="palQ" placeholder="Search, e.g. 8-3-8 or PzKw IV" aria-label="Search counters"></div>
+    <div class="palcats" id="palCats" role="group" aria-label="Counter type"></div>
+    <div class="paltgt" id="palTgt"></div>
+    <div class="palgrid" id="palGrid"></div>
+  </div>
+</aside>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
+/*__VASL_JS__*/
 (() => {
 "use strict";
 const W = 816, H = 1056;
@@ -626,7 +682,7 @@ function normalize(o) {
     side: p.side === "B" ? "B" : "A", gut: p.gut || null,
     groups: (Array.isArray(p.groups) && p.groups.length ? p.groups : [blankGroup()]).map(g => ({
       ...splitLead(g.form, g.html, "elr"), indent: [0, 1, 2].includes(g.indent) ? g.indent : 0, inline: !!g.inline,
-      slots: (Array.isArray(g.slots) ? g.slots : []).map(s => ({ img: s.img || null, qty: String(s.qty ?? ""), size: s.size === "l" ? "l" : "s" })),
+      slots: (Array.isArray(g.slots) ? g.slots : []).map(s => ({ img: s.img || null, qty: String(s.qty ?? ""), size: s.size === "l" ? "l" : "s", ...(s.v ? { v: 1 } : {}) })),
     })),
   }));
   out.ssr = cleanSSR(out.ssr);
@@ -756,7 +812,7 @@ function normalizeSasl(o) {
       sc.nat = x.nat || "";
       sc.groups = (Array.isArray(x.groups) && x.groups.length ? x.groups : [blankGroup()]).map(g => ({
         form: g.form || "", html: g.html || "", indent: [0, 1, 2].includes(g.indent) ? g.indent : 0, inline: !!g.inline,
-        slots: (Array.isArray(g.slots) ? g.slots : []).map(t => ({ img: t.img || null, qty: String(t.qty ?? ""), size: t.size === "l" ? "l" : "s" })),
+        slots: (Array.isArray(g.slots) ? g.slots : []).map(t => ({ img: t.img || null, qty: String(t.qty ?? ""), size: t.size === "l" ? "l" : "s", ...(t.v ? { v: 1 } : {}) })),
       }));
     }
     return sc;
@@ -894,7 +950,7 @@ function natSelect(side, label) {
 /* ---------- render ---------- */
 /* one counter, and one row of counters (shared by ASL OB panels and SASL OB sections) */
 function slotHTML(p, sl) { return `<div class="slot ${sl.size}" data-slot="${p}" draggable="${sl.img ? "true" : "false"}">
-      <div class="cimg zone${sl.img ? " has" : ""}" data-zone="${p}.img" tabindex="0" role="button" aria-label="Counter image: drop an image or press Enter to choose one">${sl.img ? `<img src="${sl.img}" alt="" draggable="false">` : `<span class="zl">+</span>`}</div>
+      <div class="cimg zone${sl.img ? " has" : ""}${sl.v && sl.img ? " vasl" : ""}" data-zone="${p}.img" tabindex="0" role="button" aria-label="Counter image: drop an image or press Enter to choose one">${sl.img ? `<img src="${sl.img}" alt="" draggable="false">` : `<span class="zl">+</span>`}</div>
       ${ed(p + ".qty", "qty", "", { plain: true, single: true })}
       <span class="ctl sctl"><button type="button" data-act="size" data-p="${p}" aria-label="Switch counter size" title="Counter size">${sl.size === "l" ? "⅝″" : "½″"}</button><button type="button" data-act="delSlot" data-p="${p}" aria-label="Remove counter">×</button></span>
     </div>`; }
@@ -908,6 +964,7 @@ function groupHTML(gp, gi, g) {
       <span class="ctl gctl">
         <button type="button" data-act="indent" data-p="${gp}" title="Indent the row">Indent ${g.indent ? "→".repeat(g.indent) : "off"}</button>
         ${gi > 0 ? `<button type="button" data-act="inline" data-p="${gp}">${g.inline ? "Put on own line" : "Put beside previous"}</button>` : ""}
+        <button type="button" data-act="palFor" data-p="${gp}" title="Open the counter palette and add counters to this row">Counters…</button>
         <button type="button" data-act="delGroup" data-p="${gp}">Remove row</button>
       </span>
     </div>`;
@@ -984,7 +1041,7 @@ function render() {
     sheet2.innerHTML = `<div class="bhdr"><span class="bsid" data-mirror="sid"></span><span class="bttl" data-mirror="title"></span><span class="bcont">(continued)</span></div>${sections.slice(cut).join("")}${WM}`;
     syncMirrors();
   } else { sheet2.hidden = true; sheet2.innerHTML = ""; }
-  syncBar(); alignSyms(); fitBoard(); fitStage();
+  syncBar(); alignSyms(); fitBoard(); fitStage(); palMark();
   pages.querySelectorAll("img").forEach(im => { if (!im.complete) im.addEventListener("load", () => { alignSyms(); queueFit(); }, { once: true }); });
   checkFit();
 }
@@ -1042,7 +1099,7 @@ function renderSasl() {
     ? `<div class="top">${header(true)}${zone("photo", "sphoto", "Drop the mission photo here")}</div><div class="sflow" id="sflow">${secs}</div>${WM}`
     : `<div class="sflow" id="sflow" style="margin-top:0">${header(false)}${secs}</div>${WM}`;
   sheet2.hidden = true; sheet2.innerHTML = "";
-  syncBarSasl(); fitStage();
+  syncBarSasl(); fitStage(); palMark();
   pages.querySelectorAll("img").forEach(im => { if (!im.complete) im.addEventListener("load", queueFit, { once: true }); });
   checkFit();
 }
@@ -1216,7 +1273,7 @@ function readImage(file, maxDim) {
   });
 }
 async function setImage(path, file) {
-  try { set(path, await readImage(file, maxFor(path))); render(); queueSave(); }
+  try { set(path, await readImage(file, maxFor(path))); const m = path.match(/^(.*\.slots\.\d+)\.img$/); if (m) delete get(m[1]).v; render(); queueSave(); }
   catch (e) { toast(e.message); }
 }
 async function placeFiles(groupPath, idx, files, replaceAt) {
@@ -1225,7 +1282,7 @@ async function placeFiles(groupPath, idx, files, replaceAt) {
     const urls = [];
     for (const f of files) urls.push(await readImage(f, 360));   /* counters */
     urls.forEach((u, k) => {
-      if (replaceAt && k === 0) { g.slots[idx].img = u; }
+      if (replaceAt && k === 0) { g.slots[idx].img = u; delete g.slots[idx].v; }
       else { const at = replaceAt ? idx + k : idx + k; g.slots.splice(at, 0, Object.assign(blankSlot(), { img: u })); }
     });
     render(); queueSave();
@@ -1387,6 +1444,7 @@ function act(a, p, btn) {
       if (has) { confirmTwice(btn, "Click again to remove", run); return; }
       run(); return;
     }
+    case "palFor": openPal(p); return;
     case "obAdd": { const i = parentOf(p).idx; state.sections.splice(i + 1, 0, newOB()); break; }
     case "mtRow+": { const t = get(p).table; t.rows.push(Array(t.cols.length * 2).fill("")); break; }
     case "mtRow-": { const t = get(p).table; if (t.rows.length > 1) t.rows.pop(); break; }
@@ -1413,7 +1471,7 @@ function dropTarget(e) { return e.target.closest?.(".slot") || e.target.closest?
 pages.addEventListener("dragover", (e) => {
   const t = dropTarget(e); if (!t) return;
   const hasFiles = [...(e.dataTransfer?.types || [])].includes("Files");
-  if (!hasFiles && !dragFrom) return;
+  if (!hasFiles && !dragFrom && !palDrag) return;
   e.preventDefault();
   pages.querySelectorAll(".dropbefore,.dragover").forEach(x => x.classList.remove("dropbefore", "dragover"));
   if (dragFrom && t.classList.contains("slot")) t.classList.add("dropbefore");
@@ -1436,6 +1494,11 @@ pages.addEventListener("drop", (e) => {
     if (from.arr === toArr && from.idx < toIdx) toIdx--;
     get(toArr).splice(toIdx, 0, item);
     dragFrom = null; render(); queueSave(); return;
+  }
+  if (palDrag) {
+    const c = palDrag; palDrag = null;
+    if (stripEl) { const at = slotEl ? parentOf(slotEl.dataset.slot).idx : null; addVaslCounter(c, stripEl.dataset.strip, at); }
+    return;
   }
   const files = imageFiles(e.dataTransfer); if (!files.length) return;
   if (slotEl) { placeFiles(stripEl.dataset.strip, parentOf(slotEl.dataset.slot).idx, files, true); return; }
@@ -1953,6 +2016,147 @@ $("bPdf").addEventListener("click", (e) => busy(e.currentTarget, async () => {
 
 /* ---------- boot ---------- */
 try { document.execCommand("defaultParagraphSeparator", false, "div"); } catch (_) {}
+/* ---------- VASL counter palette ---------- */
+const NAT_TO_VASL = {
+  soviet: "Russian", american: "American", usmc: "American", british: "British", canadian: "British", anzac: "British",
+  french: "French", freefrench: "French", polish: "Allied Minor", belgian: "Allied Minor", dutch: "Allied Minor", norwegian: "Allied Minor",
+  danish: "Allied Minor", greek: "Allied Minor", yugoslav: "Allied Minor", partisan: "Allied Minor", chinese: "Chinese", chicom: "Chinese",
+  german: "German", italian: "Italian", japanese: "Japanese", finnish: "Finnish", hungarian: "Hungarian",
+  romanian: "Axis Minor", bulgarian: "Axis Minor", slovakian: "Axis Minor", croatian: "Axis Minor", nkorean: "North Korean", skorean: "South Korean",
+};
+const vasl = { cat: null, blob: null, nat: "", cat1: "", q: "", list: [] };
+let palTarget = null, palDrag = null, palObs = null;
+async function vaslReady() {
+  if (vasl.cat && vasl.blob) return true;
+  const [cat, blob] = await Promise.all([idb.get("vasl_cat"), idb.get("vasl_blob")]);
+  if (cat && blob) { vasl.cat = cat; vasl.blob = blob; }
+  return !!(vasl.cat && vasl.blob);
+}
+function rowNation(gp) {
+  /* the nationality of the side or OB that owns this row */
+  const m = gp && gp.match(/^(panels|sections)\.(\d+)\./); if (!m) return "";
+  const owner = get(m[1] + "." + m[2]);
+  const id = m[1] === "panels" ? state.sides?.[owner?.side] : owner?.nat;
+  return NAT_TO_VASL[id] || "";
+}
+function rowLabel(gp) {
+  const g = get(gp); if (!g) return "";
+  const t = htmlToText((g.form || "") + " " + (g.html || "")).replace(/\s+/g, " ").trim();
+  return t ? (t.length > 60 ? t.slice(0, 57) + "…" : t) : "an untitled counter row";
+}
+function setPalTarget(gp) {
+  palTarget = gp && get(gp) ? gp : null;
+  pages.querySelectorAll(".grp.paltarget").forEach(x => x.classList.remove("paltarget"));
+  if (palTarget && !$("pal").hidden) pages.querySelector(`.grp[data-g="${palTarget}"]`)?.classList.add("paltarget");
+  $("palTgt").innerHTML = palTarget ? `Adding to: <b>${esc(rowLabel(palTarget))}</b>. Click a counter (or drag it onto any row).` : "Click a counter row on the card (or its <b>Counters…</b> button) to choose where counters go.";
+}
+async function openPal(gp) {
+  const wasOpen = !$("pal").hidden;
+  $("pal").hidden = false; document.body.classList.add("palopen"); document.documentElement.style.setProperty("--barH", document.querySelector(".bar").offsetHeight + "px");
+  if (!wasOpen) fitStage();
+  const ok = await vaslReady();
+  $("palEmpty").hidden = ok; $("palBody").hidden = !ok; $("palBody").style.display = ok ? "flex" : "none";
+  $("palVer").textContent = ok ? "VASL " + (vasl.cat.version || "") : "";
+  $("palLoad").hidden = !ok;
+  if (gp) setPalTarget(gp); else setPalTarget(palTarget);
+  if (!ok) return;
+  const want = gp ? rowNation(gp) : "";
+  if (!$("palNat").options.length || $("palNat").dataset.v !== vasl.cat.version) {
+    $("palNat").dataset.v = vasl.cat.version;
+    const by = (sd) => vasl.cat.nations.filter(n => n.side === sd).map(n => `<option value="${esc(n.name)}">${esc(n.name)}</option>`).join("");
+    $("palNat").innerHTML = `<optgroup label="Allied">${by("Allied")}</optgroup><optgroup label="Axis">${by("Axis")}</optgroup>`;
+  }
+  if (want && vasl.cat.nations.some(n => n.name === want)) vasl.nat = want;
+  if (!vasl.nat || !vasl.cat.nations.some(n => n.name === vasl.nat)) vasl.nat = vasl.cat.nations[0].name;
+  $("palNat").value = vasl.nat;
+  drawPal();
+}
+function palMark() { if (palTarget && !get(palTarget)) palTarget = null; if (!$("pal").hidden && palTarget) pages.querySelector(`.grp[data-g="${palTarget}"]`)?.classList.add("paltarget"); }
+function closePal() { $("pal").hidden = true; document.body.classList.remove("palopen"); fitStage(); pages.querySelectorAll(".grp.paltarget").forEach(x => x.classList.remove("paltarget")); }
+function drawPal() {
+  const nat = vasl.cat.nations.find(n => n.name === vasl.nat); if (!nat) return;
+  const top = (c) => c.g.split(" › ")[0] || "Other";
+  const cats = [...new Set(nat.counters.map(top))].sort((a, b) => (a === "Other") - (b === "Other"));
+  if (vasl.cat1 && !cats.includes(vasl.cat1)) vasl.cat1 = "";
+  $("palCats").innerHTML = [["", "All"], ...cats.map(c => [c, c])].map(([v, l]) => `<button type="button" data-cat="${esc(v)}" aria-pressed="${vasl.cat1 === v}">${esc(l)}</button>`).join("");
+  const q = vasl.q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const pool = q.length ? nat.counters : nat.counters.filter(c => !vasl.cat1 || top(c) === vasl.cat1);
+  vasl.list = pool.filter(c => !q.length || q.every(w => (c.n + " " + c.a + " " + c.g).toLowerCase().includes(w)));
+  let last = null, html = "";
+  vasl.list.forEach((c, i) => {
+    const sub = c.g || "Other";
+    if (sub !== last) { html += `<div class="palsub">${esc(sub)}</div>`; last = sub; }
+    html += `<button type="button" class="tile" draggable="true" data-i="${i}" title="${esc(c.n)}${c.g ? " — " + esc(c.g) : ""}"><span class="th wait"></span><span class="nm">${esc(c.n)}</span></button>`;
+  });
+  $("palGrid").innerHTML = html || `<div class="palmsg">No counters match "${esc(vasl.q)}" in ${esc(nat.name)}.</div>`;
+  $("palGrid").scrollTop = 0;
+  palObs?.disconnect();
+  palObs = new IntersectionObserver((ents) => ents.forEach(en => { if (en.isIntersecting) { palObs.unobserve(en.target); thumbQueue.push(en.target); pumpThumbs(); } }), { root: $("palGrid"), rootMargin: "200px" });
+  $("palGrid").querySelectorAll(".tile").forEach(t => palObs.observe(t));
+}
+const thumbQueue = []; let thumbBusy = 0; const thumbCache = new Map();
+async function pumpThumbs() {
+  while (thumbBusy < 4 && thumbQueue.length) {
+    const t = thumbQueue.shift(); if (!t.isConnected) continue;
+    const c = vasl.list[+t.dataset.i]; if (!c) continue;
+    thumbBusy++;
+    (async () => {
+      const key = vasl.nat + "|" + c.id + "|" + c.n;
+      let r = thumbCache.get(key);
+      if (!r) { try { r = await VASL.render(vasl.blob, c.L, 1.5); } catch (_) { r = null; } thumbCache.set(key, r); }
+      const th = t.querySelector(".th"); th.classList.remove("wait");
+      th.innerHTML = r ? `<img src="${r.url}" alt="" draggable="false" style="width:${Math.round(r.w * 1.15)}px">` : "?";
+    })().finally(() => { thumbBusy--; pumpThumbs(); });
+  }
+}
+/* put a counter into a row: into the first empty box, or at a given position, or on the end */
+async function addVaslCounter(c, gp, at = null) {
+  const g = get(gp); if (!g) { toast("Choose a counter row first."); return; }
+  try {
+    const r = await VASL.render(vasl.blob, c.L, 3.25);
+    if (!r) { toast("That counter's picture isn't in the module."); return; }
+    const sl = Object.assign(blankSlot(r.w >= 56 ? "l" : "s"), { img: r.url, v: 1 });
+    if (at !== null && at !== undefined) g.slots.splice(at, 0, sl);
+    else { const e = g.slots.findIndex(x => !x.img); if (e >= 0) { sl.qty = g.slots[e].qty; g.slots[e] = sl; } else g.slots.push(sl); }
+    render(); queueSave(); setPalTarget(gp);
+    toast(`Added ${c.n}.`);
+  } catch (e) { toast("Couldn't draw that counter: " + e.message); }
+}
+async function loadVmod(file) {
+  if (!file) return;
+  if (typeof JSZip === "undefined") { toast("The zip reader didn't load (are you offline?). Try again with an internet connection."); return; }
+  toast("Reading " + file.name + " …");
+  try {
+    const cat = await VASL.load(file);
+    await idb.set("vasl_blob", file); await idb.set("vasl_cat", cat);
+    vasl.cat = cat; vasl.blob = file; thumbCache.clear(); $("palNat").innerHTML = "";
+    const n = cat.nations.reduce((a, x) => a + x.counters.length, 0);
+    toast(`Loaded VASL ${cat.version}: ${n.toLocaleString()} counters in ${cat.nations.length} nationalities.`);
+    openPal(palTarget);
+  } catch (e) { toast(e.message || "That file couldn't be read."); }
+}
+$("bPal").addEventListener("click", () => $("pal").hidden ? openPal(palTarget) : closePal());
+$("palClose").addEventListener("click", closePal);
+for (const id of ["palLoad", "palLoad2"]) $(id).addEventListener("click", () => { const f = $("vmodPick"); f.value = ""; f.click(); });
+$("vmodPick").addEventListener("change", (e) => loadVmod(e.target.files[0]));
+$("palNat").addEventListener("change", (e) => { vasl.nat = e.target.value; vasl.cat1 = ""; drawPal(); });
+$("palQ").addEventListener("input", (e) => { vasl.q = e.target.value; drawPal(); });
+$("palCats").addEventListener("click", (e) => { const b = e.target.closest("[data-cat]"); if (!b) return; vasl.cat1 = b.dataset.cat; drawPal(); });
+$("palGrid").addEventListener("click", (e) => {
+  const t = e.target.closest(".tile"); if (!t) return;
+  if (!palTarget) { toast("Click a counter row on the card first, then the counter."); return; }
+  addVaslCounter(vasl.list[+t.dataset.i], palTarget);
+});
+$("palGrid").addEventListener("dragstart", (e) => {
+  const t = e.target.closest(".tile"); if (!t) return;
+  palDrag = vasl.list[+t.dataset.i]; e.dataTransfer.effectAllowed = "copy";
+  try { e.dataTransfer.setData("text/plain", palDrag.n); } catch (_) {}
+});
+$("palGrid").addEventListener("dragend", () => { palDrag = null; });
+/* clicking in a counter row makes it the palette's target */
+pages.addEventListener("click", (e) => { if ($("pal").hidden) return; const g = e.target.closest?.(".grp[data-g]"); if (g) setPalTarget(g.dataset.g); }, true);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("pal").hidden && !document.querySelector(".pop:not([hidden])")) closePal(); });
+
 async function boot(data) {
   await histLoad();
   const last = data?.state?.tpl || (await idb.get("lastTpl")) || "asl";

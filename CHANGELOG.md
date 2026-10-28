@@ -5,6 +5,14 @@ The version number shows next to the title in the app's toolbar, and cards saved
 
 Numbering: the second number goes up for each set of changes (1.0 → 1.1 → 1.2 …); the first number goes up for a big change such as a new template.
 
+## v1.2 — 2026-10-28
+- **Counter palette from VASL.** Load your VASL module (.vmod) once with **Counter palette → Load VASL module…**; it is read in your browser and kept in the browser's storage (nothing is uploaded, and the counter art is not built into this file).
+  - Counters are listed by nationality (the 20 VASL O/B tabs) and VASL's own groups (SQ, HS, SMC, SW, Gun, Veh, Air, Other), with a search box.
+  - Counter fronts only, drawn the way VASL layers them (e.g. squad face + class badge; guns unlimbered; broken sides, backs and play markers left out).
+  - Hover any OB counter row (ASL panels and SASL OB sections) and click **Counters…**: the palette opens on that side's nationality. Click a counter to fill the row's next empty box, or drag it onto any row. ⅝″ counters go into large boxes automatically.
+  - Counters placed on a card are copied into the card, so loading a newer VASL later never changes existing cards. To update the palette for a new VASL release, load the new .vmod the same way.
+- The card moves left while the palette is open so the two don't overlap.
+
 ## v1.1 — 2026-10-27
 - Every card page (ASL front and back page, SASL mission) now carries a small grey notice centred along the bottom edge: "This template is for personal use only." It appears in PDF and PNG exports.
 
