@@ -249,11 +249,24 @@ function blOvlGroup(o) {
   const t = OVL_TERRAIN[pre];
   return [0, "ASL overlays", t ? `${t} (${pre ? pre.toUpperCase() : "1–7"})` : `Other (${pre.toUpperCase()})`];
 }
-function blGrouped(items, groupOf, tile) {
+/* collapsed groups are remembered in this browser (a per-viewer convenience) */
+const blCollapsed = (() => { try { return new Set(JSON.parse(localStorage.getItem("bl_collapsed") || "[]")); } catch (_) { return new Set(); } })();
+function blSaveCollapsed() { try { localStorage.setItem("bl_collapsed", JSON.stringify([...blCollapsed])); } catch (_) {} }
+function blGrouped(items, groupOf, tile, searching) {
   const g = new Map();
   for (const it of items) { const [rank, head, sub = ""] = groupOf(it); const k = rank + "|" + head; if (!g.has(k)) g.set(k, { rank, head, subs: new Map() }); const G = g.get(k); if (!G.subs.has(sub)) G.subs.set(sub, []); G.subs.get(sub).push(it); }
-  return [...g.values()].sort((a, b) => a.rank - b.rank).map(G => `<h4 class="blgrp">${esc(G.head)} <span>${[...G.subs.values()].reduce((n, l) => n + l.length, 0)}</span></h4>`
-    + [...G.subs.entries()].sort((a, b) => BOARDS.natCmp(a[0], b[0])).map(([sub, list]) => (sub ? `<h5 class="blsub">${esc(sub)}</h5>` : "") + list.map(tile).join("")).join("")).join("");
+  /* while searching, everything that matches is shown */
+  const shut = (k) => !searching && blCollapsed.has(k);
+  const head = (cls, k, text, n) => `<button type="button" class="${cls}" data-coll="${esc(k)}" aria-expanded="${!shut(k)}"><span class="chev" aria-hidden="true">${shut(k) ? "▸" : "▾"}</span>${esc(text)} <span class="n">${n}</span></button>`;
+  return [...g.values()].sort((a, b) => a.rank - b.rank).map(G => {
+    const gk = BL.tab + "|" + G.head, total = [...G.subs.values()].reduce((n, l) => n + l.length, 0);
+    if (shut(gk)) return head("blgrp", gk, G.head, total);
+    return head("blgrp", gk, G.head, total) + [...G.subs.entries()].sort((a, b) => BOARDS.natCmp(a[0], b[0])).map(([sub, list]) => {
+      if (!sub) return list.map(tile).join("");
+      const sk = gk + "|" + sub;
+      return head("blsub", sk, sub, list.length) + (shut(sk) ? "" : list.map(tile).join(""));
+    }).join("");
+  }).join("");
 }
 function blDrawList() {
   const idx = BOARDS._idx || [], ovl = BOARDS._ovl || [];
@@ -265,11 +278,11 @@ function blDrawList() {
   if (BL.tab === "boards") {
     $("blList").className = "bllist";
     const list = idx.filter(b => !q || (b.label + " " + b.file).toLowerCase().includes(q));
-    $("blList").innerHTML = blGrouped(list, blBoardGroup, b => `<button type="button" class="bltile" draggable="true" data-key="${esc(b.key)}" title="Add board ${esc(b.label)} (${b.cols}×${b.rows} hexes)"><img src="${b.thumb}" alt="" loading="lazy" draggable="false"><span>${esc(b.label)}</span></button>`) || `<p class="palmsg">No boards match.</p>`;
+    $("blList").innerHTML = blGrouped(list, blBoardGroup, b => `<button type="button" class="bltile" draggable="true" data-key="${esc(b.key)}" title="Add board ${esc(b.label)} (${b.cols}×${b.rows} hexes)"><img src="${b.thumb}" alt="" loading="lazy" draggable="false"><span>${esc(b.label)}</span></button>`, !!q) || `<p class="palmsg">No boards match.</p>`;
   } else {
     $("blList").className = "bllist ovl";
     const list = ovl.filter(o => !q || (o.name + " " + o.set + " " + blOvlGroup(o).join(" ")).toLowerCase().includes(q));
-    $("blList").innerHTML = blGrouped(list, blOvlGroup, o => `<button type="button" class="bltile" draggable="true" data-ovl="${esc(o.key)}" title="Add overlay ${esc(o.name)} to the selected board"><img src="${o.thumb}" alt="" loading="lazy" draggable="false"><span>${esc(o.name)}</span></button>`)
+    $("blList").innerHTML = blGrouped(list, blOvlGroup, o => `<button type="button" class="bltile" draggable="true" data-ovl="${esc(o.key)}" title="Add overlay ${esc(o.name)} to the selected board"><img src="${o.thumb}" alt="" loading="lazy" draggable="false"><span>${esc(o.name)}</span></button>`, !!q)
       || `<p class="palmsg">${ovl.length ? "No overlays match." : "No overlays were found. Load the boards folder again; its overlays folder is read too."}</p>`;
   }
 }

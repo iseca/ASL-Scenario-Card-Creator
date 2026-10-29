@@ -427,7 +427,7 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 .bllist { flex: 1; overflow: auto; padding: 0 12px 16px; display: grid; grid-template-columns: 1fr; gap: 8px; align-content: start; }
 .bltile { all: unset; box-sizing: border-box; cursor: grab; display: flex; flex-direction: column; gap: 3px; padding: 4px; border-radius: 6px; }
 .bltile:hover { background: rgba(0,0,0,.06); } .bltile:focus-visible { outline: 2px solid var(--accent); }
-.bltile img { width: 100%; height: auto; max-height: 160px; object-fit: contain; object-position: left; border: 1px solid #0003; background: #fff; }
+.bltile img { width: auto; max-width: 100%; height: auto; max-height: 160px; align-self: flex-start; border: 1px solid #0003; background: #fff; }
 .bltile span { font-weight: 600; font-size: 12px; }
 .blright { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .bltools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
@@ -451,9 +451,17 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 .bltabs button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .bltabs button:focus-visible { outline: 2px solid var(--accent); }
 .bllist.ovl { grid-template-columns: repeat(3, 1fr); }
-.blgrp { grid-column: 1 / -1; margin: 10px 0 0; padding-bottom: 3px; border-bottom: 1px solid var(--line); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
-.blgrp span { color: var(--muted); font-weight: 500; }
-.blsub { grid-column: 1 / -1; margin: 6px 0 0; font-size: 11.5px; font-weight: 600; color: var(--muted); }
+.blgrp, .blsub { all: unset; box-sizing: border-box; grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; cursor: pointer; border-radius: 3px; }
+.blgrp { margin: 10px 0 0; padding: 3px 2px; border-bottom: 1px solid var(--line); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.blsub { margin: 6px 0 0; padding: 2px 2px 2px 10px; font-size: 11.5px; font-weight: 600; color: var(--muted); }
+.blgrp:hover, .blsub:hover { background: rgba(0,0,0,.05); }
+.blgrp:focus-visible, .blsub:focus-visible { outline: 2px solid var(--accent); }
+.blgrp .n, .blsub .n { color: var(--muted); font-weight: 500; }
+.chev { width: 10px; flex: none; font-size: 10px; }
+.blall { display: flex; gap: 10px; margin: 6px 12px 0; font-size: 12px; }
+.blall button { all: unset; cursor: pointer; color: var(--edit); }
+.blall button:hover { text-decoration: underline; }
+.blall button:focus-visible { outline: 2px solid var(--accent); }
 .bllist.ovl .bltile img { max-height: 70px; object-position: center; border: none; background: repeating-conic-gradient(#0000000d 0 25%, transparent 0 50%) 0 0 / 10px 10px; }
 .bllist.ovl .bltile span { text-align: center; }
 .blb.sel { box-shadow: 0 0 0 3px var(--edit); z-index: 2; }
@@ -637,7 +645,7 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
         <p>When you get new or updated boards, load the folder again.</p>
         <button type="button" class="btn primary" id="blLoad2">Load boards folder…</button>
       </div>
-      <div id="blListW" hidden><div class="bltabs" role="group" aria-label="Show"><button type="button" id="blTabB" aria-pressed="true">Boards</button><button type="button" id="blTabO" aria-pressed="false">Overlays</button></div><input type="search" id="blQ" placeholder="Search boards, e.g. 24 or RB" aria-label="Search boards"><div class="bllist" id="blList"></div></div>
+      <div id="blListW" hidden><div class="bltabs" role="group" aria-label="Show"><button type="button" id="blTabB" aria-pressed="true">Boards</button><button type="button" id="blTabO" aria-pressed="false">Overlays</button></div><div class="blall"><button type="button" id="blCollAll">Collapse all</button><button type="button" id="blExpAll">Expand all</button></div><input type="search" id="blQ" placeholder="Search boards, e.g. 24 or RB" aria-label="Search boards"><div class="bllist" id="blList"></div></div>
     </div>
     <div class="blright">
       <div class="bltools">
@@ -1123,11 +1131,24 @@ function blOvlGroup(o) {
   const t = OVL_TERRAIN[pre];
   return [0, "ASL overlays", t ? `${t} (${pre ? pre.toUpperCase() : "1–7"})` : `Other (${pre.toUpperCase()})`];
 }
-function blGrouped(items, groupOf, tile) {
+/* collapsed groups are remembered in this browser (a per-viewer convenience) */
+const blCollapsed = (() => { try { return new Set(JSON.parse(localStorage.getItem("bl_collapsed") || "[]")); } catch (_) { return new Set(); } })();
+function blSaveCollapsed() { try { localStorage.setItem("bl_collapsed", JSON.stringify([...blCollapsed])); } catch (_) {} }
+function blGrouped(items, groupOf, tile, searching) {
   const g = new Map();
   for (const it of items) { const [rank, head, sub = ""] = groupOf(it); const k = rank + "|" + head; if (!g.has(k)) g.set(k, { rank, head, subs: new Map() }); const G = g.get(k); if (!G.subs.has(sub)) G.subs.set(sub, []); G.subs.get(sub).push(it); }
-  return [...g.values()].sort((a, b) => a.rank - b.rank).map(G => `<h4 class="blgrp">${esc(G.head)} <span>${[...G.subs.values()].reduce((n, l) => n + l.length, 0)}</span></h4>`
-    + [...G.subs.entries()].sort((a, b) => BOARDS.natCmp(a[0], b[0])).map(([sub, list]) => (sub ? `<h5 class="blsub">${esc(sub)}</h5>` : "") + list.map(tile).join("")).join("")).join("");
+  /* while searching, everything that matches is shown */
+  const shut = (k) => !searching && blCollapsed.has(k);
+  const head = (cls, k, text, n) => `<button type="button" class="${cls}" data-coll="${esc(k)}" aria-expanded="${!shut(k)}"><span class="chev" aria-hidden="true">${shut(k) ? "▸" : "▾"}</span>${esc(text)} <span class="n">${n}</span></button>`;
+  return [...g.values()].sort((a, b) => a.rank - b.rank).map(G => {
+    const gk = BL.tab + "|" + G.head, total = [...G.subs.values()].reduce((n, l) => n + l.length, 0);
+    if (shut(gk)) return head("blgrp", gk, G.head, total);
+    return head("blgrp", gk, G.head, total) + [...G.subs.entries()].sort((a, b) => BOARDS.natCmp(a[0], b[0])).map(([sub, list]) => {
+      if (!sub) return list.map(tile).join("");
+      const sk = gk + "|" + sub;
+      return head("blsub", sk, sub, list.length) + (shut(sk) ? "" : list.map(tile).join(""));
+    }).join("");
+  }).join("");
 }
 function blDrawList() {
   const idx = BOARDS._idx || [], ovl = BOARDS._ovl || [];
@@ -1139,11 +1160,11 @@ function blDrawList() {
   if (BL.tab === "boards") {
     $("blList").className = "bllist";
     const list = idx.filter(b => !q || (b.label + " " + b.file).toLowerCase().includes(q));
-    $("blList").innerHTML = blGrouped(list, blBoardGroup, b => `<button type="button" class="bltile" draggable="true" data-key="${esc(b.key)}" title="Add board ${esc(b.label)} (${b.cols}×${b.rows} hexes)"><img src="${b.thumb}" alt="" loading="lazy" draggable="false"><span>${esc(b.label)}</span></button>`) || `<p class="palmsg">No boards match.</p>`;
+    $("blList").innerHTML = blGrouped(list, blBoardGroup, b => `<button type="button" class="bltile" draggable="true" data-key="${esc(b.key)}" title="Add board ${esc(b.label)} (${b.cols}×${b.rows} hexes)"><img src="${b.thumb}" alt="" loading="lazy" draggable="false"><span>${esc(b.label)}</span></button>`, !!q) || `<p class="palmsg">No boards match.</p>`;
   } else {
     $("blList").className = "bllist ovl";
     const list = ovl.filter(o => !q || (o.name + " " + o.set + " " + blOvlGroup(o).join(" ")).toLowerCase().includes(q));
-    $("blList").innerHTML = blGrouped(list, blOvlGroup, o => `<button type="button" class="bltile" draggable="true" data-ovl="${esc(o.key)}" title="Add overlay ${esc(o.name)} to the selected board"><img src="${o.thumb}" alt="" loading="lazy" draggable="false"><span>${esc(o.name)}</span></button>`)
+    $("blList").innerHTML = blGrouped(list, blOvlGroup, o => `<button type="button" class="bltile" draggable="true" data-ovl="${esc(o.key)}" title="Add overlay ${esc(o.name)} to the selected board"><img src="${o.thumb}" alt="" loading="lazy" draggable="false"><span>${esc(o.name)}</span></button>`, !!q)
       || `<p class="palmsg">${ovl.length ? "No overlays match." : "No overlays were found. Load the boards folder again; its overlays folder is read too."}</p>`;
   }
 }
@@ -3025,9 +3046,14 @@ $("boardsPick").addEventListener("change", async (e) => {
   } catch (err) { toast("The boards couldn't be read: " + err.message); }
 });
 $("blQ").addEventListener("input", (e) => { BL.q = e.target.value; blDrawList(); });
+$("blCollAll").addEventListener("click", () => { $("blList").querySelectorAll(".blgrp[data-coll]").forEach(h => blCollapsed.add(h.dataset.coll)); blSaveCollapsed(); blDrawList(); });
+$("blExpAll").addEventListener("click", () => { [...blCollapsed].filter(k => k.startsWith(BL.tab + "|")).forEach(k => blCollapsed.delete(k)); blSaveCollapsed(); blDrawList(); });
 $("blTabB").addEventListener("click", () => { BL.tab = "boards"; blDrawList(); });
 $("blTabO").addEventListener("click", () => { BL.tab = "overlays"; blDrawList(); });
-$("blList").addEventListener("click", (e) => { const t = e.target.closest(".bltile"); if (!t) return; if (t.dataset.ovl) blAddOverlay(t.dataset.ovl); else blAdd(t.dataset.key); });
+$("blList").addEventListener("click", (e) => {
+  const h = e.target.closest("[data-coll]");
+  if (h) { const k = h.dataset.coll; if (BL.q.trim()) return; blCollapsed.has(k) ? blCollapsed.delete(k) : blCollapsed.add(k); blSaveCollapsed(); blDrawList(); $("blList").querySelector(`[data-coll="${CSS.escape(k)}"]`)?.focus(); return; }
+  const t = e.target.closest(".bltile"); if (!t) return; if (t.dataset.ovl) blAddOverlay(t.dataset.ovl); else blAdd(t.dataset.key); });
 $("blList").addEventListener("dragstart", (e) => { const t = e.target.closest(".bltile"); if (!t) return; BL.dragKey = t.dataset.key || null; BL.dragOvl = t.dataset.ovl || null; e.dataTransfer.effectAllowed = "copy"; try { e.dataTransfer.setData("text/plain", t.dataset.key || t.dataset.ovl); } catch (_) {} });
 $("blWs").addEventListener("dragover", (e) => { if (BL.dragKey || BL.dragOvl) e.preventDefault(); });
 $("blWs").addEventListener("drop", (e) => {
