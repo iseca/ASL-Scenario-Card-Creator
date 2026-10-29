@@ -491,7 +491,7 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 
 <header class="bar">
   <div class="bar-top">
-    <div class="brand"><span class="mark" id="brandMark">ASL</span><span>Scenario Card Maker</span><span class="ver" title="Version 1.5, built 2026-10-28">v1.5</span></div>
+    <div class="brand"><span class="mark" id="brandMark">ASL</span><span>Scenario Card Maker</span><span class="ver" title="Version 1.5, built 2026-10-29">v1.5</span></div>
     <div class="tg" role="group" aria-label="Template">
       <label class="lbl" for="tplSel">Template</label>
       <select id="tplSel" class="tplsel"><option value="asl">ASL scenario card</option><option value="sasl">SASL mission card</option></select>
@@ -2064,7 +2064,19 @@ function fitBoard() {
     sizeNote();
   }
 }
+/* titles shrink to fit their line instead of running off it (down to 40% of the normal size) */
+function fitTitles() {
+  pages.querySelectorAll(".ttl, .stitle").forEach(el => {
+    el.style.fontSize = "";
+    const base = parseFloat(getComputedStyle(el).fontSize);
+    for (let i = 0; i < 3 && el.scrollWidth > el.clientWidth + 1; i++) {
+      const cur = parseFloat(getComputedStyle(el).fontSize);
+      el.style.fontSize = Math.max(base * 0.4, cur * (el.clientWidth / el.scrollWidth) * 0.99) + "px";
+    }
+  });
+}
 function checkFit() {
+  fitTitles();
   if (isSasl()) {
     pages.querySelectorAll(".over").forEach(e => e.classList.remove("over"));
     const issues = [], fl = $("sflow");

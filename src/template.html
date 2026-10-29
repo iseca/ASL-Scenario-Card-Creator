@@ -1283,7 +1283,19 @@ function fitBoard() {
     sizeNote();
   }
 }
+/* titles shrink to fit their line instead of running off it (down to 40% of the normal size) */
+function fitTitles() {
+  pages.querySelectorAll(".ttl, .stitle").forEach(el => {
+    el.style.fontSize = "";
+    const base = parseFloat(getComputedStyle(el).fontSize);
+    for (let i = 0; i < 3 && el.scrollWidth > el.clientWidth + 1; i++) {
+      const cur = parseFloat(getComputedStyle(el).fontSize);
+      el.style.fontSize = Math.max(base * 0.4, cur * (el.clientWidth / el.scrollWidth) * 0.99) + "px";
+    }
+  });
+}
 function checkFit() {
+  fitTitles();
   if (isSasl()) {
     pages.querySelectorAll(".over").forEach(e => e.classList.remove("over"));
     const issues = [], fl = $("sflow");
