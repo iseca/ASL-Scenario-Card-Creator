@@ -245,6 +245,7 @@ output.count { min-width: 22px; text-align: center; font: 700 15px var(--f-num);
   background: #263045; color: #fff; white-space: nowrap;
 }
 .ctl button:hover { background: #2f6fd0; }
+.ctl button[disabled] { opacity: .4; cursor: default; background: #263045; }
 .ctl button:focus-visible { outline: 2px solid #ffbf3c; }
 .ctl button.armed { background: #b3261b; }
 .slot:hover > .sctl, .slot:focus-within > .sctl,
@@ -1087,7 +1088,8 @@ function groupHTML(gp, gi, g, n = 1, side = "") {
       </div></div>
       <span class="ctl gctl">
         <button type="button" data-act="note" data-p="${gp}" title="${g.noteOn ? "Remove the plain-text line under this row's heading" : "Add a plain (not bold) line of text under this row's heading"}">${g.noteOn ? "− Text line" : "+ Text line"}</button>
-        <button type="button" data-act="indent" data-p="${gp}" title="Indent the row">Indent ${g.indent ? "→".repeat(g.indent) : "off"}</button>
+        <button type="button" data-act="outdent" data-p="${gp}" title="Move the row left one step"${g.indent ? "" : " disabled"} aria-label="Indent left">← Indent</button>
+        <button type="button" data-act="indent" data-p="${gp}" title="Move the row right one step (${g.indent}/2)"${g.indent >= 2 ? " disabled" : ""} aria-label="Indent right">Indent →</button>
         ${gi > 0 ? `<button type="button" data-act="grpUp" data-p="${gp}" title="Move this row up">↑</button>` : ""}
         ${gi < n - 1 ? `<button type="button" data-act="grpDown" data-p="${gp}" title="Move this row down">↓</button>` : ""}
         ${gi > 0 ? `<button type="button" data-act="inline" data-p="${gp}" title="${g.inline ? "Start this row on its own line" : "Fit this row into the empty space to the right of the row above"}">${g.inline ? "Own line" : "Beside row above"}</button>` : ""}
@@ -1561,7 +1563,8 @@ function act(a, p, btn) {
       if (hasContent) { confirmTwice(btn, "Click again to remove", run); return; }
       run(); return;
     }
-    case "indent": { const g = get(p); g.indent = (g.indent + 1) % 3; break; }
+    case "indent": { const g = get(p); if (g.indent >= 2) return; g.indent++; break; }
+    case "outdent": { const g = get(p); if (!g.indent) return; g.indent--; break; }
     case "note": {
       const g = get(p);
       if (g.noteOn && g.note && htmlToText(g.note).trim()) { confirmTwice(btn, "Click again to remove the text", () => { g.noteOn = false; g.note = ""; render(); queueSave(); }); return; }
