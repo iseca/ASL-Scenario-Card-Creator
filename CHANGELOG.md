@@ -3,7 +3,33 @@
 Each release is kept as its own file in `versions/` (for example `ASL_Scenario_Card_Maker_v1.0.html`).
 The version number shows next to the title in the app's toolbar, and cards saved with **Save card** record the version that saved them.
 
-Numbering: the second number goes up for each set of changes (1.0 → 1.1 → 1.2 …); the first number goes up for a big change such as a new template.
+Numbering: from v1.5 on, each change gets the next third number (1.5.1, 1.5.2 …) until the next major upgrade, which moves to a new second number (1.6). The first number goes up for a big change such as a new template.
+
+## v1.5.1 — 2026-10-29
+Everything since v1.5 (these went out as unnumbered updates):
+
+**Board layout**
+- Overlays draw between the boards and the red shading; shading is always on top, with board numbers and overlay IDs above it.
+- Board list grouped into ASL boards (any number), Deluxe boards (lettered boards with large hexes, a–l, and "dx" boards), Fortenberry boards (##a / ##b), ASL Starter Kit boards (standard-size lettered boards, gSK, iSK) and Historical ASL maps; everything else is Third-party. Overlays grouped into ASL and Deluxe, ASL overlays by terrain. Groups can be collapsed (remembered in the browser), with Collapse all / Expand all.
+- Zoom in / out / Fit (buttons, + / − / 0 keys, ⌘/Ctrl + scroll wheel); the work area scrolls when zoomed.
+
+**ASL card**
+- The board configuration grows in proportion until it meets the room beside the Balance text (which wraps to make room), the top of the Turn Record Chart box, and either the intro text (when the map clears the "Board Configuration" heading's words) or the heading.
+- Turn Record Chart reinforcement symbols: the first mover's in the upper-left corner, the side setting up first in the upper-right.
+- Special Rules text is justified.
+
+**OB rows (ASL panels and SASL OB sections)**
+- Optional plain-text line under a row's "Elements of …" heading (+ Text line).
+- Rows can be moved up and down; separate ← Indent and Indent → buttons.
+- "Beside row above" puts a row in the space to the right; rows side by side become columns sized by their counters, with headings wrapping inside, and the rows set beside sit at the right.
+- The hidden + box no longer takes up layout room.
+
+**Both templates**
+- Titles shrink to fit their line.
+- Counter palette includes dismantled (dm) machine guns and other dismantlable support weapons; an older saved palette is rebuilt automatically.
+
+**Repository**
+- Moved to GitHub; KF1 sample artwork removed; README and GPL-3.0 license; the build runs from any folder.
 
 ## v1.5 — 2026-10-28
 - **Overlays in the board layout.** Loading the boards folder now also reads its `overlays` folder (and bundles such as Standard_overlays.zip). In the Board layout panel, switch the list from **Boards** to **Overlays** (with search).

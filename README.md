@@ -41,4 +41,4 @@ The card maker's code is released under the **GNU General Public License v3.0** 
 
 ## Releases
 
-Bump `src/VERSION`, add a `CHANGELOG.md` entry, build, commit, and tag the commit `vX.Y`. Small fixes that don't need a new number are committed without a tag.
+Versions are numbered 1.5.1, 1.5.2 … for each change until the next major upgrade (1.6). For each one: bump `src/VERSION`, add a `CHANGELOG.md` entry, build, commit, and tag the commit `vX.Y.Z`.

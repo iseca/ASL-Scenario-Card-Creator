@@ -145,7 +145,7 @@ output.count { min-width: 22px; text-align: center; font: 700 15px var(--f-num);
 .zone.board.has img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .bnote { font-family: var(--f-num); font-weight: 700; font-size: 8px; line-height: 1.15; text-align: center; width: 121px; }
 
-.trch { margin-top: 7px; margin-bottom: 1px; flex: none; width: 350px; }
+.trch { margin-top: 7px; margin-bottom: 1px; flex: none; }
 .trc { display: grid; border: 1.5px solid var(--rule); height: 52px; flex: none; }
 .trl { position: relative; display: grid; grid-template-rows: 1fr 1fr; min-width: 0; }
 .trr { display: flex; align-items: center; gap: 6px; padding: 0 8px; font-weight: 700; font-size: 11px; min-width: 0; }
@@ -162,9 +162,7 @@ output.count { min-width: 22px; text-align: center; font: 700 15px var(--f-num);
 .turn .half { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .turn .tnum { position: relative; z-index: 1; }
 .turn .tm { z-index: 1; }
-.turn .tm { position: absolute; top: 2px; display: flex; gap: 2px; }
-.turn .tm.tl { left: 2px; }
-.turn .tm.tr { right: 2px; }
+.turn .tm { position: absolute; top: 2px; left: 2px; display: flex; gap: 2px; }
 .tend { border-left: 1px solid var(--rule); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; text-transform: uppercase; white-space: nowrap; overflow: hidden; }
 
 .ob { position: relative; border: 1.5px solid var(--rule); margin-top: 11px; padding: 8px 10px 4.5px 6px; display: grid; grid-template-columns: 96px minmax(0, 1fr); column-gap: 8px; flex: none; }
@@ -176,29 +174,16 @@ output.count { min-width: 22px; text-align: center; font: 700 15px var(--f-num);
 .symwrap:hover { outline: 1px dashed rgba(47,111,208,.6); outline-offset: 2px; }
 .zone.gutimg { width: 56px; height: 104px; }
 .grps { display: flex; flex-wrap: wrap; column-gap: 22px; row-gap: 5px; min-width: 0; align-content: flex-start; }
-.grp { position: relative; flex: 0 0 100%; max-width: 100%; min-width: 0; padding-top: 2px; }
-.grow { display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: 22px; row-gap: 5px; min-width: 0; }
-.grow > .strip { flex: 0 1 auto; min-width: 0; }
-.grp.inl { padding-top: 2px; }
-/* a line of rows side by side: each column's width comes from its counters, and its heading wraps within it */
-.gline { flex: 0 0 100%; display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: 22px; row-gap: 5px; min-width: 0; position: relative; }
-.gline > .grp { flex: 0 1 auto; min-width: 170px; max-width: 100%; }
-.gline > .grp > .gtxt, .gline > .grp > .gnote { contain: inline-size; }
-/* the rows set beside sit at the right-hand side of the box */
-.gline > .grp:first-child + .grp { margin-left: auto; }
+.grp { position: relative; flex: 0 0 100%; min-width: 0; padding-top: 2px; }
+.grp.inl { flex: 0 1 auto; max-width: 100%; }
 .grp.ind1 { padding-left: 47px; }
 .grp.ind2 { padding-left: 94px; }
 .gtxt { margin-bottom: 5px; max-width: 100%; }
-/* optional plain line under a row's "Elements of …" heading */
-.gnote { margin: -3px 0 5px; max-width: 100%; font-weight: 400; }
-.gnote .ed { font-weight: 400; min-height: 1.2em; }
 .ed.lead { font-weight: 700; }
 .ed.body { font-weight: 400; }
 .ed[data-inline] { min-width: 12px; }
-.grp.inl .gtxt { max-width: 100%; }
-.strip { position: relative; display: flex; flex-wrap: wrap; align-items: flex-end; padding-left: 1px; min-height: 30px; }
-/* the "+" box hangs just past the last counter so it never takes up layout room (it doesn't print) */
-.strip:not(.empty) > .addslot { position: absolute; left: 100%; bottom: 0; }
+.grp.inl .gtxt { max-width: 300px; }
+.strip { display: flex; flex-wrap: wrap; align-items: flex-end; padding-left: 1px; min-height: 30px; }
 .strip.dragover { outline: 2px dashed var(--edit); outline-offset: 2px; }
 .slot { position: relative; display: flex; flex-direction: column; align-items: center; margin-left: -1px; }
 .slot .cimg { width: 46px; height: 46px; border: 1px solid #111; }
@@ -221,7 +206,7 @@ output.count { min-width: 22px; text-align: center; font: 700 15px var(--f-num);
 .flow { flex: 1 1 0; min-height: 0; margin-top: 12px; column-count: 2; column-gap: 22px; column-fill: auto; overflow: hidden; }
 .ssrh { margin-bottom: 2px; }
 .ssr { counter-reset: ssr; }
-.ssr > div { margin-bottom: 1px; counter-increment: ssr; font-weight: 400; text-align: justify; hyphens: auto; }
+.ssr > div { margin-bottom: 1px; counter-increment: ssr; font-weight: 400; }
 .ssr > div::before { content: counter(ssr) ". "; font-weight: 700; }
 .am { font-size: 8.7px; line-height: 1.2; text-align: justify; hyphens: auto; margin-top: 8px; }
 .am.newcol { break-before: column; margin-top: 0; }
@@ -247,11 +232,10 @@ output.count { min-width: 22px; text-align: center; font: 700 15px var(--f-num);
   background: #263045; color: #fff; white-space: nowrap;
 }
 .ctl button:hover { background: #2f6fd0; }
-.ctl button[disabled] { opacity: .4; cursor: default; background: #263045; }
 .ctl button:focus-visible { outline: 2px solid #ffbf3c; }
 .ctl button.armed { background: #b3261b; }
 .slot:hover > .sctl, .slot:focus-within > .sctl,
-.grp:hover:not(:has(.grp:hover)) > .gctl, .grp:focus-within:not(:has(.grp:focus-within)) > .gctl,
+.grp:hover > .gctl, .grp:focus-within > .gctl,
 .ob:hover > .pctl, .ob:focus-within > .pctl,
 .trl:hover > .swap, .trl:focus-within > .swap,
 .zone:hover > .zb, .zone:focus-within > .zb,
@@ -339,7 +323,7 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 .obs .grps { column-gap: 14px; }
 .obs .grp.ind1 { padding-left: 24px; }
 .obs .grp.ind2 { padding-left: 48px; }
-.obs .grp.inl .gtxt { max-width: 100%; }
+.obs .grp.inl .gtxt { max-width: 200px; }
 .obs .gtxt { margin-bottom: 3px; }
 .obs:hover .addslot, .obs:focus-within .addslot { opacity: 1; }
 .sheet font[size="1"] { font-size: 7.6px; line-height: 1.2; }
@@ -443,21 +427,16 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 .bllist { flex: 1; overflow: auto; padding: 0 12px 16px; display: grid; grid-template-columns: 1fr; gap: 8px; align-content: start; }
 .bltile { all: unset; box-sizing: border-box; cursor: grab; display: flex; flex-direction: column; gap: 3px; padding: 4px; border-radius: 6px; }
 .bltile:hover { background: rgba(0,0,0,.06); } .bltile:focus-visible { outline: 2px solid var(--accent); }
-.bltile img { width: auto; max-width: 100%; height: auto; max-height: 160px; align-self: flex-start; border: 1px solid #0003; background: #fff; }
+.bltile img { width: 100%; height: auto; max-height: 160px; object-fit: contain; object-position: left; border: 1px solid #0003; background: #fff; }
 .bltile span { font-weight: 600; font-size: 12px; }
 .blright { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .bltools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
 .bltools label { display: flex; gap: 6px; align-items: center; margin-left: 6px; }
-.blws { flex: 1; min-height: 0; position: relative; overflow: auto; background: repeating-conic-gradient(#0000000a 0 25%, transparent 0 50%) 0 0 / 24px 24px; }
-.blwsin { position: relative; touch-action: none; }
-.blzoom { display: inline-flex; align-items: center; gap: 4px; }
-.blzoom output { min-width: 42px; text-align: center; font-variant-numeric: tabular-nums; color: var(--muted); }
+.blws { flex: 1; min-height: 0; position: relative; overflow: hidden; background: repeating-conic-gradient(#0000000a 0 25%, transparent 0 50%) 0 0 / 24px 24px; }
+.blwsin { position: absolute; inset: 0; touch-action: none; }
 .blb { position: absolute; overflow: hidden; cursor: move; box-shadow: 0 0 0 1px #0006; background: #fff; }
 .blin { position: absolute; left: 50%; top: 50%; transform-origin: 50% 50%; }
 .blin > .bimg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
-.blovl { position: absolute; z-index: 2; pointer-events: none; }
-.blovl.tags { z-index: 5; }
-.blovl .blo, .blovl .blot { pointer-events: auto; }
 .blo { position: absolute; cursor: move; z-index: 1; }
 .blo.sel { outline: 2px solid var(--edit); outline-offset: 1px; z-index: 2; }
 .blot { position: absolute; z-index: 3; background: #fffffff0; border: 1px solid #333; padding: 0 5px; border-radius: 2px; font: 700 11px var(--f-ui); white-space: nowrap; cursor: move; }
@@ -467,22 +446,11 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 .bltabs button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .bltabs button:focus-visible { outline: 2px solid var(--accent); }
 .bllist.ovl { grid-template-columns: repeat(3, 1fr); }
-.blgrp, .blsub { all: unset; box-sizing: border-box; grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; cursor: pointer; border-radius: 3px; }
-.blgrp { margin: 10px 0 0; padding: 3px 2px; border-bottom: 1px solid var(--line); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
-.blsub { margin: 6px 0 0; padding: 2px 2px 2px 10px; font-size: 11.5px; font-weight: 600; color: var(--muted); }
-.blgrp:hover, .blsub:hover { background: rgba(0,0,0,.05); }
-.blgrp:focus-visible, .blsub:focus-visible { outline: 2px solid var(--accent); }
-.blgrp .n, .blsub .n { color: var(--muted); font-weight: 500; }
-.chev { width: 10px; flex: none; font-size: 10px; }
-.blall { display: flex; gap: 10px; margin: 6px 12px 0; font-size: 12px; }
-.blall button { all: unset; cursor: pointer; color: var(--edit); }
-.blall button:hover { text-decoration: underline; }
-.blall button:focus-visible { outline: 2px solid var(--accent); }
 .bllist.ovl .bltile img { max-height: 70px; object-position: center; border: none; background: repeating-conic-gradient(#0000000d 0 25%, transparent 0 50%) 0 0 / 10px 10px; }
 .bllist.ovl .bltile span { text-align: center; }
 .blb.sel { box-shadow: 0 0 0 3px var(--edit); z-index: 2; }
 .blb.missing { display: flex; align-items: center; justify-content: center; background: #f4d7d7; color: #6d1b1b; font-weight: 600; }
-.bll { position: absolute; z-index: 5; background: #ffffffd9; padding: 1px 7px; border-radius: 2px; font-weight: 700; font-size: 13px; pointer-events: none; white-space: nowrap; }
+.bll { position: absolute; background: #ffffffd9; padding: 1px 7px; border-radius: 2px; font-weight: 700; font-size: 13px; pointer-events: none; white-space: nowrap; }
 .bls { position: absolute; background: rgba(205,25,25,.38); outline: 1px dashed #fff8; cursor: move; z-index: 3; }
 .bls.sel { outline: 2px solid var(--edit); }
 .blh { position: absolute; right: -6px; bottom: -6px; width: 12px; height: 12px; background: #fff; border: 2px solid var(--edit); border-radius: 2px; cursor: nwse-resize; }
@@ -507,7 +475,7 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 
 <header class="bar">
   <div class="bar-top">
-    <div class="brand"><span class="mark" id="brandMark">ASL</span><span>Scenario Card Maker</span><span class="ver" title="Version 1.5, built 2026-10-29">v1.5</span></div>
+    <div class="brand"><span class="mark" id="brandMark">ASL</span><span>Scenario Card Maker</span><span class="ver" title="Version 1.5, built 2026-10-28">v1.5</span></div>
     <div class="tg" role="group" aria-label="Template">
       <label class="lbl" for="tplSel">Template</label>
       <select id="tplSel" class="tplsel"><option value="asl">ASL scenario card</option><option value="sasl">SASL mission card</option></select>
@@ -661,7 +629,7 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
         <p>When you get new or updated boards, load the folder again.</p>
         <button type="button" class="btn primary" id="blLoad2">Load boards folder…</button>
       </div>
-      <div id="blListW" hidden><div class="bltabs" role="group" aria-label="Show"><button type="button" id="blTabB" aria-pressed="true">Boards</button><button type="button" id="blTabO" aria-pressed="false">Overlays</button></div><div class="blall"><button type="button" id="blCollAll">Collapse all</button><button type="button" id="blExpAll">Expand all</button></div><input type="search" id="blQ" placeholder="Search boards, e.g. 24 or RB" aria-label="Search boards"><div class="bllist" id="blList"></div></div>
+      <div id="blListW" hidden><div class="bltabs" role="group" aria-label="Show"><button type="button" id="blTabB" aria-pressed="true">Boards</button><button type="button" id="blTabO" aria-pressed="false">Overlays</button></div><input type="search" id="blQ" placeholder="Search boards, e.g. 24 or RB" aria-label="Search boards"><div class="bllist" id="blList"></div></div>
     </div>
     <div class="blright">
       <div class="bltools">
@@ -670,7 +638,6 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
         <button type="button" class="btn" id="blShade" title="Add a shaded area to show what is out of play; drag it, and drag its corner to size it">+ Shaded area</button>
         <button type="button" class="btn" id="blDel" title="Remove the selected board or shaded area (Delete)">Remove</button>
         <label><input type="checkbox" id="blLabels"> Board &amp; overlay IDs on the card</label>
-        <span class="blzoom" role="group" aria-label="Zoom"><button type="button" class="btn sq" id="blZoomOut" aria-label="Zoom out" title="Zoom out (−)">−</button><output id="blZoomPct">100%</output><button type="button" class="btn sq" id="blZoomIn" aria-label="Zoom in" title="Zoom in (+)">+</button><button type="button" class="btn" id="blZoomFit" title="Fit the whole layout (0)">Fit</button></span>
         <span class="sp"></span>
         <button type="button" class="btn" id="blNote" title="Write the list of boards into the card's board note">Put list in board note</button>
       </div>
@@ -703,7 +670,6 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
    and draws counter FRONTS the way VASL layers them (base image + active image layers).
    Everything stays in this browser: the module file and the catalogue go into IndexedDB. */
 const VASL = (() => {
-  const CAT_FMT = 2;   /* bump when the catalogue gains something, so a stored one is rebuilt from the saved module */
   /* VASSAL SequenceEncoder: split on a delimiter unless it is escaped with a backslash */
   function tok(s, d) {
     const out = []; let cur = "";
@@ -747,7 +713,7 @@ const VASL = (() => {
   }
   const num = (v, d = 0) => { const n = parseInt(v, 10); return Number.isFinite(n) ? n : d; };
   /* the image layers that show on the front, bottom first */
-  function layersOf(traits, force) {   /* force: Map(trait index -> level) to show another face, e.g. dismantled */
+  function layersOf(traits) {
     const props = {};
     for (const tr of traits) {
       if (tr.id === "mark") { const names = tok(tok(tr.t, ";")[1] || "", ","), vals = tok(tr.s, ","); names.forEach((n, i) => props[n] = vals[i] ?? ""); }
@@ -770,7 +736,6 @@ const VASL = (() => {
         let level, active;
         if (follow) { const pv = num(props[prop], NaN); level = Number.isFinite(pv) ? pv - first + 1 : 1; active = true; }
         else { const v = num(tr.s, 1); level = Math.abs(v); active = v > 0; }
-        if (force && force.has(i)) { level = force.get(i); active = true; }
         /* newer modules can tie a layer's on/off to a property (e.g. the class badge shows only when BRK_Active) */
         if (f[33] === "true" && f[32]) active = active && props[f[32]] === "true";
         /* a layer switched on by a command (Activate…) only shows when its state says so */
@@ -805,21 +770,10 @@ const VASL = (() => {
             const t = tag(c);
             if (t === "PieceSlot") {
               const { type, state } = pieceParts(c.textContent);
-              const traits = traitsOf(type, state, protos);
-              const layers = layersOf(traits);
+              const layers = layersOf(traitsOf(type, state, protos));
               if (!layers.length) continue;
               const en = c.getAttribute("entryName") || "";
-              const name = layers.label && layers.label !== en ? layers.label : en;
-              counters.push({ n: name, a: en, g: path.join(" › "), id: c.getAttribute("gpid") || "", L: layers.map(l => ({ ...l })) });
-              /* a machine gun (or other SW) that can be dismantled: also offer its dismantled face, "dm HMG" */
-              traits.forEach((tr, ti) => {
-                if (tr.id !== "emb2") return;
-                const f = tok(tr.t, ";"), names = tok(f[17] || "", ",").map(x => x.replace(/\\/g, "").trim());
-                const k = names.findIndex(x => /^dm\b/i.test(x)); if (k < 0) return;
-                const v = num(tr.s, 1); if (Math.abs(v) === k + 1 && v > 0) return;
-                const dm = layersOf(traits, new Map([[ti, k + 1]])); if (!dm.length) return;
-                counters.push({ n: "dm " + name, a: en + " dismantled", g: path.join(" › "), id: (c.getAttribute("gpid") || "") + "dm", L: dm.map(l => ({ ...l })) });
-              });
+              counters.push({ n: layers.label && layers.label !== en ? layers.label : en, a: en, g: path.join(" › "), id: c.getAttribute("gpid") || "", L: layers.map(l => ({ ...l })) });
             } else if (/Widget$/.test(t)) {
               const en = (c.getAttribute("entryName") || "").replace(/^<\s*/, "").trim();
               walk(c, en && en !== "?" ? [...path, en] : path);
@@ -827,12 +781,10 @@ const VASL = (() => {
           }
         };
         walk(tab, []);
-        /* drop repeats (a dismantled face VASL also lists as its own piece) */
-        const seenN = new Set();
-        nations.push({ name, side, counters: counters.filter(c => { const k = c.n + "|" + c.g; if (seenN.has(k)) return false; seenN.add(k); return true; }) });
+        nations.push({ name, side, counters });
       }
     }
-    return { version, nations, fmt: CAT_FMT };
+    return { version, nations };
   }
   /* ---- module file ---- */
   let zipP = null, zipOf = null;
@@ -906,7 +858,7 @@ const VASL = (() => {
     }
     return { url: cv.toDataURL("image/png"), w, h };
   }
-  return { tok, chain, pieceParts, traitsOf, layersOf, buildCatalog, load, render, CAT_FMT };
+  return { tok, chain, pieceParts, traitsOf, layersOf, buildCatalog, load, render };
 })();
 
 (() => {
@@ -1034,11 +986,8 @@ const BOARDS = (() => {
     for (const f of list) {
       try {
         for (const b of await readBoards(f)) {
-          let key = b.label.toLowerCase(), prev = out.get(key);
-          /* a Deluxe board and a Starter Kit board with the same letter are different boards: keep both */
-          if (prev && (prev.w !== b.w || prev.h !== b.h) && /^[a-z]$/i.test(b.name)) {
-            const tag = b.cols < 25 ? " (Deluxe)" : " (SK)"; b.label += tag; key = b.label.toLowerCase(); prev = out.get(key);
-          }
+          const key = b.label.toLowerCase();
+          const prev = out.get(key);
           /* the same board twice (e.g. "bd1b" and "bd1b.zip"): keep the newer version */
           if (!prev || (parseFloat(b.version) || 0) > (parseFloat(prev.version) || 0)) {
             await idb.set(imgKey(key), b.blob);                 /* store the picture now; keep only the details in memory */
@@ -1132,58 +1081,12 @@ async function openBoards(imgPath) {
   BL.layout = saved && Array.isArray(saved.boards) ? JSON.parse(JSON.stringify(saved)) : { boards: [], shades: [], labels: true };
   BL.layout.overlays = BL.layout.overlays || [];
   BL.layout.boards.forEach(b => { if (!b.id) b.id = blUid(); });
-  BL.sel = null; BL.note = false; BL.zoom = 1;
+  BL.sel = null; BL.note = false;
   BOARDS._idx = await BOARDS.getIndex(); BOARDS._ovl = await BOARDS.getOverlays();
   $("blDlg").hidden = false; document.body.classList.add("blopen");
   blDrawList(); blDraw();
 }
 function blClose() { $("blDlg").hidden = true; document.body.classList.remove("blopen"); }
-/* list groups: boards by family, overlays by regular/Deluxe and then terrain */
-const OVL_TERRAIN = {
-  "": "Map sections", b: "Brush", bb: "Bamboo", be: "Beach", br: "Bridges", d: "Deirs", dj: "Dense jungle", e: "Escarpments",
-  ef: "Streams with fords", elrr: "Elevated railroads", g: "Grain", h: "Hills", hd: "Hedges", hi: "Hillocks", m: "Marsh",
-  o: "Orchards", ob: "Ocean & beach", oc: "Ocean", og: "Open ground", ow: "Olive groves", p: "Ponds", rp: "Rice paddies",
-  rr: "Railroads", s: "Sand", sd: "Sand dunes", sh: "Shellholes", sr: "Rubble", st: "Streams", surr: "Sunken railroads",
-  rv: "Rivers", sw: "Swamp", v: "Vineyards", w: "Wadis", wd: "Woods", wr: "Wrecks", wt: "Water", x: "Buildings",
-};
-const HASL_MAPS = new Set(["abtf", "brt", "cdp", "dae", "dinant", "er", "fa", "fb", "gt", "hc", "ht", "lg", "ls", "ne", "ng", "pb", "pbr", "rbv2", "rileys", "ro", "sa", "sap", "sc", "sg", "st", "votg"]);
-function blBoardGroup(b) {
-  const n = String(b.name);
-  if (/^\d+$/.test(n)) return [0, "ASL boards"];
-  /* lettered boards come in two sizes: Deluxe (big hexes, 15×5) and Starter Kit (standard size, 33×10) */
-  const big = (+b.cols && +b.cols < 25) || +b.w > 2000;
-  if (/dx/i.test(n) || (/^[a-z]$/i.test(n) && big)) return [1, "Deluxe boards"];
-  if (/^\d+[ab]$/i.test(n)) return [2, "Fortenberry boards"];
-  if (/^[a-z]$/i.test(n) || /^[a-z]sk$/i.test(n) || / \(SK\)$/.test(b.label || "")) return [3, "ASL Starter Kit boards"];
-  /* Historical ASL maps; Festung Budapest comes as FB_NE, FB_NW …, and SAP as SaPC, SaPF, SaPN */
-  if (HASL_MAPS.has(n.toLowerCase()) || /^fb_/i.test(n) || /^sap[a-z]?$/i.test(n)) return [4, "Historical ASL maps"];
-  return [5, "Third-party boards"];
-}
-function blOvlGroup(o) {
-  const pre = (o.key.match(/^[a-z]*/) || [""])[0];
-  if (pre === "dx") return [1, "Deluxe overlays", ""];
-  const t = OVL_TERRAIN[pre];
-  return [0, "ASL overlays", t ? `${t} (${pre ? pre.toUpperCase() : "1–7"})` : `Other (${pre.toUpperCase()})`];
-}
-/* collapsed groups are remembered in this browser (a per-viewer convenience) */
-const blCollapsed = (() => { try { return new Set(JSON.parse(localStorage.getItem("bl_collapsed") || "[]")); } catch (_) { return new Set(); } })();
-function blSaveCollapsed() { try { localStorage.setItem("bl_collapsed", JSON.stringify([...blCollapsed])); } catch (_) {} }
-function blGrouped(items, groupOf, tile, searching) {
-  const g = new Map();
-  for (const it of items) { const [rank, head, sub = ""] = groupOf(it); const k = rank + "|" + head; if (!g.has(k)) g.set(k, { rank, head, subs: new Map() }); const G = g.get(k); if (!G.subs.has(sub)) G.subs.set(sub, []); G.subs.get(sub).push(it); }
-  /* while searching, everything that matches is shown */
-  const shut = (k) => !searching && blCollapsed.has(k);
-  const head = (cls, k, text, n) => `<button type="button" class="${cls}" data-coll="${esc(k)}" aria-expanded="${!shut(k)}"><span class="chev" aria-hidden="true">${shut(k) ? "▸" : "▾"}</span>${esc(text)} <span class="n">${n}</span></button>`;
-  return [...g.values()].sort((a, b) => a.rank - b.rank).map(G => {
-    const gk = BL.tab + "|" + G.head, total = [...G.subs.values()].reduce((n, l) => n + l.length, 0);
-    if (shut(gk)) return head("blgrp", gk, G.head, total);
-    return head("blgrp", gk, G.head, total) + [...G.subs.entries()].sort((a, b) => BOARDS.natCmp(a[0], b[0])).map(([sub, list]) => {
-      if (!sub) return list.map(tile).join("");
-      const sk = gk + "|" + sub;
-      return head("blsub", sk, sub, list.length) + (shut(sk) ? "" : list.map(tile).join(""));
-    }).join("");
-  }).join("");
-}
 function blDrawList() {
   const idx = BOARDS._idx || [], ovl = BOARDS._ovl || [];
   $("blCount").textContent = idx.length ? `${idx.length} boards, ${ovl.length} overlays` : "";
@@ -1194,11 +1097,11 @@ function blDrawList() {
   if (BL.tab === "boards") {
     $("blList").className = "bllist";
     const list = idx.filter(b => !q || (b.label + " " + b.file).toLowerCase().includes(q));
-    $("blList").innerHTML = blGrouped(list, blBoardGroup, b => `<button type="button" class="bltile" draggable="true" data-key="${esc(b.key)}" title="Add board ${esc(b.label)} (${b.cols}×${b.rows} hexes)"><img src="${b.thumb}" alt="" loading="lazy" draggable="false"><span>${esc(b.label)}</span></button>`, !!q) || `<p class="palmsg">No boards match.</p>`;
+    $("blList").innerHTML = list.map(b => `<button type="button" class="bltile" draggable="true" data-key="${esc(b.key)}" title="Add board ${esc(b.label)} (${b.cols}×${b.rows} hexes)"><img src="${b.thumb}" alt="" loading="lazy" draggable="false"><span>${esc(b.label)}</span></button>`).join("") || `<p class="palmsg">No boards match.</p>`;
   } else {
     $("blList").className = "bllist ovl";
-    const list = ovl.filter(o => !q || (o.name + " " + o.set + " " + blOvlGroup(o).join(" ")).toLowerCase().includes(q));
-    $("blList").innerHTML = blGrouped(list, blOvlGroup, o => `<button type="button" class="bltile" draggable="true" data-ovl="${esc(o.key)}" title="Add overlay ${esc(o.name)} to the selected board"><img src="${o.thumb}" alt="" loading="lazy" draggable="false"><span>${esc(o.name)}</span></button>`, !!q)
+    const list = ovl.filter(o => !q || (o.name + " " + o.set).toLowerCase().includes(q));
+    $("blList").innerHTML = list.map(o => `<button type="button" class="bltile" draggable="true" data-ovl="${esc(o.key)}" title="Add overlay ${esc(o.name)} to the selected board"><img src="${o.thumb}" alt="" loading="lazy" draggable="false"><span>${esc(o.name)}</span></button>`).join("")
       || `<p class="palmsg">${ovl.length ? "No overlays match." : "No overlays were found. Load the boards folder again; its overlays folder is read too."}</p>`;
   }
 }
@@ -1294,30 +1197,11 @@ async function blTurnOverlay(steps) {
   const after = await BOARDS.overlay(o.key, o.ori); if (!after) return;
   o.x = cx - after.snap[0]; o.y = cy - after.snap[1]; blDraw();
 }
-/* the view fits the layout, times the zoom; when zoomed in the work area scrolls */
 function blFit() {
   const ws = $("blWs"), ext = blExtent(), pad = 40;
   const W = Math.max(1, ext.x1 - ext.x0 + pad * 2), H = Math.max(1, ext.y1 - ext.y0 + pad * 2);
-  const fit = Math.min((ws.clientWidth - 8) / W, (ws.clientHeight - 8) / H, 0.6);
-  BL.scale = fit * (BL.zoom || 1);
+  BL.scale = Math.min((ws.clientWidth - 8) / W, (ws.clientHeight - 8) / H, 0.6);
   BL.ox = ext.x0 - pad; BL.oy = ext.y0 - pad;
-  const inn = $("blWsIn");
-  inn.style.width = Math.max(ws.clientWidth, W * BL.scale) + "px"; inn.style.height = Math.max(ws.clientHeight, H * BL.scale) + "px";
-  $("blZoomPct").textContent = Math.round((BL.zoom || 1) * 100) + "%";
-}
-/* zoom about the selected board / overlay / shaded area, or else about the middle of the view */
-function blSelCentre() {
-  const S = BL.sel, L = BL.layout; if (!S) return null;
-  if (S.t === "b") { const b = L.boards[S.i], info = blInfo(b.key); if (!info) return null; const bx = blBox(b, info); return { x: b.x + bx.w / 2, y: b.y + bx.h / 2 }; }
-  if (S.t === "s") { const r = L.shades[S.i]; return { x: r.x + r.w / 2, y: r.y + r.h / 2 }; }
-  if (S.t === "o") { const o = L.overlays[S.i], b = L.boards.find(x => x.id === o.bid), info = b && blInfo(b.key), im = BOARDS.overlaySync(o.key, o.ori); if (!info || !im) return null; return blFromBoard(b, info, { x: o.x + im.w / 2, y: o.y + im.h / 2 }); }
-  return null;
-}
-function blZoom(z) {
-  const ws = $("blWs"), s0 = BL.scale, c = blSelCentre(), cx = c ? c.x : (ws.scrollLeft + ws.clientWidth / 2) / s0 + BL.ox, cy = c ? c.y : (ws.scrollTop + ws.clientHeight / 2) / s0 + BL.oy;
-  BL.zoom = Math.min(8, Math.max(0.25, z));
-  blDraw();
-  ws.scrollLeft = (cx - BL.ox) * BL.scale - ws.clientWidth / 2; ws.scrollTop = (cy - BL.oy) * BL.scale - ws.clientHeight / 2;
 }
 /* where a board's number goes: the corner nearest the board's own printed ID
    (lower-left on an unturned geomorphic board), following the board as it is rotated or reversed */
@@ -1341,35 +1225,26 @@ function blUsed() {
 async function blDraw() {
   blFit();
   const L = BL.layout, s = BL.scale, X = (v) => (v - BL.ox) * s, Y = (v) => (v - BL.oy) * s;
-  const parts = [], mid = [], top = [];
+  const parts = [];
   L.boards.forEach((b, i) => {
     const info = blInfo(b.key);
     if (!info) { parts.push(`<div class="blb missing" data-i="${i}" style="left:${X(b.x)}px;top:${Y(b.y)}px;width:${1800 * s}px;height:${645 * s}px">Board ${esc(b.name)} isn't loaded</div>`); return; }
     const bx = blBox(b, info), sel = BL.sel?.t === "b" && BL.sel.i === i;
-    const ovl = L.overlays.map((o, j) => [o, j]).filter(([o]) => o.bid === b.id).map(([o, j]) => {
-      const im = BOARDS.overlaySync(o.key, o.ori); if (!im) return null;
+    const ovs = L.overlays.map((o, j) => [o, j]).filter(([o]) => o.bid === b.id).map(([o, j]) => {
+      const im = BOARDS.overlaySync(o.key, o.ori); if (!im) return "";
       const osel = BL.sel?.t === "o" && BL.sel.i === j;
-      return [`<img class="blo${osel ? " sel" : ""}" data-o="${j}" src="${im.src}" alt="" draggable="false" style="left:${o.x * s}px;top:${o.y * s}px;width:${im.w * s}px;height:${im.h * s}px">`,
-        `<span class="blot${osel ? " sel" : ""}" data-o="${j}" style="left:${(o.x + im.ref[0]) * s}px;top:${(o.y + im.ref[1] - 30) * s}px;transform:translate(-50%,-50%) rotate(${-(b.rot || 0)}deg)">${esc(o.name)}</span>`];
-    }).filter(Boolean);
-    if (ovl.length) {
-      /* layers: board, then its overlays, then red shading on top; the ID tags float above everything so they stay readable and clickable */
-      const imgs = ovl.map(x => x[0]).join(""), tags = ovl.map(x => x[1]).join("");
-      const box = (cls, html) => `<div class="${cls}" style="left:${X(b.x)}px;top:${Y(b.y)}px;width:${bx.w * s}px;height:${bx.h * s}px"><div class="blin" style="width:${info.w * s}px;height:${info.h * s}px;transform:translate(-50%,-50%) rotate(${b.rot || 0}deg)">${html}</div></div>`;
-      mid.push(box("blovl", imgs)); top.push(box("blovl tags", tags));
-    }
+      return `<img class="blo${osel ? " sel" : ""}" data-o="${j}" src="${im.src}" alt="" draggable="false" style="left:${o.x * s}px;top:${o.y * s}px;width:${im.w * s}px;height:${im.h * s}px">`
+        + `<span class="blot${osel ? " sel" : ""}" data-o="${j}" style="left:${(o.x + im.ref[0]) * s}px;top:${(o.y + im.ref[1] - 30) * s}px;transform:translate(-50%,-50%) rotate(${-(b.rot || 0)}deg)">${esc(o.name)}</span>`;
+    }).join("");
     parts.push(`<div class="blb${sel ? " sel" : ""}" data-i="${i}" style="left:${X(b.x)}px;top:${Y(b.y)}px;width:${bx.w * s}px;height:${bx.h * s}px">
-      <div class="blin" style="width:${info.w * s}px;height:${info.h * s}px;transform:translate(-50%,-50%) rotate(${b.rot || 0}deg)"><img class="bimg" src="${BOARDS.urlSync(b.key) || info.thumb}" alt="" draggable="false"></div>
-      </div>`);
-    /* board numbers float above the red shading, like the overlay IDs */
-    if (L.labels) { const p = blLabelSpot(b, info); top.push(`<span class="bll" style="left:${X(p.x)}px;top:${Y(p.y)}px;transform:translate(${-p.ax * 100}%,${-p.ay * 100}%)">${esc(b.name)}</span>`); }
+      <div class="blin" style="width:${info.w * s}px;height:${info.h * s}px;transform:translate(-50%,-50%) rotate(${b.rot || 0}deg)"><img class="bimg" src="${BOARDS.urlSync(b.key) || info.thumb}" alt="" draggable="false">${ovs}</div>
+      ${L.labels ? (() => { const p = blLabelSpot(b, info); return `<span class="bll" style="left:${(p.x - b.x) * s}px;top:${(p.y - b.y) * s}px;transform:translate(${-p.ax * 100}%,${-p.ay * 100}%)">${esc(b.name)}</span>`; })() : ""}</div>`);
   });
-  parts.push(...mid);
   L.shades.forEach((r, i) => {
     const sel = BL.sel?.t === "s" && BL.sel.i === i;
     parts.push(`<div class="bls${sel ? " sel" : ""}" data-s="${i}" style="left:${X(r.x)}px;top:${Y(r.y)}px;width:${r.w * s}px;height:${r.h * s}px"><span class="blh" data-h="${i}"></span></div>`);
   });
-  $("blWsIn").innerHTML = (parts.join("") + top.join("")) || `<p class="palmsg">Click a board on the left to start the layout. Boards snap together when their edges meet.</p>`;
+  $("blWsIn").innerHTML = parts.join("") || `<p class="palmsg">Click a board on the left to start the layout. Boards snap together when their edges meet.</p>`;
   $("blUsed").textContent = L.boards.length ? "In use: boards " + blUsed() : "No boards yet.";
   const t = BL.sel?.t;
   $("blRot").disabled = $("blRev").disabled = !(t === "b" || t === "o"); $("blDel").disabled = !BL.sel;
@@ -1450,16 +1325,14 @@ async function blRender(maxSide = 1600) {
   for (const b of L.boards) {
     const info = blInfo(b.key), im = info && await BOARDS.image(b.key); if (!im) continue;
     const bx = blBox(b, info), cx = (b.x - ext.x0 + bx.w / 2) * s, cy = (b.y - ext.y0 + bx.h / 2) * s;
-    g.save(); g.translate(cx, cy); g.rotate((b.rot || 0) * Math.PI / 180); g.drawImage(im, -info.w * s / 2, -info.h * s / 2, info.w * s, info.h * s); g.restore();
-  }
-  /* overlays sit on the boards, under the red shading; drawn in their board's own frame so they turn with it */
-  for (const b of L.boards) {
-    const info = blInfo(b.key); if (!info) continue; const bx = blBox(b, info);
+    g.save(); g.translate(cx, cy); g.rotate((b.rot || 0) * Math.PI / 180); g.drawImage(im, -info.w * s / 2, -info.h * s / 2, info.w * s, info.h * s);
+    /* the board's overlays, drawn in the board's own frame so they turn with it */
+    g.beginPath(); g.rect(-info.w * s / 2, -info.h * s / 2, info.w * s, info.h * s); g.clip();
     for (const o of L.overlays.filter(o => o.bid === b.id)) {
       const oi = await BOARDS.overlay(o.key, o.ori); if (!oi) continue;
-      g.save(); g.translate((b.x - ext.x0 + bx.w / 2) * s, (b.y - ext.y0 + bx.h / 2) * s); g.rotate((b.rot || 0) * Math.PI / 180);
-      g.drawImage(oi.im, (o.x - info.w / 2) * s, (o.y - info.h / 2) * s, oi.w * s, oi.h * s); g.restore();
+      g.drawImage(oi.im, (o.x - info.w / 2) * s, (o.y - info.h / 2) * s, oi.w * s, oi.h * s);
     }
+    g.restore();
   }
   /* shading only darkens the boards, never the empty space around them */
   g.save(); g.beginPath();
@@ -1584,7 +1457,6 @@ function normalize(o) {
     side: p.side === "B" ? "B" : "A", gut: p.gut || null,
     groups: (Array.isArray(p.groups) && p.groups.length ? p.groups : [blankGroup()]).map(g => ({
       ...splitLead(g.form, g.html, "elr"), indent: [0, 1, 2].includes(g.indent) ? g.indent : 0, inline: !!g.inline,
-      ...(g.noteOn ? { noteOn: true, note: g.note || "" } : {}),
       slots: (Array.isArray(g.slots) ? g.slots : []).map(s => ({ img: s.img || null, qty: String(s.qty ?? ""), size: s.size === "l" ? "l" : "s", ...(s.v ? { v: 1 } : {}) })),
     })),
   }));
@@ -1715,7 +1587,6 @@ function normalizeSasl(o) {
       sc.nat = x.nat || "";
       sc.groups = (Array.isArray(x.groups) && x.groups.length ? x.groups : [blankGroup()]).map(g => ({
         form: g.form || "", html: g.html || "", indent: [0, 1, 2].includes(g.indent) ? g.indent : 0, inline: !!g.inline,
-        ...(g.noteOn ? { noteOn: true, note: g.note || "" } : {}),
         slots: (Array.isArray(g.slots) ? g.slots : []).map(t => ({ img: t.img || null, qty: String(t.qty ?? ""), size: t.size === "l" ? "l" : "s", ...(t.v ? { v: 1 } : {}) })),
       }));
     }
@@ -1860,35 +1731,16 @@ function slotHTML(p, sl) { return `<div class="slot ${sl.size}" data-slot="${p}"
       ${ed(p + ".qty", "qty", "", { plain: true, single: true })}
       <span class="ctl sctl"><button type="button" data-act="size" data-p="${p}" aria-label="Switch counter size" title="Counter size">${sl.size === "l" ? "⅝″" : "½″"}</button><button type="button" data-act="delSlot" data-p="${p}" aria-label="Remove counter">×</button></span>
     </div>`; }
-/* the rows of one OB panel / section. A row set "beside" sits next to the counters of the row above
-   (under that row's heading), so a long "Elements of …" heading doesn't push it onto a new line */
-function groupsHTML(base, groups) {
-  let out = "";
-  for (let i = 0; i < groups.length; i++) {
-    let j = i + 1, side = "";
-    while (j < groups.length && groups[j].inline) { side += groupHTML(`${base}.${j}`, j, groups[j], groups.length); j++; }
-    /* a row with rows beside it becomes a line of columns: each column is as wide as its counters
-       (at least a minimum) and its heading wraps inside that width, so the rows fit side by side */
-    out += side ? `<div class="gline">${groupHTML(`${base}.${i}`, i, groups[i], groups.length)}${side}</div>` : groupHTML(`${base}.${i}`, i, groups[i], groups.length);
-    i = j - 1;
-  }
-  return out;
-}
-function groupHTML(gp, gi, g, n = 1, side = "") {
-    return `<div class="grp ind${g.indent}${g.inline && gi > 0 ? " inl" : ""}" data-g="${gp}">
+function groupHTML(gp, gi, g) {
+    return `<div class="grp ind${g.indent}${g.inline ? " inl" : ""}" data-g="${gp}">
       <div class="gtxt">${ed(gp + ".form", "lead", gi === 0 ? "Elements of … [ELR: #]" : "Formation (optional)", { inline: true, single: true })} ${ed(gp + ".html", "body", gi === 0 ? "set up …: {SAN: #}" : "Enter on Turn # along the … edge:", { inline: true })}</div>
-      ${g.noteOn ? `<div class="gnote">${ed(gp + ".note", "body", "Optional note, e.g. (see SSR 3) or Elements set up as per …")}</div>` : ""}
-      <div class="grow"><div class="strip${g.slots.length ? "" : " empty"}" data-strip="${gp}">
+      <div class="strip${g.slots.length ? "" : " empty"}" data-strip="${gp}">
         ${g.slots.map((sl, si) => slotHTML(`${gp}.slots.${si}`, sl)).join("")}
         <button type="button" class="addslot" data-act="addSlot" data-p="${gp}" aria-label="Add counter (or drop images here)" title="Add counter, or drop images here">+</button>
-      </div></div>
+      </div>
       <span class="ctl gctl">
-        <button type="button" data-act="note" data-p="${gp}" title="${g.noteOn ? "Remove the plain-text line under this row's heading" : "Add a plain (not bold) line of text under this row's heading"}">${g.noteOn ? "− Text line" : "+ Text line"}</button>
-        <button type="button" data-act="outdent" data-p="${gp}" title="Move the row left one step"${g.indent ? "" : " disabled"} aria-label="Indent left">← Indent</button>
-        <button type="button" data-act="indent" data-p="${gp}" title="Move the row right one step (${g.indent}/2)"${g.indent >= 2 ? " disabled" : ""} aria-label="Indent right">Indent →</button>
-        ${gi > 0 ? `<button type="button" data-act="grpUp" data-p="${gp}" title="Move this row up">↑</button>` : ""}
-        ${gi < n - 1 ? `<button type="button" data-act="grpDown" data-p="${gp}" title="Move this row down">↓</button>` : ""}
-        ${gi > 0 ? `<button type="button" data-act="inline" data-p="${gp}" title="${g.inline ? "Start this row on its own line" : "Fit this row into the empty space to the right of the row above"}">${g.inline ? "Own line" : "Beside row above"}</button>` : ""}
+        <button type="button" data-act="indent" data-p="${gp}" title="Indent the row">Indent ${g.indent ? "→".repeat(g.indent) : "off"}</button>
+        ${gi > 0 ? `<button type="button" data-act="inline" data-p="${gp}">${g.inline ? "Put on own line" : "Put beside previous"}</button>` : ""}
         <button type="button" data-act="palFor" data-p="${gp}" title="Open the counter palette and add counters to this row">Counters…</button>
         <button type="button" data-act="delGroup" data-p="${gp}">Remove row</button>
       </span>
@@ -1905,7 +1757,7 @@ function render() {
       <div class="symwrap" title="Change this side's nationality"><span class="sym big">${sideSym(p.side)}</span>${natSelect(p.side, "Nationality for this side")}</div>
       ${zone(`panels.${pi}.gut`, "gutimg", "Side art")}
     </div>
-    <div class="grps">${groupsHTML(`panels.${pi}.groups`, p.groups)}</div>
+    <div class="grps">${p.groups.map((g, gi) => groupHTML(`panels.${pi}.groups.${gi}`, gi, g)).join("")}</div>
     <span class="ctl pctl">
       <button type="button" data-act="addGroup" data-p="panels.${pi}">+ Counter row</button>
       <button type="button" data-act="panelSide" data-p="panels.${pi}">Switch to ${p.side === "A" ? "Side 2" : "Side 1"}</button>
@@ -1957,12 +1809,7 @@ function render() {
       ${s.trc.rows.map((r, i) => `<div class="trr"><span class="sym sm">${sideSym(r.side)}</span>${ed(`trc.rows.${i}.html`, "", i === 0 ? sideLabel(r.side).toUpperCase() + " Sets up First" : sideLabel(r.side).toUpperCase() + " Moves First", { single: true })}</div>`).join("")}
       <span class="ctl swap"><button type="button" data-act="swapRows" title="Swap which side is on each row">Swap sides</button></span>
     </div>
-    ${s.trc.turns.map((t, i) => `<button type="button" class="turn f-${t.fill || "none"}" data-act="turn" data-i="${i}" aria-label="Turn ${i + 1} options${t.half ? ", game ends in the first half of this turn" : ""}">${t.half ? `<svg class="half" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="100,0 100,100 0,100" fill="#d4202a"/></svg>` : ""}${(() => {
-      /* reinforcements: the side that moves first goes in the upper-left corner, the side that sets up first in the upper-right */
-      const mover = s.trc.rows[1].side, setter = s.trc.rows[0].side;
-      return (t.mark.includes(mover) ? `<span class="tm tl"><span class="sym xs">${sideSym(mover)}</span></span>` : "")
-        + (t.mark.includes(setter) ? `<span class="tm tr"><span class="sym xs">${sideSym(setter)}</span></span>` : "");
-    })()}<span class="tnum">${i + 1}</span></button>`).join("")}
+    ${s.trc.turns.map((t, i) => `<button type="button" class="turn f-${t.fill || "none"}" data-act="turn" data-i="${i}" aria-label="Turn ${i + 1} options${t.half ? ", game ends in the first half of this turn" : ""}">${t.half ? `<svg class="half" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="100,0 100,100 0,100" fill="#d4202a"/></svg>` : ""}<span class="tm">${t.mark.map(m => `<span class="sym xs">${sideSym(m)}</span>`).join("")}</span><span class="tnum">${i + 1}</span></button>`).join("")}
     ${ed("trc.end", "tend", "END", { single: true })}
   </div>
   ${sections.slice(0, cut).join("")}${WM}`;
@@ -2009,7 +1856,7 @@ function secHTML(sc, i) {
     case "tables": return `<div class="${cls} block" data-sec="${sp}">${head(true)}${mtHTML(sp, sc.table)}${ctl}</div>`;
     case "ob": return `<div class="${cls} block obs">
       <div class="obh"><span class="obsw" title="Choose this OB's nationality symbol"><span class="sym">${symHTML(sc.nat)}</span><select aria-label="Nationality for this OB" data-nat="${sp}.nat">${nationOptions(sc.nat)}</select></span>${ed(sp + ".head", "sech", "FRIENDLY OB:", { inline: true, single: true })}</div>
-      <div class="grps">${groupsHTML(`${sp}.groups`, sc.groups)}</div>${ctl}</div>`;
+      <div class="grps">${sc.groups.map((g, gi) => groupHTML(`${sp}.groups.${gi}`, gi, g)).join("")}</div>${ctl}</div>`;
     case "config": return `<div class="${cls}"><div class="cfg">${ed(sp + ".head", "cfgl", "Initial Mapboard Configuration:", { single: false })}<div class="north${sc.ndir === "right" ? " right" : ""}" data-act="nDir" data-p="${sp}" role="button" tabindex="0" title="Click to point the arrow ${sc.ndir === "right" ? "up" : "right"}" aria-label="North arrow, pointing ${sc.ndir === "right" ? "right" : "up"}. Click to change.">${sc.ndir === "right" ? NORTH_R : NORTH}</div>${zone(sp + ".img", "scfg", "Mapboard diagram", boardBtn(sp + ".img"))}</div>${ctl}</div>`;
   }
   return "";
@@ -2083,7 +1930,7 @@ function queueFit() { clearTimeout(fitT); fitT = setTimeout(checkFit, 120); }
    2. the mini map then gets the largest SQUARE that fits between the "Board Configuration" heading
       and the bottom of the band (less padding), and the map image is fitted inside that square;
    3. the board note wraps to the map's width (wider for a tall map). */
-const BOARD_SIDEWAYS_H = 48 /* 0.5 in at 96 px/in */, BOARD_SIDEWAYS_AR = 2, BOARD_PAD = 6, BOARD_SQ_MIN = 70, BOARD_SQ_MAX = 400, BAL_MIN_W = 96, NOTE_TALL_MIN = 160;
+const BOARD_SIDEWAYS_H = 48 /* 0.5 in at 96 px/in */, BOARD_SIDEWAYS_AR = 2, BOARD_PAD = 6, BOARD_SQ_MIN = 70, BOARD_SQ_MAX = 400, BAL_MIN_W = 150, NOTE_TALL_MIN = 160;
 function sizeNote() {
   const z = sheet.querySelector(".zone.board"), n = sheet.querySelector(".boardw .bnote"); if (!z || !n) return;
   const tall = z.offsetHeight > z.offsetWidth;   /* narrower than tall */
@@ -2100,61 +1947,28 @@ function fitBoard() {
   const z = sheet.querySelector(".zone.board"), n = bw && bw.querySelector(".bnote");
   if (!bl || !br || !bcg || !z) return;
   br.style.minHeight = bl.offsetHeight + "px";               /* left column wins */
-  /* the map may also use the strip beside the "Turn Record Chart" heading, down to the top of the chart itself */
-  const trch = sheet.querySelector(".trch"); if (trch) trch.style.marginTop = "";
-  const headRoom = trch ? trch.offsetHeight + (parseFloat(getComputedStyle(trch).marginTop) || 0) + (parseFloat(getComputedStyle(trch).marginBottom) || 0) : 0;
   const img = z.classList.contains("has") ? z.querySelector("img") : null;
   if (!img || !img.naturalWidth) { z.style.width = ""; z.style.height = ""; sizeNote(); return; }
   const ar = img.naturalWidth / img.naturalHeight;
   const k = br.offsetHeight / (br.getBoundingClientRect().height || 1);   /* undo the preview zoom */
-  /* the map grows, keeping its proportions, until it meets the padding below "Board Configuration" (and the
-     history text above it), the turn record chart below, or the room left beside the Balance text, which wraps to make room */
-  const room = () => {
-    const top = bcg.getBoundingClientRect().top, bottom = br.getBoundingClientRect().top + (bl.offsetHeight + headRoom) / k;
+  for (let pass = 0; pass < 3; pass++) {
+    const top = bcg.getBoundingClientRect().top, bottom = br.getBoundingClientRect().top + bl.offsetHeight / k;
     const padTop = parseFloat(getComputedStyle(bw).paddingTop) || 0;
     const noteH = n ? n.offsetHeight + (parseFloat(getComputedStyle(n).marginTop) || 0) : 0;
-    return { h: (bottom - top) * k - padTop - noteH - BOARD_PAD, w: bcg.offsetWidth - BAL_MIN_W - 26 };
-  };
-  const place = (w) => { w = Math.max(BOARD_SQ_MIN * Math.min(1, ar), Math.floor(w));   /* the minimum applies to the map's longer side */ z.style.width = w + "px"; z.style.height = Math.round(w / ar) + "px"; sizeNote(); };
-  const grow = () => {
-    for (let pass = 0; pass < 3; pass++) { const r = room(); place(Math.min(r.w, r.h * ar)); }
-    /* if the wrapped Balance text now makes the band taller than the photo column, give it back some width */
-    for (let i = 0; i < 14 && br.offsetHeight > bl.offsetHeight + headRoom + 1 && z.offsetWidth > BOARD_SQ_MIN * Math.min(1, ar); i++) place(z.offsetWidth * 0.93);
-  };
-  /* first try letting the map rise beside the "Board Configuration" heading, up to the bottom of the history text.
-     If the map (or its N arrow) would then reach the end of the heading's words, or the Balance text would, the map
-     starts below the heading instead */
-  const head = br.querySelector(":scope > .h2");
-  bcg.style.marginTop = "";
-  if (head) {
-    const hcs = getComputedStyle(head), lift = head.offsetHeight + (parseFloat(hcs.marginTop) || 0) + (parseFloat(hcs.marginBottom) || 0);
-    const rg = document.createRange(); rg.selectNodeContents(head);
-    const tr = rg.getBoundingClientRect(), headBottom = head.getBoundingClientRect().bottom, pad = BOARD_PAD / k;
-    bcg.style.marginTop = -lift + "px";
-    grow();
-    /* only what actually sits beside the heading's words counts: the map, and the N arrow only if it reaches up that far */
-    const hits = (el) => { if (!el) return false; const r = el.getBoundingClientRect(); return r.left < tr.right + pad && r.top < tr.bottom + pad && r.bottom > tr.top - pad && r.right > tr.left - pad; };
-    const balTop = br.querySelector(".balw")?.getBoundingClientRect().top ?? Infinity;
-    if (hits(z) || hits(bw.querySelector(".north svg")) || balTop < headBottom + 2 / k) bcg.style.marginTop = "";
-  }
-  if (!bcg.style.marginTop) grow();
-  /* when the map runs past the photo column, pull the heading up beside it so the chart stays put */
-  const over = br.offsetHeight - bl.offsetHeight;
-  if (trch && over > 0) trch.style.marginTop = ((parseFloat(getComputedStyle(trch).marginTop) || 0) - over) + "px";
-}
-/* titles shrink to fit their line instead of running off it (down to 40% of the normal size) */
-function fitTitles() {
-  pages.querySelectorAll(".ttl, .stitle").forEach(el => {
-    el.style.fontSize = "";
-    const base = parseFloat(getComputedStyle(el).fontSize);
-    for (let i = 0; i < 3 && el.scrollWidth > el.clientWidth + 1; i++) {
-      const cur = parseFloat(getComputedStyle(el).fontSize);
-      el.style.fontSize = Math.max(base * 0.4, cur * (el.clientWidth / el.scrollWidth) * 0.99) + "px";
+    let side = (bottom - top) * k - padTop - noteH - BOARD_PAD;
+    side = Math.min(side, bcg.offsetWidth - BAL_MIN_W - 26);  /* leave room for the Balance text and N arrow */
+    side = Math.max(BOARD_SQ_MIN, Math.min(BOARD_SQ_MAX, Math.floor(side)));
+    let w = ar >= 1 ? side : Math.round(side * ar), h = ar >= 1 ? Math.round(side / ar) : side;
+    if (ar >= BOARD_SIDEWAYS_AR) {                       /* a board on its side: fixed 0.5" tall */
+      const wMax = bcg.offsetWidth - BAL_MIN_W - 26;
+      h = BOARD_SIDEWAYS_H; w = Math.round(h * ar);
+      if (w > wMax) { w = Math.floor(wMax); h = Math.round(w / ar); }
     }
-  });
+    z.style.width = w + "px"; z.style.height = h + "px";
+    sizeNote();
+  }
 }
 function checkFit() {
-  fitTitles();
   if (isSasl()) {
     pages.querySelectorAll(".over").forEach(e => e.classList.remove("over"));
     const issues = [], fl = $("sflow");
@@ -2380,24 +2194,8 @@ function act(a, p, btn) {
       if (hasContent) { confirmTwice(btn, "Click again to remove", run); return; }
       run(); return;
     }
-    case "indent": { const g = get(p); if (g.indent >= 2) return; g.indent++; break; }
-    case "outdent": { const g = get(p); if (!g.indent) return; g.indent--; break; }
-    case "note": {
-      const g = get(p);
-      if (g.noteOn && g.note && htmlToText(g.note).trim()) { confirmTwice(btn, "Click again to remove the text", () => { g.noteOn = false; g.note = ""; render(); queueSave(); }); return; }
-      g.noteOn = !g.noteOn; if (!g.noteOn) g.note = "";
-      render(); queueSave();
-      if (g.noteOn) pages.querySelector(`[data-bind="${p}.note"]`)?.focus();
-      return;
-    }
+    case "indent": { const g = get(p); g.indent = (g.indent + 1) % 3; break; }
     case "inline": { const g = get(p); g.inline = !g.inline; break; }
-    case "grpUp": case "grpDown": {
-      const { arr, idx } = parentOf(p), L = get(arr), j = a === "grpUp" ? idx - 1 : idx + 1;
-      if (j < 0 || j >= L.length) return;
-      [L[idx], L[j]] = [L[j], L[idx]];
-      L[0].inline = false;                      /* the first row always starts the panel */
-      break;
-    }
     case "panelSide": { const pn = get(p); pn.side = pn.side === "A" ? "B" : "A"; break; }
     case "delPanel": {
       const { idx } = parentOf(p);
@@ -3009,13 +2807,7 @@ let palTarget = null, palDrag = null, palObs = null;
 async function vaslReady() {
   if (vasl.cat && vasl.blob) return true;
   const [cat, blob] = await Promise.all([idb.get("vasl_cat"), idb.get("vasl_blob")]);
-  if (cat && blob) {
-    vasl.cat = cat; vasl.blob = blob;
-    /* a palette built by an older version of the card maker is rebuilt from the saved module (adds e.g. dismantled MGs) */
-    if (cat.fmt !== VASL.CAT_FMT) {
-      try { toast("Updating the counter palette…"); const fresh = await VASL.load(blob); await idb.set("vasl_cat", fresh); vasl.cat = fresh; thumbCache.clear(); } catch (_) {}
-    }
-  }
+  if (cat && blob) { vasl.cat = cat; vasl.blob = blob; }
   return !!(vasl.cat && vasl.blob);
 }
 function rowNation(gp) {
@@ -3161,14 +2953,9 @@ $("boardsPick").addEventListener("change", async (e) => {
   } catch (err) { toast("The boards couldn't be read: " + err.message); }
 });
 $("blQ").addEventListener("input", (e) => { BL.q = e.target.value; blDrawList(); });
-$("blCollAll").addEventListener("click", () => { $("blList").querySelectorAll(".blgrp[data-coll]").forEach(h => blCollapsed.add(h.dataset.coll)); blSaveCollapsed(); blDrawList(); });
-$("blExpAll").addEventListener("click", () => { [...blCollapsed].filter(k => k.startsWith(BL.tab + "|")).forEach(k => blCollapsed.delete(k)); blSaveCollapsed(); blDrawList(); });
 $("blTabB").addEventListener("click", () => { BL.tab = "boards"; blDrawList(); });
 $("blTabO").addEventListener("click", () => { BL.tab = "overlays"; blDrawList(); });
-$("blList").addEventListener("click", (e) => {
-  const h = e.target.closest("[data-coll]");
-  if (h) { const k = h.dataset.coll; if (BL.q.trim()) return; blCollapsed.has(k) ? blCollapsed.delete(k) : blCollapsed.add(k); blSaveCollapsed(); blDrawList(); $("blList").querySelector(`[data-coll="${CSS.escape(k)}"]`)?.focus(); return; }
-  const t = e.target.closest(".bltile"); if (!t) return; if (t.dataset.ovl) blAddOverlay(t.dataset.ovl); else blAdd(t.dataset.key); });
+$("blList").addEventListener("click", (e) => { const t = e.target.closest(".bltile"); if (!t) return; if (t.dataset.ovl) blAddOverlay(t.dataset.ovl); else blAdd(t.dataset.key); });
 $("blList").addEventListener("dragstart", (e) => { const t = e.target.closest(".bltile"); if (!t) return; BL.dragKey = t.dataset.key || null; BL.dragOvl = t.dataset.ovl || null; e.dataTransfer.effectAllowed = "copy"; try { e.dataTransfer.setData("text/plain", t.dataset.key || t.dataset.ovl); } catch (_) {} });
 $("blWs").addEventListener("dragover", (e) => { if (BL.dragKey || BL.dragOvl) e.preventDefault(); });
 $("blWs").addEventListener("drop", (e) => {
@@ -3201,10 +2988,6 @@ $("blShade").addEventListener("click", () => {
   const r = { x: blSnapTo(ext.x1 - w, g.ox, g.sx), y: ext.y0, w: 0, h: ext.y1 - ext.y0 }; r.w = ext.x1 - r.x;
   BL.layout.shades.push(r); BL.sel = { t: "s", i: BL.layout.shades.length - 1 }; blDraw();
 });
-$("blZoomIn").addEventListener("click", () => blZoom((BL.zoom || 1) * 1.4));
-$("blZoomOut").addEventListener("click", () => blZoom((BL.zoom || 1) / 1.4));
-$("blZoomFit").addEventListener("click", () => { BL.zoom = 1; blDraw(); $("blWs").scrollTo(0, 0); });
-$("blWs").addEventListener("wheel", (e) => { if (!(e.ctrlKey || e.metaKey)) return; e.preventDefault(); blZoom((BL.zoom || 1) * (e.deltaY < 0 ? 1.15 : 1 / 1.15)); }, { passive: false });
 $("blLabels").addEventListener("change", (e) => { BL.layout.labels = e.target.checked; blDraw(); });
 $("blNote").addEventListener("click", () => {
   if (!BL.layout.boards.length) return;
@@ -3217,9 +3000,6 @@ document.addEventListener("keydown", (e) => {
   if (e.target.closest?.("input, textarea, select")) return;
   if (e.key === "Escape") { blClose(); e.stopPropagation(); }
   else if ((e.key === "Delete" || e.key === "Backspace") && BL.sel) { e.preventDefault(); $("blDel").click(); }
-  else if (e.key === "+" || e.key === "=") { e.preventDefault(); blZoom((BL.zoom || 1) * 1.4); }
-  else if (e.key === "-" || e.key === "_") { e.preventDefault(); blZoom((BL.zoom || 1) / 1.4); }
-  else if (e.key === "0") { e.preventDefault(); $("blZoomFit").click(); }
   else if ((e.key === "r" || e.key === "R") && BL.sel?.t === "b") { e.preventDefault(); blTurn(90); }
   else if ((e.key === "r" || e.key === "R") && BL.sel?.t === "o") { e.preventDefault(); blTurnOverlay(e.shiftKey ? -1 : 1); }
 }, true);
