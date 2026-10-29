@@ -177,7 +177,8 @@ output.count { min-width: 22px; text-align: center; font: 700 15px var(--f-num);
 .grp { position: relative; flex: 0 0 100%; max-width: 100%; min-width: 0; padding-top: 2px; }
 .grow { display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: 22px; row-gap: 5px; min-width: 0; }
 .grow > .strip { flex: 0 1 auto; min-width: 0; }
-.grp.inl { flex: 0 1 auto; max-width: 100%; padding-top: 0; }
+/* a row set beside takes whatever room is left (its heading wraps to fit), at least as wide as its widest counter or word */
+.grp.inl { flex: 1 1 150px; max-width: 360px; min-width: min-content; padding-top: 0; }
 .grp.ind1 { padding-left: 47px; }
 .grp.ind2 { padding-left: 94px; }
 .gtxt { margin-bottom: 5px; max-width: 100%; }
@@ -187,8 +188,10 @@ output.count { min-width: 22px; text-align: center; font: 700 15px var(--f-num);
 .ed.lead { font-weight: 700; }
 .ed.body { font-weight: 400; }
 .ed[data-inline] { min-width: 12px; }
-.grp.inl .gtxt { max-width: 300px; }
-.strip { display: flex; flex-wrap: wrap; align-items: flex-end; padding-left: 1px; min-height: 30px; }
+.grp.inl .gtxt { max-width: 100%; }
+.strip { position: relative; display: flex; flex-wrap: wrap; align-items: flex-end; padding-left: 1px; min-height: 30px; }
+/* the "+" box hangs just past the last counter so it never takes up layout room (it doesn't print) */
+.strip:not(.empty) > .addslot { position: absolute; left: 100%; bottom: 0; }
 .strip.dragover { outline: 2px dashed var(--edit); outline-offset: 2px; }
 .slot { position: relative; display: flex; flex-direction: column; align-items: center; margin-left: -1px; }
 .slot .cimg { width: 46px; height: 46px; border: 1px solid #111; }
@@ -328,7 +331,7 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 .obs .grps { column-gap: 14px; }
 .obs .grp.ind1 { padding-left: 24px; }
 .obs .grp.ind2 { padding-left: 48px; }
-.obs .grp.inl .gtxt { max-width: 200px; }
+.obs .grp.inl .gtxt { max-width: 100%; }
 .obs .gtxt { margin-bottom: 3px; }
 .obs:hover .addslot, .obs:focus-within .addslot { opacity: 1; }
 .sheet font[size="1"] { font-size: 7.6px; line-height: 1.2; }
