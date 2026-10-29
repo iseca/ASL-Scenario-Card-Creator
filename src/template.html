@@ -177,10 +177,13 @@ output.count { min-width: 22px; text-align: center; font: 700 15px var(--f-num);
 .grp { position: relative; flex: 0 0 100%; max-width: 100%; min-width: 0; padding-top: 2px; }
 .grow { display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: 22px; row-gap: 5px; min-width: 0; }
 .grow > .strip { flex: 0 1 auto; min-width: 0; }
-/* a row set beside takes whatever room is left (its heading wraps to fit), at least as wide as its widest counter or word */
-.grp.inl { flex: 0 1 210px; max-width: 260px; min-width: min-content; padding-top: 0; }
-/* the first row set beside goes to the right-hand side of the box, its heading wrapped narrow */
-.grow > .strip + .grp.inl { margin-left: auto; }
+.grp.inl { padding-top: 2px; }
+/* a line of rows side by side: each column's width comes from its counters, and its heading wraps within it */
+.gline { flex: 0 0 100%; display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: 22px; row-gap: 5px; min-width: 0; position: relative; }
+.gline > .grp { flex: 0 1 auto; min-width: 170px; max-width: 100%; }
+.gline > .grp > .gtxt, .gline > .grp > .gnote { contain: inline-size; }
+/* the rows set beside sit at the right-hand side of the box */
+.gline > .grp:first-child + .grp { margin-left: auto; }
 .grp.ind1 { padding-left: 47px; }
 .grp.ind2 { padding-left: 94px; }
 .gtxt { margin-bottom: 5px; max-width: 100%; }
@@ -1067,7 +1070,9 @@ function groupsHTML(base, groups) {
   for (let i = 0; i < groups.length; i++) {
     let j = i + 1, side = "";
     while (j < groups.length && groups[j].inline) { side += groupHTML(`${base}.${j}`, j, groups[j], groups.length); j++; }
-    out += groupHTML(`${base}.${i}`, i, groups[i], groups.length, side);
+    /* a row with rows beside it becomes a line of columns: each column is as wide as its counters
+       (at least a minimum) and its heading wraps inside that width, so the rows fit side by side */
+    out += side ? `<div class="gline">${groupHTML(`${base}.${i}`, i, groups[i], groups.length)}${side}</div>` : groupHTML(`${base}.${i}`, i, groups[i], groups.length);
     i = j - 1;
   }
   return out;
@@ -1079,7 +1084,7 @@ function groupHTML(gp, gi, g, n = 1, side = "") {
       <div class="grow"><div class="strip${g.slots.length ? "" : " empty"}" data-strip="${gp}">
         ${g.slots.map((sl, si) => slotHTML(`${gp}.slots.${si}`, sl)).join("")}
         <button type="button" class="addslot" data-act="addSlot" data-p="${gp}" aria-label="Add counter (or drop images here)" title="Add counter, or drop images here">+</button>
-      </div>${side}</div>
+      </div></div>
       <span class="ctl gctl">
         <button type="button" data-act="note" data-p="${gp}" title="${g.noteOn ? "Remove the plain-text line under this row's heading" : "Add a plain (not bold) line of text under this row's heading"}">${g.noteOn ? "− Text line" : "+ Text line"}</button>
         <button type="button" data-act="indent" data-p="${gp}" title="Indent the row">Indent ${g.indent ? "→".repeat(g.indent) : "off"}</button>
