@@ -35,6 +35,10 @@ python3 src/build.py
 
 This writes `ASL_Scenario_Card_Maker.html` and `dist/ASL_Scenario_Card_Maker_v<VERSION>.html`. The page loads html2canvas, jsPDF and JSZip from cdnjs, so exporting and reading VASL files need an internet connection.
 
+## License
+
+The card maker's code is released under the **GNU General Public License v3.0** (see `LICENSE`). That covers this repository's own code only; ASL, SASL and VASL material is not part of it, and cards you make remain for personal use.
+
 ## Releases
 
 Bump `src/VERSION`, add a `CHANGELOG.md` entry, build, commit, and tag the commit `vX.Y`. Small fixes that don't need a new number are committed without a tag.
