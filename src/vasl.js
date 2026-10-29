@@ -3,6 +3,7 @@
    and draws counter FRONTS the way VASL layers them (base image + active image layers).
    Everything stays in this browser: the module file and the catalogue go into IndexedDB. */
 const VASL = (() => {
+  const CAT_FMT = 2;   /* bump when the catalogue gains something, so a stored one is rebuilt from the saved module */
   /* VASSAL SequenceEncoder: split on a delimiter unless it is escaped with a backslash */
   function tok(s, d) {
     const out = []; let cur = "";
@@ -46,7 +47,7 @@ const VASL = (() => {
   }
   const num = (v, d = 0) => { const n = parseInt(v, 10); return Number.isFinite(n) ? n : d; };
   /* the image layers that show on the front, bottom first */
-  function layersOf(traits) {
+  function layersOf(traits, force) {   /* force: Map(trait index -> level) to show another face, e.g. dismantled */
     const props = {};
     for (const tr of traits) {
       if (tr.id === "mark") { const names = tok(tok(tr.t, ";")[1] || "", ","), vals = tok(tr.s, ","); names.forEach((n, i) => props[n] = vals[i] ?? ""); }
@@ -69,6 +70,7 @@ const VASL = (() => {
         let level, active;
         if (follow) { const pv = num(props[prop], NaN); level = Number.isFinite(pv) ? pv - first + 1 : 1; active = true; }
         else { const v = num(tr.s, 1); level = Math.abs(v); active = v > 0; }
+        if (force && force.has(i)) { level = force.get(i); active = true; }
         /* newer modules can tie a layer's on/off to a property (e.g. the class badge shows only when BRK_Active) */
         if (f[33] === "true" && f[32]) active = active && props[f[32]] === "true";
         /* a layer switched on by a command (Activate…) only shows when its state says so */
@@ -103,10 +105,21 @@ const VASL = (() => {
             const t = tag(c);
             if (t === "PieceSlot") {
               const { type, state } = pieceParts(c.textContent);
-              const layers = layersOf(traitsOf(type, state, protos));
+              const traits = traitsOf(type, state, protos);
+              const layers = layersOf(traits);
               if (!layers.length) continue;
               const en = c.getAttribute("entryName") || "";
-              counters.push({ n: layers.label && layers.label !== en ? layers.label : en, a: en, g: path.join(" › "), id: c.getAttribute("gpid") || "", L: layers.map(l => ({ ...l })) });
+              const name = layers.label && layers.label !== en ? layers.label : en;
+              counters.push({ n: name, a: en, g: path.join(" › "), id: c.getAttribute("gpid") || "", L: layers.map(l => ({ ...l })) });
+              /* a machine gun (or other SW) that can be dismantled: also offer its dismantled face, "dm HMG" */
+              traits.forEach((tr, ti) => {
+                if (tr.id !== "emb2") return;
+                const f = tok(tr.t, ";"), names = tok(f[17] || "", ",").map(x => x.replace(/\\/g, "").trim());
+                const k = names.findIndex(x => /^dm\b/i.test(x)); if (k < 0) return;
+                const v = num(tr.s, 1); if (Math.abs(v) === k + 1 && v > 0) return;
+                const dm = layersOf(traits, new Map([[ti, k + 1]])); if (!dm.length) return;
+                counters.push({ n: "dm " + name, a: en + " dismantled", g: path.join(" › "), id: (c.getAttribute("gpid") || "") + "dm", L: dm.map(l => ({ ...l })) });
+              });
             } else if (/Widget$/.test(t)) {
               const en = (c.getAttribute("entryName") || "").replace(/^<\s*/, "").trim();
               walk(c, en && en !== "?" ? [...path, en] : path);
@@ -114,10 +127,12 @@ const VASL = (() => {
           }
         };
         walk(tab, []);
-        nations.push({ name, side, counters });
+        /* drop repeats (a dismantled face VASL also lists as its own piece) */
+        const seenN = new Set();
+        nations.push({ name, side, counters: counters.filter(c => { const k = c.n + "|" + c.g; if (seenN.has(k)) return false; seenN.add(k); return true; }) });
       }
     }
-    return { version, nations };
+    return { version, nations, fmt: CAT_FMT };
   }
   /* ---- module file ---- */
   let zipP = null, zipOf = null;
@@ -191,5 +206,5 @@ const VASL = (() => {
     }
     return { url: cv.toDataURL("image/png"), w, h };
   }
-  return { tok, chain, pieceParts, traitsOf, layersOf, buildCatalog, load, render };
+  return { tok, chain, pieceParts, traitsOf, layersOf, buildCatalog, load, render, CAT_FMT };
 })();

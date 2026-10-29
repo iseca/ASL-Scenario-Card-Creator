@@ -2156,7 +2156,13 @@ let palTarget = null, palDrag = null, palObs = null;
 async function vaslReady() {
   if (vasl.cat && vasl.blob) return true;
   const [cat, blob] = await Promise.all([idb.get("vasl_cat"), idb.get("vasl_blob")]);
-  if (cat && blob) { vasl.cat = cat; vasl.blob = blob; }
+  if (cat && blob) {
+    vasl.cat = cat; vasl.blob = blob;
+    /* a palette built by an older version of the card maker is rebuilt from the saved module (adds e.g. dismantled MGs) */
+    if (cat.fmt !== VASL.CAT_FMT) {
+      try { toast("Updating the counter palette…"); const fresh = await VASL.load(blob); await idb.set("vasl_cat", fresh); vasl.cat = fresh; thumbCache.clear(); } catch (_) {}
+    }
+  }
   return !!(vasl.cat && vasl.blob);
 }
 function rowNation(gp) {
