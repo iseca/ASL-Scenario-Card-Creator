@@ -1333,12 +1333,13 @@ function fitBoard() {
   if (head) {
     const hcs = getComputedStyle(head), lift = head.offsetHeight + (parseFloat(hcs.marginTop) || 0) + (parseFloat(hcs.marginBottom) || 0);
     const rg = document.createRange(); rg.selectNodeContents(head);
-    const textRight = rg.getBoundingClientRect().right, headBottom = head.getBoundingClientRect().bottom;
+    const tr = rg.getBoundingClientRect(), headBottom = head.getBoundingClientRect().bottom, pad = BOARD_PAD / k;
     bcg.style.marginTop = -lift + "px";
     grow();
-    const north = bw.querySelector(".north"), left = Math.min(z.getBoundingClientRect().left, north ? north.getBoundingClientRect().left : Infinity);
+    /* only what actually sits beside the heading's words counts: the map, and the N arrow only if it reaches up that far */
+    const hits = (el) => { if (!el) return false; const r = el.getBoundingClientRect(); return r.left < tr.right + pad && r.top < tr.bottom + pad && r.bottom > tr.top - pad && r.right > tr.left - pad; };
     const balTop = br.querySelector(".balw")?.getBoundingClientRect().top ?? Infinity;
-    if (left < textRight + BOARD_PAD / k || balTop < headBottom + 2 / k) bcg.style.marginTop = "";
+    if (hits(z) || hits(bw.querySelector(".north svg")) || balTop < headBottom + 2 / k) bcg.style.marginTop = "";
   }
   if (!bcg.style.marginTop) grow();
   /* when the map runs past the photo column, pull the heading up beside it so the chart stays put */
