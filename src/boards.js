@@ -121,8 +121,11 @@ const BOARDS = (() => {
     for (const f of list) {
       try {
         for (const b of await readBoards(f)) {
-          const key = b.label.toLowerCase();
-          const prev = out.get(key);
+          let key = b.label.toLowerCase(), prev = out.get(key);
+          /* a Deluxe board and a Starter Kit board with the same letter are different boards: keep both */
+          if (prev && (prev.w !== b.w || prev.h !== b.h) && /^[a-z]$/i.test(b.name)) {
+            const tag = b.cols < 25 ? " (Deluxe)" : " (SK)"; b.label += tag; key = b.label.toLowerCase(); prev = out.get(key);
+          }
           /* the same board twice (e.g. "bd1b" and "bd1b.zip"): keep the newer version */
           if (!prev || (parseFloat(b.version) || 0) > (parseFloat(prev.version) || 0)) {
             await idb.set(imgKey(key), b.blob);                 /* store the picture now; keep only the details in memory */
@@ -234,11 +237,11 @@ const HASL_MAPS = new Set(["abtf", "brt", "cdp", "dae", "dinant", "er", "fa", "f
 function blBoardGroup(b) {
   const n = String(b.name);
   if (/^\d+$/.test(n)) return [0, "ASL boards"];
-  /* Deluxe: the large boards a–i, and any "dx" board */
-  if (/dx/i.test(n) || /^[a-i]$/i.test(n)) return [1, "Deluxe boards"];
+  /* lettered boards come in two sizes: Deluxe (big hexes, 15×5) and Starter Kit (standard size, 33×10) */
+  const big = (+b.cols && +b.cols < 25) || +b.w > 2000;
+  if (/dx/i.test(n) || (/^[a-z]$/i.test(n) && big)) return [1, "Deluxe boards"];
   if (/^\d+[ab]$/i.test(n)) return [2, "Fortenberry boards"];
-  /* Starter Kit: j–z, plus the SK versions of lettered boards (gSK, iSK) */
-  if (/^[j-z]$/i.test(n) || /^[a-z]sk$/i.test(n)) return [3, "ASL Starter Kit boards"];
+  if (/^[a-z]$/i.test(n) || /^[a-z]sk$/i.test(n) || / \(SK\)$/.test(b.label || "")) return [3, "ASL Starter Kit boards"];
   /* Historical ASL maps; Festung Budapest comes as FB_NE, FB_NW …, and SAP as SaPC, SaPF, SaPN */
   if (HASL_MAPS.has(n.toLowerCase()) || /^fb_/i.test(n) || /^sap[a-z]?$/i.test(n)) return [4, "Historical ASL maps"];
   return [5, "Third-party boards"];
