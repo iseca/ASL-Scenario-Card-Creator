@@ -162,7 +162,9 @@ output.count { min-width: 22px; text-align: center; font: 700 15px var(--f-num);
 .turn .half { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .turn .tnum { position: relative; z-index: 1; }
 .turn .tm { z-index: 1; }
-.turn .tm { position: absolute; top: 2px; left: 2px; display: flex; gap: 2px; }
+.turn .tm { position: absolute; top: 2px; display: flex; gap: 2px; }
+.turn .tm.tl { left: 2px; }
+.turn .tm.tr { right: 2px; }
 .tend { border-left: 1px solid var(--rule); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; text-transform: uppercase; white-space: nowrap; overflow: hidden; }
 
 .ob { position: relative; border: 1.5px solid var(--rule); margin-top: 11px; padding: 8px 10px 4.5px 6px; display: grid; grid-template-columns: 96px minmax(0, 1fr); column-gap: 8px; flex: none; }
@@ -1905,7 +1907,12 @@ function render() {
       ${s.trc.rows.map((r, i) => `<div class="trr"><span class="sym sm">${sideSym(r.side)}</span>${ed(`trc.rows.${i}.html`, "", i === 0 ? sideLabel(r.side).toUpperCase() + " Sets up First" : sideLabel(r.side).toUpperCase() + " Moves First", { single: true })}</div>`).join("")}
       <span class="ctl swap"><button type="button" data-act="swapRows" title="Swap which side is on each row">Swap sides</button></span>
     </div>
-    ${s.trc.turns.map((t, i) => `<button type="button" class="turn f-${t.fill || "none"}" data-act="turn" data-i="${i}" aria-label="Turn ${i + 1} options${t.half ? ", game ends in the first half of this turn" : ""}">${t.half ? `<svg class="half" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="100,0 100,100 0,100" fill="#d4202a"/></svg>` : ""}<span class="tm">${t.mark.map(m => `<span class="sym xs">${sideSym(m)}</span>`).join("")}</span><span class="tnum">${i + 1}</span></button>`).join("")}
+    ${s.trc.turns.map((t, i) => `<button type="button" class="turn f-${t.fill || "none"}" data-act="turn" data-i="${i}" aria-label="Turn ${i + 1} options${t.half ? ", game ends in the first half of this turn" : ""}">${t.half ? `<svg class="half" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="100,0 100,100 0,100" fill="#d4202a"/></svg>` : ""}${(() => {
+      /* reinforcements: the side that moves first goes in the upper-left corner, the side that sets up first in the upper-right */
+      const mover = s.trc.rows[1].side, setter = s.trc.rows[0].side;
+      return (t.mark.includes(mover) ? `<span class="tm tl"><span class="sym xs">${sideSym(mover)}</span></span>` : "")
+        + (t.mark.includes(setter) ? `<span class="tm tr"><span class="sym xs">${sideSym(setter)}</span></span>` : "");
+    })()}<span class="tnum">${i + 1}</span></button>`).join("")}
     ${ed("trc.end", "tend", "END", { single: true })}
   </div>
   ${sections.slice(0, cut).join("")}${WM}`;
