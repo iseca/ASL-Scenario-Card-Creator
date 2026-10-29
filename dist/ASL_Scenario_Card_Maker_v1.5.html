@@ -176,9 +176,10 @@ output.count { min-width: 22px; text-align: center; font: 700 15px var(--f-num);
 .symwrap:hover { outline: 1px dashed rgba(47,111,208,.6); outline-offset: 2px; }
 .zone.gutimg { width: 56px; height: 104px; }
 .grps { display: flex; flex-wrap: wrap; column-gap: 22px; row-gap: 5px; min-width: 0; align-content: flex-start; }
-.grp { position: relative; flex: 0 1 auto; max-width: 100%; min-width: 0; padding-top: 2px; }
-.grp.inl { flex: 0 1 auto; max-width: 100%; }
-.gbreak { flex: 0 0 100%; height: 0; }
+.grp { position: relative; flex: 0 0 100%; max-width: 100%; min-width: 0; padding-top: 2px; }
+.grow { display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: 22px; row-gap: 5px; min-width: 0; }
+.grow > .strip { flex: 0 1 auto; min-width: 0; }
+.grp.inl { flex: 0 1 auto; max-width: 100%; padding-top: 0; }
 .grp.ind1 { padding-left: 47px; }
 .grp.ind2 { padding-left: 94px; }
 .gtxt { margin-bottom: 5px; max-width: 100%; }
@@ -241,7 +242,7 @@ output.count { min-width: 22px; text-align: center; font: 700 15px var(--f-num);
 .ctl button:focus-visible { outline: 2px solid #ffbf3c; }
 .ctl button.armed { background: #b3261b; }
 .slot:hover > .sctl, .slot:focus-within > .sctl,
-.grp:hover > .gctl, .grp:focus-within > .gctl,
+.grp:hover:not(:has(.grp:hover)) > .gctl, .grp:focus-within:not(:has(.grp:focus-within)) > .gctl,
 .ob:hover > .pctl, .ob:focus-within > .pctl,
 .trl:hover > .swap, .trl:focus-within > .swap,
 .zone:hover > .zb, .zone:focus-within > .zb,
@@ -1850,15 +1851,26 @@ function slotHTML(p, sl) { return `<div class="slot ${sl.size}" data-slot="${p}"
       ${ed(p + ".qty", "qty", "", { plain: true, single: true })}
       <span class="ctl sctl"><button type="button" data-act="size" data-p="${p}" aria-label="Switch counter size" title="Counter size">${sl.size === "l" ? "⅝″" : "½″"}</button><button type="button" data-act="delSlot" data-p="${p}" aria-label="Remove counter">×</button></span>
     </div>`; }
-function groupHTML(gp, gi, g, n = 1) {
-    /* a row normally starts a new line; a row set "beside" flows into the space to the right of the row before it */
-    return `${gi > 0 && !g.inline ? `<div class="gbreak" aria-hidden="true"></div>` : ""}<div class="grp ind${g.indent}${g.inline ? " inl" : ""}" data-g="${gp}">
+/* the rows of one OB panel / section. A row set "beside" sits next to the counters of the row above
+   (under that row's heading), so a long "Elements of …" heading doesn't push it onto a new line */
+function groupsHTML(base, groups) {
+  let out = "";
+  for (let i = 0; i < groups.length; i++) {
+    let j = i + 1, side = "";
+    while (j < groups.length && groups[j].inline) { side += groupHTML(`${base}.${j}`, j, groups[j], groups.length); j++; }
+    out += groupHTML(`${base}.${i}`, i, groups[i], groups.length, side);
+    i = j - 1;
+  }
+  return out;
+}
+function groupHTML(gp, gi, g, n = 1, side = "") {
+    return `<div class="grp ind${g.indent}${g.inline && gi > 0 ? " inl" : ""}" data-g="${gp}">
       <div class="gtxt">${ed(gp + ".form", "lead", gi === 0 ? "Elements of … [ELR: #]" : "Formation (optional)", { inline: true, single: true })} ${ed(gp + ".html", "body", gi === 0 ? "set up …: {SAN: #}" : "Enter on Turn # along the … edge:", { inline: true })}</div>
       ${g.noteOn ? `<div class="gnote">${ed(gp + ".note", "body", "Optional note, e.g. (see SSR 3) or Elements set up as per …")}</div>` : ""}
-      <div class="strip${g.slots.length ? "" : " empty"}" data-strip="${gp}">
+      <div class="grow"><div class="strip${g.slots.length ? "" : " empty"}" data-strip="${gp}">
         ${g.slots.map((sl, si) => slotHTML(`${gp}.slots.${si}`, sl)).join("")}
         <button type="button" class="addslot" data-act="addSlot" data-p="${gp}" aria-label="Add counter (or drop images here)" title="Add counter, or drop images here">+</button>
-      </div>
+      </div>${side}</div>
       <span class="ctl gctl">
         <button type="button" data-act="note" data-p="${gp}" title="${g.noteOn ? "Remove the plain-text line under this row's heading" : "Add a plain (not bold) line of text under this row's heading"}">${g.noteOn ? "− Text line" : "+ Text line"}</button>
         <button type="button" data-act="indent" data-p="${gp}" title="Indent the row">Indent ${g.indent ? "→".repeat(g.indent) : "off"}</button>
@@ -1881,7 +1893,7 @@ function render() {
       <div class="symwrap" title="Change this side's nationality"><span class="sym big">${sideSym(p.side)}</span>${natSelect(p.side, "Nationality for this side")}</div>
       ${zone(`panels.${pi}.gut`, "gutimg", "Side art")}
     </div>
-    <div class="grps">${p.groups.map((g, gi) => groupHTML(`panels.${pi}.groups.${gi}`, gi, g, p.groups.length)).join("")}</div>
+    <div class="grps">${groupsHTML(`panels.${pi}.groups`, p.groups)}</div>
     <span class="ctl pctl">
       <button type="button" data-act="addGroup" data-p="panels.${pi}">+ Counter row</button>
       <button type="button" data-act="panelSide" data-p="panels.${pi}">Switch to ${p.side === "A" ? "Side 2" : "Side 1"}</button>
@@ -1985,7 +1997,7 @@ function secHTML(sc, i) {
     case "tables": return `<div class="${cls} block" data-sec="${sp}">${head(true)}${mtHTML(sp, sc.table)}${ctl}</div>`;
     case "ob": return `<div class="${cls} block obs">
       <div class="obh"><span class="obsw" title="Choose this OB's nationality symbol"><span class="sym">${symHTML(sc.nat)}</span><select aria-label="Nationality for this OB" data-nat="${sp}.nat">${nationOptions(sc.nat)}</select></span>${ed(sp + ".head", "sech", "FRIENDLY OB:", { inline: true, single: true })}</div>
-      <div class="grps">${sc.groups.map((g, gi) => groupHTML(`${sp}.groups.${gi}`, gi, g, sc.groups.length)).join("")}</div>${ctl}</div>`;
+      <div class="grps">${groupsHTML(`${sp}.groups`, sc.groups)}</div>${ctl}</div>`;
     case "config": return `<div class="${cls}"><div class="cfg">${ed(sp + ".head", "cfgl", "Initial Mapboard Configuration:", { single: false })}<div class="north${sc.ndir === "right" ? " right" : ""}" data-act="nDir" data-p="${sp}" role="button" tabindex="0" title="Click to point the arrow ${sc.ndir === "right" ? "up" : "right"}" aria-label="North arrow, pointing ${sc.ndir === "right" ? "right" : "up"}. Click to change.">${sc.ndir === "right" ? NORTH_R : NORTH}</div>${zone(sp + ".img", "scfg", "Mapboard diagram", boardBtn(sp + ".img"))}</div>${ctl}</div>`;
   }
   return "";
