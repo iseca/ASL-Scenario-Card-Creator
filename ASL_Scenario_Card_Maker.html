@@ -180,7 +180,9 @@ output.count { min-width: 22px; text-align: center; font: 700 15px var(--f-num);
 .grow { display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: 22px; row-gap: 5px; min-width: 0; }
 .grow > .strip { flex: 0 1 auto; min-width: 0; }
 /* a row set beside takes whatever room is left (its heading wraps to fit), at least as wide as its widest counter or word */
-.grp.inl { flex: 1 1 150px; max-width: 360px; min-width: min-content; padding-top: 0; }
+.grp.inl { flex: 0 1 210px; max-width: 260px; min-width: min-content; padding-top: 0; }
+/* the first row set beside goes to the right-hand side of the box, its heading wrapped narrow */
+.grow > .strip + .grp.inl { margin-left: auto; }
 .grp.ind1 { padding-left: 47px; }
 .grp.ind2 { padding-left: 94px; }
 .gtxt { margin-bottom: 5px; max-width: 100%; }
@@ -216,7 +218,7 @@ output.count { min-width: 22px; text-align: center; font: 700 15px var(--f-num);
 .flow { flex: 1 1 0; min-height: 0; margin-top: 12px; column-count: 2; column-gap: 22px; column-fill: auto; overflow: hidden; }
 .ssrh { margin-bottom: 2px; }
 .ssr { counter-reset: ssr; }
-.ssr > div { margin-bottom: 1px; counter-increment: ssr; font-weight: 400; }
+.ssr > div { margin-bottom: 1px; counter-increment: ssr; font-weight: 400; text-align: justify; hyphens: auto; }
 .ssr > div::before { content: counter(ssr) ". "; font-weight: 700; }
 .am { font-size: 8.7px; line-height: 1.2; text-align: justify; hyphens: auto; margin-top: 8px; }
 .am.newcol { break-before: column; margin-top: 0; }
