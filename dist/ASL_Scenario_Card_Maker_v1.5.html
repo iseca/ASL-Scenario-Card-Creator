@@ -2083,7 +2083,7 @@ function queueFit() { clearTimeout(fitT); fitT = setTimeout(checkFit, 120); }
    2. the mini map then gets the largest SQUARE that fits between the "Board Configuration" heading
       and the bottom of the band (less padding), and the map image is fitted inside that square;
    3. the board note wraps to the map's width (wider for a tall map). */
-const BOARD_SIDEWAYS_H = 48 /* 0.5 in at 96 px/in */, BOARD_SIDEWAYS_AR = 2, BOARD_PAD = 6, BOARD_SQ_MIN = 70, BOARD_SQ_MAX = 400, BAL_MIN_W = 150, NOTE_TALL_MIN = 160;
+const BOARD_SIDEWAYS_H = 48 /* 0.5 in at 96 px/in */, BOARD_SIDEWAYS_AR = 2, BOARD_PAD = 6, BOARD_SQ_MIN = 70, BOARD_SQ_MAX = 400, BAL_MIN_W = 96, NOTE_TALL_MIN = 160;
 function sizeNote() {
   const z = sheet.querySelector(".zone.board"), n = sheet.querySelector(".boardw .bnote"); if (!z || !n) return;
   const tall = z.offsetHeight > z.offsetWidth;   /* narrower than tall */
@@ -2104,22 +2104,18 @@ function fitBoard() {
   if (!img || !img.naturalWidth) { z.style.width = ""; z.style.height = ""; sizeNote(); return; }
   const ar = img.naturalWidth / img.naturalHeight;
   const k = br.offsetHeight / (br.getBoundingClientRect().height || 1);   /* undo the preview zoom */
-  for (let pass = 0; pass < 3; pass++) {
+  /* the map grows, keeping its proportions, until it meets the padding below "Board Configuration" (and the
+     history text above it), the turn record chart below, or the room left beside the Balance text, which wraps to make room */
+  const room = () => {
     const top = bcg.getBoundingClientRect().top, bottom = br.getBoundingClientRect().top + bl.offsetHeight / k;
     const padTop = parseFloat(getComputedStyle(bw).paddingTop) || 0;
     const noteH = n ? n.offsetHeight + (parseFloat(getComputedStyle(n).marginTop) || 0) : 0;
-    let side = (bottom - top) * k - padTop - noteH - BOARD_PAD;
-    side = Math.min(side, bcg.offsetWidth - BAL_MIN_W - 26);  /* leave room for the Balance text and N arrow */
-    side = Math.max(BOARD_SQ_MIN, Math.min(BOARD_SQ_MAX, Math.floor(side)));
-    let w = ar >= 1 ? side : Math.round(side * ar), h = ar >= 1 ? Math.round(side / ar) : side;
-    if (ar >= BOARD_SIDEWAYS_AR) {                       /* a board on its side: fixed 0.5" tall */
-      const wMax = bcg.offsetWidth - BAL_MIN_W - 26;
-      h = BOARD_SIDEWAYS_H; w = Math.round(h * ar);
-      if (w > wMax) { w = Math.floor(wMax); h = Math.round(w / ar); }
-    }
-    z.style.width = w + "px"; z.style.height = h + "px";
-    sizeNote();
-  }
+    return { h: (bottom - top) * k - padTop - noteH - BOARD_PAD - 6, w: bcg.offsetWidth - BAL_MIN_W - 26 };
+  };
+  const place = (w) => { w = Math.max(BOARD_SQ_MIN, Math.floor(w)); z.style.width = w + "px"; z.style.height = Math.round(w / ar) + "px"; sizeNote(); };
+  for (let pass = 0; pass < 3; pass++) { const r = room(); place(Math.min(r.w, r.h * ar)); }
+  /* if the wrapped Balance text now makes the band taller than the photo column, give it back some width */
+  for (let i = 0; i < 14 && br.offsetHeight > bl.offsetHeight + 1 && z.offsetWidth > BOARD_SQ_MIN; i++) place(z.offsetWidth * 0.93);
 }
 /* titles shrink to fit their line instead of running off it (down to 40% of the normal size) */
 function fitTitles() {
