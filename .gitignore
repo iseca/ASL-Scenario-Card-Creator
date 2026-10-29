@@ -1,7 +1,9 @@
 *.png
 preview.html
 asl-scenario-card-maker.html
-src/template.before_*.html
+src/*.before_*
 __pycache__/
 ref/
 out/
+assets/
+.DS_Store
