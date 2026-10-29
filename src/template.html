@@ -1319,10 +1319,28 @@ function fitBoard() {
     const noteH = n ? n.offsetHeight + (parseFloat(getComputedStyle(n).marginTop) || 0) : 0;
     return { h: (bottom - top) * k - padTop - noteH - BOARD_PAD, w: bcg.offsetWidth - BAL_MIN_W - 26 };
   };
-  const place = (w) => { w = Math.max(BOARD_SQ_MIN, Math.floor(w)); z.style.width = w + "px"; z.style.height = Math.round(w / ar) + "px"; sizeNote(); };
-  for (let pass = 0; pass < 3; pass++) { const r = room(); place(Math.min(r.w, r.h * ar)); }
-  /* if the wrapped Balance text now makes the band taller than the photo column, give it back some width */
-  for (let i = 0; i < 14 && br.offsetHeight > bl.offsetHeight + headRoom + 1 && z.offsetWidth > BOARD_SQ_MIN; i++) place(z.offsetWidth * 0.93);
+  const place = (w) => { w = Math.max(BOARD_SQ_MIN * Math.min(1, ar), Math.floor(w));   /* the minimum applies to the map's longer side */ z.style.width = w + "px"; z.style.height = Math.round(w / ar) + "px"; sizeNote(); };
+  const grow = () => {
+    for (let pass = 0; pass < 3; pass++) { const r = room(); place(Math.min(r.w, r.h * ar)); }
+    /* if the wrapped Balance text now makes the band taller than the photo column, give it back some width */
+    for (let i = 0; i < 14 && br.offsetHeight > bl.offsetHeight + headRoom + 1 && z.offsetWidth > BOARD_SQ_MIN * Math.min(1, ar); i++) place(z.offsetWidth * 0.93);
+  };
+  /* first try letting the map rise beside the "Board Configuration" heading, up to the bottom of the history text.
+     If the map (or its N arrow) would then reach the end of the heading's words, or the Balance text would, the map
+     starts below the heading instead */
+  const head = br.querySelector(":scope > .h2");
+  bcg.style.marginTop = "";
+  if (head) {
+    const hcs = getComputedStyle(head), lift = head.offsetHeight + (parseFloat(hcs.marginTop) || 0) + (parseFloat(hcs.marginBottom) || 0);
+    const rg = document.createRange(); rg.selectNodeContents(head);
+    const textRight = rg.getBoundingClientRect().right, headBottom = head.getBoundingClientRect().bottom;
+    bcg.style.marginTop = -lift + "px";
+    grow();
+    const north = bw.querySelector(".north"), left = Math.min(z.getBoundingClientRect().left, north ? north.getBoundingClientRect().left : Infinity);
+    const balTop = br.querySelector(".balw")?.getBoundingClientRect().top ?? Infinity;
+    if (left < textRight + BOARD_PAD / k || balTop < headBottom + 2 / k) bcg.style.marginTop = "";
+  }
+  if (!bcg.style.marginTop) grow();
   /* when the map runs past the photo column, pull the heading up beside it so the chart stays put */
   const over = br.offsetHeight - bl.offsetHeight;
   if (trch && over > 0) trch.style.marginTop = ((parseFloat(getComputedStyle(trch).marginTop) || 0) - over) + "px";
