@@ -179,6 +179,9 @@ output.count { min-width: 22px; text-align: center; font: 700 15px var(--f-num);
 .grp.ind1 { padding-left: 47px; }
 .grp.ind2 { padding-left: 94px; }
 .gtxt { margin-bottom: 5px; max-width: 100%; }
+/* optional plain line under a row's "Elements of …" heading */
+.gnote { margin: -3px 0 5px; max-width: 100%; font-weight: 400; }
+.gnote .ed { font-weight: 400; min-height: 1.2em; }
 .ed.lead { font-weight: 700; }
 .ed.body { font-weight: 400; }
 .ed[data-inline] { min-width: 12px; }
@@ -774,6 +777,7 @@ function normalize(o) {
     side: p.side === "B" ? "B" : "A", gut: p.gut || null,
     groups: (Array.isArray(p.groups) && p.groups.length ? p.groups : [blankGroup()]).map(g => ({
       ...splitLead(g.form, g.html, "elr"), indent: [0, 1, 2].includes(g.indent) ? g.indent : 0, inline: !!g.inline,
+      ...(g.noteOn ? { noteOn: true, note: g.note || "" } : {}),
       slots: (Array.isArray(g.slots) ? g.slots : []).map(s => ({ img: s.img || null, qty: String(s.qty ?? ""), size: s.size === "l" ? "l" : "s", ...(s.v ? { v: 1 } : {}) })),
     })),
   }));
@@ -904,6 +908,7 @@ function normalizeSasl(o) {
       sc.nat = x.nat || "";
       sc.groups = (Array.isArray(x.groups) && x.groups.length ? x.groups : [blankGroup()]).map(g => ({
         form: g.form || "", html: g.html || "", indent: [0, 1, 2].includes(g.indent) ? g.indent : 0, inline: !!g.inline,
+        ...(g.noteOn ? { noteOn: true, note: g.note || "" } : {}),
         slots: (Array.isArray(g.slots) ? g.slots : []).map(t => ({ img: t.img || null, qty: String(t.qty ?? ""), size: t.size === "l" ? "l" : "s", ...(t.v ? { v: 1 } : {}) })),
       }));
     }
@@ -1051,11 +1056,13 @@ function slotHTML(p, sl) { return `<div class="slot ${sl.size}" data-slot="${p}"
 function groupHTML(gp, gi, g) {
     return `<div class="grp ind${g.indent}${g.inline ? " inl" : ""}" data-g="${gp}">
       <div class="gtxt">${ed(gp + ".form", "lead", gi === 0 ? "Elements of … [ELR: #]" : "Formation (optional)", { inline: true, single: true })} ${ed(gp + ".html", "body", gi === 0 ? "set up …: {SAN: #}" : "Enter on Turn # along the … edge:", { inline: true })}</div>
+      ${g.noteOn ? `<div class="gnote">${ed(gp + ".note", "body", "Optional note, e.g. (see SSR 3) or Elements set up as per …")}</div>` : ""}
       <div class="strip${g.slots.length ? "" : " empty"}" data-strip="${gp}">
         ${g.slots.map((sl, si) => slotHTML(`${gp}.slots.${si}`, sl)).join("")}
         <button type="button" class="addslot" data-act="addSlot" data-p="${gp}" aria-label="Add counter (or drop images here)" title="Add counter, or drop images here">+</button>
       </div>
       <span class="ctl gctl">
+        <button type="button" data-act="note" data-p="${gp}" title="${g.noteOn ? "Remove the plain-text line under this row's heading" : "Add a plain (not bold) line of text under this row's heading"}">${g.noteOn ? "− Text line" : "+ Text line"}</button>
         <button type="button" data-act="indent" data-p="${gp}" title="Indent the row">Indent ${g.indent ? "→".repeat(g.indent) : "off"}</button>
         ${gi > 0 ? `<button type="button" data-act="inline" data-p="${gp}">${g.inline ? "Put on own line" : "Put beside previous"}</button>` : ""}
         <button type="button" data-act="palFor" data-p="${gp}" title="Open the counter palette and add counters to this row">Counters…</button>
@@ -1529,6 +1536,14 @@ function act(a, p, btn) {
       run(); return;
     }
     case "indent": { const g = get(p); g.indent = (g.indent + 1) % 3; break; }
+    case "note": {
+      const g = get(p);
+      if (g.noteOn && g.note && htmlToText(g.note).trim()) { confirmTwice(btn, "Click again to remove the text", () => { g.noteOn = false; g.note = ""; render(); queueSave(); }); return; }
+      g.noteOn = !g.noteOn; if (!g.noteOn) g.note = "";
+      render(); queueSave();
+      if (g.noteOn) pages.querySelector(`[data-bind="${p}.note"]`)?.focus();
+      return;
+    }
     case "inline": { const g = get(p); g.inline = !g.inline; break; }
     case "panelSide": { const pn = get(p); pn.side = pn.side === "A" ? "B" : "A"; break; }
     case "delPanel": {
