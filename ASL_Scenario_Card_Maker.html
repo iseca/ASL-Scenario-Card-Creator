@@ -175,7 +175,20 @@ output.count { min-width: 22px; text-align: center; font: 700 15px var(--f-num);
 .sheet.exporting .sym:empty { outline: none; }
 .symwrap:hover { outline: 1px dashed rgba(47,111,208,.6); outline-offset: 2px; }
 .zone.gutimg { width: 56px; height: 104px; }
-.grps { display: flex; flex-wrap: wrap; column-gap: 22px; row-gap: 5px; min-width: 0; align-content: flex-start; }
+/* free placement: rows are positioned inside the panel's padded area */
+.grps.free { display: block; position: relative; }
+.grps.free > .grp.free { position: absolute; max-width: 100%; padding-top: 0; padding-left: 0; flex: none; }
+.grps.free > .grp.free .gtxt, .grps.free > .grp.free .gnote { max-width: none; }
+.grps.free.showgrid, .grps.free.dragging { background-image: radial-gradient(circle, rgba(47,111,208,.45) 0.8px, transparent 1.2px); background-size: 8px 8px; background-position: -4px -4px; }
+.sheet.exporting .grps.free { background: none !important; }
+.ggrip { position: absolute; left: -15px; top: 0; width: 13px; height: 20px; display: flex; align-items: center; justify-content: center; font: 700 13px/1 var(--f-ui); color: #fff; background: #263045; border-radius: 3px; cursor: grab; opacity: 0; touch-action: none; user-select: none; z-index: 6; }
+.gwid { position: absolute; right: -4px; top: 0; bottom: 0; width: 7px; cursor: ew-resize; opacity: 0; touch-action: none; z-index: 6; }
+.gwid::after { content: ""; position: absolute; left: 3px; top: 25%; bottom: 25%; width: 2px; background: #2f6fd0; border-radius: 1px; }
+.grp.free:hover > .ggrip, .grp.free:hover > .gwid, .ggrip:focus-visible, .grp.free.moving > .ggrip { opacity: 1; }
+.ggrip:focus-visible { outline: 2px solid #ffbf3c; }
+.grp.free.moving { outline: 1px dashed var(--edit); outline-offset: 2px; z-index: 5; }
+.sheet.exporting .ggrip, .sheet.exporting .gwid { display: none; }
+.grps {display: flex; flex-wrap: wrap; column-gap: 22px; row-gap: 5px; min-width: 0; align-content: flex-start; }
 .grp { position: relative; flex: 0 0 100%; max-width: 100%; min-width: 0; padding-top: 2px; }
 .grow { display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: 22px; row-gap: 5px; min-width: 0; }
 .grow > .strip { flex: 0 1 auto; min-width: 0; }
@@ -507,7 +520,7 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 
 <header class="bar">
   <div class="bar-top">
-    <div class="brand"><span class="mark" id="brandMark">ASL</span><span>Scenario Card Maker</span><span class="ver" title="Version 1.5.1, built 2026-10-29">v1.5.1</span></div>
+    <div class="brand"><span class="mark" id="brandMark">ASL</span><span>Scenario Card Maker</span><span class="ver" title="Version 1.5.1-freeform, built 2026-10-29">v1.5.1-freeform</span></div>
     <div class="tg" role="group" aria-label="Template">
       <label class="lbl" for="tplSel">Template</label>
       <select id="tplSel" class="tplsel"><option value="asl">ASL scenario card</option><option value="sasl">SASL mission card</option></select>
@@ -539,6 +552,7 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
       <output class="count" id="tCount">6</output>
       <button type="button" class="btn sq" id="tPlus" aria-label="More turns">+</button>
       <button type="button" class="btn" id="bPanel">+ OB panel</button>
+      <label class="chk" title="Show the grid OB rows snap to (it never prints)"><input type="checkbox" id="obGrid"> OB grid</label>
       <label class="lbl" for="backSel">Back page</label><select id="backSel"></select>
       <label class="chk"><input type="checkbox" id="ssrCol"> Special Rules continue to the right column</label>
       <label class="chk" id="ssrAtW" hidden>from rule <input type="number" id="ssrAt" min="2" step="1" class="numin" aria-label="Rule number that starts the right column"></label>
@@ -1586,6 +1600,7 @@ function normalize(o) {
       ...splitLead(g.form, g.html, "elr"), indent: [0, 1, 2].includes(g.indent) ? g.indent : 0, inline: !!g.inline,
       ...(g.noteOn ? { noteOn: true, note: g.note || "" } : {}),
       slots: (Array.isArray(g.slots) ? g.slots : []).map(s => ({ img: s.img || null, qty: String(s.qty ?? ""), size: s.size === "l" ? "l" : "s", ...(s.v ? { v: 1 } : {}) })),
+      ...(Number.isFinite(g.x) && Number.isFinite(g.y) ? { x: g.x, y: g.y } : {}), ...(Number.isFinite(g.w) ? { w: g.w } : {}),
     })),
   }));
   out.ssr = cleanSSR(out.ssr);
@@ -1860,6 +1875,39 @@ function slotHTML(p, sl) { return `<div class="slot ${sl.size}" data-slot="${p}"
       ${ed(p + ".qty", "qty", "", { plain: true, single: true })}
       <span class="ctl sctl"><button type="button" data-act="size" data-p="${p}" aria-label="Switch counter size" title="Counter size">${sl.size === "l" ? "⅝″" : "½″"}</button><button type="button" data-act="delSlot" data-p="${p}" aria-label="Remove counter">×</button></span>
     </div>`; }
+/* ---------- free-placement OB rows (this branch) ----------
+   Each row of an ASL OB panel sits where you drag it inside the panel's padded area, snapping to a grid.
+   Positions are stored with the row (x, y and an optional width w, in card pixels). */
+const OB_GRID = 8;   /* px, about 1/12 inch */
+function freeGroupsHTML(pi, groups) {
+  const placed = groups.every(g => Number.isFinite(g.x) && Number.isFinite(g.y));
+  if (!placed) return `<div class="grps" data-measure="${pi}">${groupsHTML(`panels.${pi}.groups`, groups)}</div>`;   /* laid out once the old way, then measured */
+  return `<div class="grps free${state.showGrid ? " showgrid" : ""}" data-panel="${pi}">${groups.map((g, gi) =>
+    groupHTML(`panels.${pi}.groups.${gi}`, gi, g, groups.length).replace('<div class="grp ', `<div style="left:${g.x}px;top:${g.y}px;${Number.isFinite(g.w) ? `width:${g.w}px;` : ""}" class="grp free `)).join("")}</div>`;
+}
+/* rows from a card made with the flowing layout get positions from where they were drawn */
+function measureFreeRows() {
+  let changed = false;
+  pages.querySelectorAll(".grps[data-measure]").forEach(box => {
+    const pi = +box.dataset.measure, P = state.panels[pi]; if (!P) return;
+    const b = box.getBoundingClientRect(), k = box.offsetWidth / (b.width || 1);
+    box.querySelectorAll(".grp[data-g]").forEach(el => {
+      const g = get(el.dataset.g); if (!g) return; const r = el.getBoundingClientRect();
+      const pad = parseFloat(getComputedStyle(el).paddingLeft) || 0; g.indent = 0;
+      g.x = Math.max(0, Math.round(((r.left - b.left) * k + pad) / OB_GRID) * OB_GRID); g.y = Math.max(0, Math.round((r.top - b.top) * k / OB_GRID) * OB_GRID);
+      if (el.closest(".gline")) g.w = Math.round(r.width * k - pad);
+    });
+    changed = true;
+  });
+  return changed;
+}
+/* a free panel is as tall as its lowest row */
+function sizeFreePanels() {
+  pages.querySelectorAll(".grps.free").forEach(box => {
+    let h = 0; box.querySelectorAll(":scope > .grp").forEach(el => { h = Math.max(h, el.offsetTop + el.offsetHeight); });
+    box.style.height = Math.max(60, h + 2) + "px";
+  });
+}
 /* the rows of one OB panel / section. A row set "beside" sits next to the counters of the row above
    (under that row's heading), so a long "Elements of …" heading doesn't push it onto a new line */
 function groupsHTML(base, groups) {
@@ -1882,13 +1930,14 @@ function groupHTML(gp, gi, g, n = 1, side = "") {
         ${g.slots.map((sl, si) => slotHTML(`${gp}.slots.${si}`, sl)).join("")}
         <button type="button" class="addslot" data-act="addSlot" data-p="${gp}" aria-label="Add counter (or drop images here)" title="Add counter, or drop images here">+</button>
       </div></div>
+      ${Number.isFinite(g.x) ? `<span class="ggrip" data-grip="${gp}" tabindex="0" role="button" title="Drag to move this row (arrow keys nudge it; hold Alt to place without the grid)" aria-label="Move row">⠿</span><span class="gwid" data-wid="${gp}" title="Drag to set the row's width; double-click for automatic width" aria-hidden="true"></span>` : ""}
       <span class="ctl gctl">
         <button type="button" data-act="note" data-p="${gp}" title="${g.noteOn ? "Remove the plain-text line under this row's heading" : "Add a plain (not bold) line of text under this row's heading"}">${g.noteOn ? "− Text line" : "+ Text line"}</button>
-        <button type="button" data-act="outdent" data-p="${gp}" title="Move the row left one step"${g.indent ? "" : " disabled"} aria-label="Indent left">← Indent</button>
-        <button type="button" data-act="indent" data-p="${gp}" title="Move the row right one step (${g.indent}/2)"${g.indent >= 2 ? " disabled" : ""} aria-label="Indent right">Indent →</button>
-        ${gi > 0 ? `<button type="button" data-act="grpUp" data-p="${gp}" title="Move this row up">↑</button>` : ""}
+        ${Number.isFinite(g.x) ? "" : `<button type="button" data-act="outdent" data-p="${gp}" title="Move the row left one step"${g.indent ? "" : " disabled"} aria-label="Indent left">← Indent</button>
+        <button type="button" data-act="indent" data-p="${gp}" title="Move the row right one step (${g.indent}/2)"${g.indent >= 2 ? " disabled" : ""} aria-label="Indent right">Indent →</button>`}
+        ${Number.isFinite(g.x) ? "" : `${gi > 0 ? `<button type="button" data-act="grpUp" data-p="${gp}" title="Move this row up">↑</button>` : ""}
         ${gi < n - 1 ? `<button type="button" data-act="grpDown" data-p="${gp}" title="Move this row down">↓</button>` : ""}
-        ${gi > 0 ? `<button type="button" data-act="inline" data-p="${gp}" title="${g.inline ? "Start this row on its own line" : "Fit this row into the empty space to the right of the row above"}">${g.inline ? "Own line" : "Beside row above"}</button>` : ""}
+        ${gi > 0 ? `<button type="button" data-act="inline" data-p="${gp}" title="${g.inline ? "Start this row on its own line" : "Fit this row into the empty space to the right of the row above"}">${g.inline ? "Own line" : "Beside row above"}</button>` : ""}`}
         <button type="button" data-act="palFor" data-p="${gp}" title="Open the counter palette and add counters to this row">Counters…</button>
         <button type="button" data-act="delGroup" data-p="${gp}">Remove row</button>
       </span>
@@ -1905,7 +1954,7 @@ function render() {
       <div class="symwrap" title="Change this side's nationality"><span class="sym big">${sideSym(p.side)}</span>${natSelect(p.side, "Nationality for this side")}</div>
       ${zone(`panels.${pi}.gut`, "gutimg", "Side art")}
     </div>
-    <div class="grps">${groupsHTML(`panels.${pi}.groups`, p.groups)}</div>
+    ${freeGroupsHTML(pi, p.groups)}
     <span class="ctl pctl">
       <button type="button" data-act="addGroup" data-p="panels.${pi}">+ Counter row</button>
       <button type="button" data-act="panelSide" data-p="panels.${pi}">Switch to ${p.side === "A" ? "Side 2" : "Side 1"}</button>
@@ -1972,6 +2021,8 @@ function render() {
     syncMirrors();
   } else { sheet2.hidden = true; sheet2.innerHTML = ""; }
   syncBar(); alignSyms(); fitBoard(); fitStage(); palMark();
+  if (measureFreeRows()) { amendNext = true; queueSave(); render(); return; }
+  sizeFreePanels();
   pages.querySelectorAll("img").forEach(im => { if (!im.complete) im.addEventListener("load", () => { alignSyms(); queueFit(); }, { once: true }); });
   checkFit();
 }
@@ -2066,7 +2117,7 @@ function syncBar() {
   $("tCount").textContent = state.trc.turns.length;
   $("amCol").checked = !!state.amNewCol && !state.ssrSplit;
   $("amCol").disabled = !!state.ssrSplit;
-  $("ssrCol").checked = !!state.ssrSplit;
+  $("ssrCol").checked = !!state.ssrSplit; $("obGrid").checked = !!state.showGrid;
   $("ssrAtW").hidden = !state.ssrSplit;
   if (state.ssrSplit) { $("ssrAt").value = state.ssrSplit; $("ssrAt").max = Math.max(2, ssrCount()); }
 }
@@ -2372,7 +2423,14 @@ function act(a, p, btn) {
     case "addSlot": get(p).slots.push(blankSlot()); break;
     case "delSlot": { const { arr, idx } = parentOf(p); get(arr).splice(idx, 1); break; }
     case "size": { const sl = get(p); sl.size = sl.size === "l" ? "s" : "l"; break; }
-    case "addGroup": { const g = blankGroup(); if (get(p).groups.length) g.indent = 1; get(p).groups.push(g); break; }
+    case "addGroup": {
+      const P = get(p), g = blankGroup(); if (P.groups.length) g.indent = 1;
+      if (P.groups.length && P.groups.every(x => Number.isFinite(x.x))) {
+        const box = pages.querySelector(`.grps.free[data-panel="${p.split(".")[1]}"]`);
+        g.indent = 0; g.x = 0; g.y = box ? Math.ceil((box.offsetHeight + 4) / OB_GRID) * OB_GRID : 0;
+      }
+      P.groups.push(g); break;
+    }
     case "delGroup": {
       const { arr, idx } = parentOf(p); const g = get(p);
       const hasContent = g.html || g.slots.some(s => s.img);
@@ -2520,6 +2578,45 @@ document.addEventListener("mousedown", (e) => {
   if (!e.target.closest(".pop") && !e.target.closest(".turn") && !e.target.closest("#bSym") && !e.target.closest("#bSym2")) closePops();
 });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closePops(); });
+/* ---- moving and sizing free-placed OB rows ---- */
+const snapG = (v, free) => free ? Math.round(v) : Math.round(v / OB_GRID) * OB_GRID;
+pages.addEventListener("pointerdown", (e) => {
+  const h = e.target.closest?.(".ggrip, .gwid"); if (!h || e.button !== 0) return;
+  const el = h.closest(".grp.free"), box = el?.parentElement; if (!box) return;
+  e.preventDefault(); h.setPointerCapture(e.pointerId);
+  const gp = el.dataset.g, g = get(gp), k = box.offsetWidth / (box.getBoundingClientRect().width || 1);
+  const sx = e.clientX, sy = e.clientY, x0 = el.offsetLeft, y0 = el.offsetTop, w0 = el.offsetWidth, W = box.clientWidth;
+  const sizing = h.classList.contains("gwid");
+  box.classList.add("dragging"); el.classList.add("moving");
+  const move = (ev) => {
+    const dx = (ev.clientX - sx) * k, dy = (ev.clientY - sy) * k;
+    if (sizing) { g.w = Math.max(90, Math.min(W - el.offsetLeft, snapG(x0 + w0 + dx, ev.altKey) - el.offsetLeft)); el.style.width = g.w + "px"; }
+    else {
+      g.x = Math.max(0, Math.min(W - el.offsetWidth, snapG(x0 + dx, ev.altKey))); g.y = Math.max(0, snapG(y0 + dy, ev.altKey));
+      el.style.left = g.x + "px"; el.style.top = g.y + "px";
+    }
+    sizeFreePanels();
+  };
+  const up = () => {
+    h.removeEventListener("pointermove", move); h.removeEventListener("pointerup", up); h.removeEventListener("pointercancel", up);
+    box.classList.remove("dragging"); el.classList.remove("moving");
+    if (el.offsetLeft !== x0 || el.offsetTop !== y0 || el.offsetWidth !== w0) { render(); queueSave(); }
+  };
+  h.addEventListener("pointermove", move); h.addEventListener("pointerup", up); h.addEventListener("pointercancel", up);
+});
+pages.addEventListener("dblclick", (e) => {
+  const h = e.target.closest?.(".gwid"); if (!h) return;
+  const g = get(h.dataset.wid); if (g && "w" in g) { delete g.w; render(); queueSave(); }
+});
+pages.addEventListener("keydown", (e) => {
+  const h = e.target.closest?.(".ggrip"); if (!h) return;
+  const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key]; if (!d) return;
+  e.preventDefault();
+  const el = h.closest(".grp.free"), box = el.parentElement, g = get(h.dataset.grip), st = e.altKey ? 1 : OB_GRID;
+  g.x = Math.max(0, Math.min(box.clientWidth - el.offsetWidth, g.x + d[0] * st)); g.y = Math.max(0, g.y + d[1] * st);
+  render(); queueSave();
+  pages.querySelector(`.ggrip[data-grip="${h.dataset.grip}"]`)?.focus();
+});
 
 /* ---------- tool rail ---------- */
 document.querySelectorAll("[data-cmd],[data-ins]").forEach(b => {
@@ -2855,6 +2952,7 @@ $("tPlus").addEventListener("click", () => { if (state.trc.turns.length < 12) { 
 $("backSel").addEventListener("change", (e) => { state.backFrom = e.target.value === "" ? null : +e.target.value; render(); queueSave(); });
 $("bPanel").addEventListener("click", () => { if (state.backFrom === state.panels.length) state.backFrom++; state.panels.push({ side: state.panels.length % 2 ? "B" : "A", gut: null, groups: [blankGroup()] }); render(); queueSave(); });
 $("amCol").addEventListener("change", (e) => { state.amNewCol = e.target.checked; render(); queueSave(); });
+$("obGrid").addEventListener("change", (e) => { state.showGrid = e.target.checked; pages.querySelectorAll(".grps.free").forEach(b => b.classList.toggle("showgrid", state.showGrid)); queueSave(); });
 $("ssrCol").addEventListener("change", (e) => {
   state.ssrSplit = e.target.checked ? Math.max(2, Math.ceil(ssrCount() / 2) + 1) : null;
   render(); syncBar(); queueSave();
@@ -2970,7 +3068,7 @@ async function snapshot(target = sheet) {
   } finally { target.classList.remove("exporting"); scaler.style.transform = prev; window.scrollTo(sx, sy); }
 }
 async function busy(btn, fn) { const t = btn.textContent; btn.disabled = true; btn.textContent = "Working…"; try { await fn(); } catch (e) { toast(e.message || "Export failed."); } finally { btn.textContent = t; setSaveUI(); } }
-const APP_VERSION = "1.5.1";
+const APP_VERSION = "1.5.1-freeform";
 $("bSave").addEventListener("click", (e) => busy(e.currentTarget, () => offer(baseName() + ".json", JSON.stringify({ ...state, appVersion: APP_VERSION }))));
 $("bPng").addEventListener("click", (e) => busy(e.currentTarget, async () => {
   const two = !sheet2.hidden;

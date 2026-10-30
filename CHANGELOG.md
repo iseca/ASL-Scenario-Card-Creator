@@ -5,6 +5,15 @@ The version number shows next to the title in the app's toolbar, and cards saved
 
 Numbering: from v1.5 on, each change gets the next third number (1.5.1, 1.5.2 …) until the next major upgrade, which moves to a new second number (1.6). The first number goes up for a big change such as a new template.
 
+## 1.5.1-freeform (branch `freeform-ob`, experimental)
+- OB rows in ASL OB panels are placed freely: drag a row by its grip (⠿, left of the row on hover) anywhere inside the panel's padded area.
+- Rows snap to an 8 px grid; hold Alt while dragging (or with the arrow keys) to place without snapping. Arrow keys nudge a focused grip.
+- Drag a row's right edge to set its width (text wraps); double-click the edge to return to automatic width.
+- "OB grid" in the toolbar shows the grid; it never prints or exports, and it also appears while dragging.
+- Cards made with the flowing layout keep their look: row positions are measured from it the first time they open.
+- The panel grows to fit its lowest row. Indent, ↑/↓ and "Beside row above" are not needed here and are hidden.
+- SASL OB sections still use the flowing layout.
+
 ## v1.5.1 — 2026-10-29
 Everything since v1.5 (these went out as unnumbered updates):
 
