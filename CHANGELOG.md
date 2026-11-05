@@ -5,7 +5,11 @@ The version number shows next to the title in the app's toolbar, and cards saved
 
 Numbering: from v1.5 on, each change gets the next third number (1.5.1, 1.5.2 …) until the next major upgrade, which moves to a new second number (1.6). The first number goes up for a big change such as a new template.
 
-## 1.5.1-freeform (branch `freeform-ob`, experimental)
+## 1.5.2 — 2026-11-04
+- Counter palette: new **Fortifications** list (under "Both sides" in the list picker) with VASL's foxholes, trenches, A-T ditches, wire, barricades, roadblocks, PFZs, sangars, PTO/BRT pieces, mines, fortified buildings, strongpoints, caves, cupolas, pillboxes and tunnels.
+- Counters that share a name but have different pictures (e.g. 1S/2S/3S foxholes) are no longer merged.
+- A saved VASL catalogue is rebuilt automatically the next time the palette opens.
+## 1.5.2-freeform (branch `freeform-ob`, experimental)
 - OB rows in ASL OB panels are placed freely: drag a row by its grip (⠿, left of the row on hover) anywhere inside the panel's padded area.
 - Rows snap to an 8 px grid; hold Alt while dragging (or with the arrow keys) to place without snapping. Arrow keys nudge a focused grip.
 - Drag a row's right edge to set its width (text wraps); double-click the edge to return to automatic width.

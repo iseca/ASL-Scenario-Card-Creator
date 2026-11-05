@@ -2352,7 +2352,7 @@ async function openPal(gp) {
   if (!$("palNat").options.length || $("palNat").dataset.v !== vasl.cat.version) {
     $("palNat").dataset.v = vasl.cat.version;
     const by = (sd) => vasl.cat.nations.filter(n => n.side === sd).map(n => `<option value="${esc(n.name)}">${esc(n.name)}</option>`).join("");
-    $("palNat").innerHTML = `<optgroup label="Allied">${by("Allied")}</optgroup><optgroup label="Axis">${by("Axis")}</optgroup>`;
+    $("palNat").innerHTML = `<optgroup label="Allied">${by("Allied")}</optgroup><optgroup label="Axis">${by("Axis")}</optgroup>${by("Other") ? `<optgroup label="Both sides">${by("Other")}</optgroup>` : ""}`;
   }
   if (want && vasl.cat.nations.some(n => n.name === want)) vasl.nat = want;
   if (!vasl.nat || !vasl.cat.nations.some(n => n.name === vasl.nat)) vasl.nat = vasl.cat.nations[0].name;
@@ -2419,7 +2419,7 @@ async function loadVmod(file) {
     await idb.set("vasl_blob", file); await idb.set("vasl_cat", cat);
     vasl.cat = cat; vasl.blob = file; thumbCache.clear(); $("palNat").innerHTML = "";
     const n = cat.nations.reduce((a, x) => a + x.counters.length, 0);
-    toast(`Loaded VASL ${cat.version}: ${n.toLocaleString()} counters in ${cat.nations.length} nationalities.`);
+    toast(`Loaded VASL ${cat.version}: ${n.toLocaleString()} counters in ${cat.nations.length} lists (nationalities and fortifications).`);
     openPal(palTarget);
   } catch (e) { toast(e.message || "That file couldn't be read."); }
 }

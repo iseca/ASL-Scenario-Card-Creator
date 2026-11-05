@@ -3,7 +3,7 @@
    and draws counter FRONTS the way VASL layers them (base image + active image layers).
    Everything stays in this browser: the module file and the catalogue go into IndexedDB. */
 const VASL = (() => {
-  const CAT_FMT = 2;   /* bump when the catalogue gains something, so a stored one is rebuilt from the saved module */
+  const CAT_FMT = 3;   /* bump when the catalogue gains something, so a stored one is rebuilt from the saved module */
   /* VASSAL SequenceEncoder: split on a delimiter unless it is escaped with a backslash */
   function tok(s, d) {
     const out = []; let cur = "";
@@ -94,11 +94,7 @@ const VASL = (() => {
     const win = [...doc.getElementsByTagName("VASSAL.build.module.PieceWindow")].find(w => w.getAttribute("name") === "VASL Counters");
     const nations = [], seen = new Set();
     if (!win) return { version, nations };
-    const boxes = [...win.getElementsByTagName("VASSAL.build.widget.BoxWidget")].filter(b => /O\/B/.test(b.getAttribute("entryName") || ""));
-    for (const box of boxes) {
-      const side = /Axis/.test(box.getAttribute("entryName")) ? "Axis" : "Allied";
-      for (const tab of [...box.children].filter(c => tag(c) === "TabWidget")) {
-        const name = tab.getAttribute("entryName"); if (!name || seen.has(name)) continue; seen.add(name);
+    const addList = (tab, name, side) => {
         const counters = [];
         const walk = (el, path) => {
           for (const c of el.children) {
@@ -127,11 +123,21 @@ const VASL = (() => {
           }
         };
         walk(tab, []);
-        /* drop repeats (a dismantled face VASL also lists as its own piece) */
+        /* drop repeats (a dismantled face VASL also lists as its own piece); same name with a different picture stays */
         const seenN = new Set();
-        nations.push({ name, side, counters: counters.filter(c => { const k = c.n + "|" + c.g; if (seenN.has(k)) return false; seenN.add(k); return true; }) });
+        nations.push({ name, side, counters: counters.filter(c => { const k = c.n + "|" + c.g + "|" + c.L.map(l => l.img).join(","); if (seenN.has(k)) return false; seenN.add(k); return true; }) });
+    };
+    const boxes = [...win.getElementsByTagName("VASSAL.build.widget.BoxWidget")].filter(b => /O\/B/.test(b.getAttribute("entryName") || ""));
+    for (const box of boxes) {
+      const side = /Axis/.test(box.getAttribute("entryName")) ? "Axis" : "Allied";
+      for (const tab of [...box.children].filter(c => tag(c) === "TabWidget")) {
+        const name = tab.getAttribute("entryName"); if (!name || seen.has(name)) continue; seen.add(name);
+        addList(tab, name, side);
       }
     }
+    /* fortifications (foxholes, trenches, wire, mines, pillboxes, …) live in the Info tab's "Fortify" list */
+    const fort = [...win.getElementsByTagName("*")].find(e => /Widget$/.test(tag(e)) && e.getAttribute("entryName") === "Fortify");
+    if (fort) addList(fort, "Fortifications", "Other");
     return { version, nations, fmt: CAT_FMT };
   }
   /* ---- module file ---- */
