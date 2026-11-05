@@ -507,7 +507,7 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 
 <header class="bar">
   <div class="bar-top">
-    <div class="brand"><span class="mark" id="brandMark">ASL</span><span>Scenario Card Maker</span><span class="ver" title="Version 1.5.1, built 2026-10-29">v1.5.1</span></div>
+    <div class="brand"><span class="mark" id="brandMark">ASL</span><span>Scenario Card Maker</span><span class="ver" title="Version 1.5.2, built 2026-11-04">v1.5.2</span></div>
     <div class="tg" role="group" aria-label="Template">
       <label class="lbl" for="tplSel">Template</label>
       <select id="tplSel" class="tplsel"><option value="asl">ASL scenario card</option><option value="sasl">SASL mission card</option></select>
@@ -703,7 +703,7 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
    and draws counter FRONTS the way VASL layers them (base image + active image layers).
    Everything stays in this browser: the module file and the catalogue go into IndexedDB. */
 const VASL = (() => {
-  const CAT_FMT = 2;   /* bump when the catalogue gains something, so a stored one is rebuilt from the saved module */
+  const CAT_FMT = 3;   /* bump when the catalogue gains something, so a stored one is rebuilt from the saved module */
   /* VASSAL SequenceEncoder: split on a delimiter unless it is escaped with a backslash */
   function tok(s, d) {
     const out = []; let cur = "";
@@ -794,11 +794,7 @@ const VASL = (() => {
     const win = [...doc.getElementsByTagName("VASSAL.build.module.PieceWindow")].find(w => w.getAttribute("name") === "VASL Counters");
     const nations = [], seen = new Set();
     if (!win) return { version, nations };
-    const boxes = [...win.getElementsByTagName("VASSAL.build.widget.BoxWidget")].filter(b => /O\/B/.test(b.getAttribute("entryName") || ""));
-    for (const box of boxes) {
-      const side = /Axis/.test(box.getAttribute("entryName")) ? "Axis" : "Allied";
-      for (const tab of [...box.children].filter(c => tag(c) === "TabWidget")) {
-        const name = tab.getAttribute("entryName"); if (!name || seen.has(name)) continue; seen.add(name);
+    const addList = (tab, name, side) => {
         const counters = [];
         const walk = (el, path) => {
           for (const c of el.children) {
@@ -827,11 +823,21 @@ const VASL = (() => {
           }
         };
         walk(tab, []);
-        /* drop repeats (a dismantled face VASL also lists as its own piece) */
+        /* drop repeats (a dismantled face VASL also lists as its own piece); same name with a different picture stays */
         const seenN = new Set();
-        nations.push({ name, side, counters: counters.filter(c => { const k = c.n + "|" + c.g; if (seenN.has(k)) return false; seenN.add(k); return true; }) });
+        nations.push({ name, side, counters: counters.filter(c => { const k = c.n + "|" + c.g + "|" + c.L.map(l => l.img).join(","); if (seenN.has(k)) return false; seenN.add(k); return true; }) });
+    };
+    const boxes = [...win.getElementsByTagName("VASSAL.build.widget.BoxWidget")].filter(b => /O\/B/.test(b.getAttribute("entryName") || ""));
+    for (const box of boxes) {
+      const side = /Axis/.test(box.getAttribute("entryName")) ? "Axis" : "Allied";
+      for (const tab of [...box.children].filter(c => tag(c) === "TabWidget")) {
+        const name = tab.getAttribute("entryName"); if (!name || seen.has(name)) continue; seen.add(name);
+        addList(tab, name, side);
       }
     }
+    /* fortifications (foxholes, trenches, wire, mines, pillboxes, …) live in the Info tab's "Fortify" list */
+    const fort = [...win.getElementsByTagName("*")].find(e => /Widget$/.test(tag(e)) && e.getAttribute("entryName") === "Fortify");
+    if (fort) addList(fort, "Fortifications", "Other");
     return { version, nations, fmt: CAT_FMT };
   }
   /* ---- module file ---- */
@@ -2970,7 +2976,7 @@ async function snapshot(target = sheet) {
   } finally { target.classList.remove("exporting"); scaler.style.transform = prev; window.scrollTo(sx, sy); }
 }
 async function busy(btn, fn) { const t = btn.textContent; btn.disabled = true; btn.textContent = "Working…"; try { await fn(); } catch (e) { toast(e.message || "Export failed."); } finally { btn.textContent = t; setSaveUI(); } }
-const APP_VERSION = "1.5.1";
+const APP_VERSION = "1.5.2";
 $("bSave").addEventListener("click", (e) => busy(e.currentTarget, () => offer(baseName() + ".json", JSON.stringify({ ...state, appVersion: APP_VERSION }))));
 $("bPng").addEventListener("click", (e) => busy(e.currentTarget, async () => {
   const two = !sheet2.hidden;
@@ -3050,7 +3056,7 @@ async function openPal(gp) {
   if (!$("palNat").options.length || $("palNat").dataset.v !== vasl.cat.version) {
     $("palNat").dataset.v = vasl.cat.version;
     const by = (sd) => vasl.cat.nations.filter(n => n.side === sd).map(n => `<option value="${esc(n.name)}">${esc(n.name)}</option>`).join("");
-    $("palNat").innerHTML = `<optgroup label="Allied">${by("Allied")}</optgroup><optgroup label="Axis">${by("Axis")}</optgroup>`;
+    $("palNat").innerHTML = `<optgroup label="Allied">${by("Allied")}</optgroup><optgroup label="Axis">${by("Axis")}</optgroup>${by("Other") ? `<optgroup label="Both sides">${by("Other")}</optgroup>` : ""}`;
   }
   if (want && vasl.cat.nations.some(n => n.name === want)) vasl.nat = want;
   if (!vasl.nat || !vasl.cat.nations.some(n => n.name === vasl.nat)) vasl.nat = vasl.cat.nations[0].name;
@@ -3117,7 +3123,7 @@ async function loadVmod(file) {
     await idb.set("vasl_blob", file); await idb.set("vasl_cat", cat);
     vasl.cat = cat; vasl.blob = file; thumbCache.clear(); $("palNat").innerHTML = "";
     const n = cat.nations.reduce((a, x) => a + x.counters.length, 0);
-    toast(`Loaded VASL ${cat.version}: ${n.toLocaleString()} counters in ${cat.nations.length} nationalities.`);
+    toast(`Loaded VASL ${cat.version}: ${n.toLocaleString()} counters in ${cat.nations.length} lists (nationalities and fortifications).`);
     openPal(palTarget);
   } catch (e) { toast(e.message || "That file couldn't be read."); }
 }
