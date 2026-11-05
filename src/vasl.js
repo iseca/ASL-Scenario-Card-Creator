@@ -3,7 +3,7 @@
    and draws counter FRONTS the way VASL layers them (base image + active image layers).
    Everything stays in this browser: the module file and the catalogue go into IndexedDB. */
 const VASL = (() => {
-  const CAT_FMT = 3;   /* bump when the catalogue gains something, so a stored one is rebuilt from the saved module */
+  const CAT_FMT = 4;   /* bump when the catalogue gains something, so a stored one is rebuilt from the saved module */
   /* VASSAL SequenceEncoder: split on a delimiter unless it is escaped with a backslash */
   function tok(s, d) {
     const out = []; let cur = "";
@@ -115,6 +115,17 @@ const VASL = (() => {
                 const v = num(tr.s, 1); if (Math.abs(v) === k + 1 && v > 0) return;
                 const dm = layersOf(traits, new Map([[ti, k + 1]])); if (!dm.length) return;
                 counters.push({ n: "dm " + name, a: en + " dismantled", g: path.join(" › "), id: (c.getAttribute("gpid") || "") + "dm", L: dm.map(l => ({ ...l })) });
+              });
+              /* the horse counter is one piece with 1-, 2- and 3-horse faces; offer each one (a single horse is what an SMC rides) */
+              traits.forEach((tr, ti) => {
+                if (tr.id !== "emb2") return;
+                const f = tok(tr.t, ";"), imgs = tok(f[16] || "", ",");
+                if (!imgs.length || !imgs.every(x => /Horse/i.test(x))) return;
+                counters.splice(counters.length - 1, 1);
+                imgs.forEach((x, k) => {
+                  const L = layersOf(traits, new Map([[ti, k + 1]])); if (!L.length) return;
+                  counters.push({ n: `${en} (${k + 1})`, a: `${en} ${k + 1} horse${k ? "s" : ""}`, g: path.join(" › "), id: (c.getAttribute("gpid") || "") + "h" + (k + 1), L: L.map(l => ({ ...l })) });
+                });
               });
             } else if (/Widget$/.test(t)) {
               const en = (c.getAttribute("entryName") || "").replace(/^<\s*/, "").trim();
