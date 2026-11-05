@@ -520,7 +520,7 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 
 <header class="bar">
   <div class="bar-top">
-    <div class="brand"><span class="mark" id="brandMark">ASL</span><span>Scenario Card Maker</span><span class="ver" title="Version 1.5.2-freeform, built 2026-11-04">v1.5.2-freeform</span></div>
+    <div class="brand"><span class="mark" id="brandMark">ASL</span><span>Scenario Card Maker</span><span class="ver" title="Version 1.5.3-freeform, built 2026-11-04">v1.5.3-freeform</span></div>
     <div class="tg" role="group" aria-label="Template">
       <label class="lbl" for="tplSel">Template</label>
       <select id="tplSel" class="tplsel"><option value="asl">ASL scenario card</option><option value="sasl">SASL mission card</option></select>
@@ -717,7 +717,7 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
    and draws counter FRONTS the way VASL layers them (base image + active image layers).
    Everything stays in this browser: the module file and the catalogue go into IndexedDB. */
 const VASL = (() => {
-  const CAT_FMT = 3;   /* bump when the catalogue gains something, so a stored one is rebuilt from the saved module */
+  const CAT_FMT = 4;   /* bump when the catalogue gains something, so a stored one is rebuilt from the saved module */
   /* VASSAL SequenceEncoder: split on a delimiter unless it is escaped with a backslash */
   function tok(s, d) {
     const out = []; let cur = "";
@@ -829,6 +829,17 @@ const VASL = (() => {
                 const v = num(tr.s, 1); if (Math.abs(v) === k + 1 && v > 0) return;
                 const dm = layersOf(traits, new Map([[ti, k + 1]])); if (!dm.length) return;
                 counters.push({ n: "dm " + name, a: en + " dismantled", g: path.join(" › "), id: (c.getAttribute("gpid") || "") + "dm", L: dm.map(l => ({ ...l })) });
+              });
+              /* the horse counter is one piece with 1-, 2- and 3-horse faces; offer each one (a single horse is what an SMC rides) */
+              traits.forEach((tr, ti) => {
+                if (tr.id !== "emb2") return;
+                const f = tok(tr.t, ";"), imgs = tok(f[16] || "", ",");
+                if (!imgs.length || !imgs.every(x => /Horse/i.test(x))) return;
+                counters.splice(counters.length - 1, 1);
+                imgs.forEach((x, k) => {
+                  const L = layersOf(traits, new Map([[ti, k + 1]])); if (!L.length) return;
+                  counters.push({ n: `${en} (${k + 1})`, a: `${en} ${k + 1} horse${k ? "s" : ""}`, g: path.join(" › "), id: (c.getAttribute("gpid") || "") + "h" + (k + 1), L: L.map(l => ({ ...l })) });
+                });
               });
             } else if (/Widget$/.test(t)) {
               const en = (c.getAttribute("entryName") || "").replace(/^<\s*/, "").trim();
@@ -3074,7 +3085,7 @@ async function snapshot(target = sheet) {
   } finally { target.classList.remove("exporting"); scaler.style.transform = prev; window.scrollTo(sx, sy); }
 }
 async function busy(btn, fn) { const t = btn.textContent; btn.disabled = true; btn.textContent = "Working…"; try { await fn(); } catch (e) { toast(e.message || "Export failed."); } finally { btn.textContent = t; setSaveUI(); } }
-const APP_VERSION = "1.5.2-freeform";
+const APP_VERSION = "1.5.3-freeform";
 $("bSave").addEventListener("click", (e) => busy(e.currentTarget, () => offer(baseName() + ".json", JSON.stringify({ ...state, appVersion: APP_VERSION }))));
 $("bPng").addEventListener("click", (e) => busy(e.currentTarget, async () => {
   const two = !sheet2.hidden;
