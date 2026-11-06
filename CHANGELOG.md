@@ -5,6 +5,10 @@ The version number shows next to the title in the app's toolbar, and cards saved
 
 Numbering: from v1.5 on, each change gets the next third number (1.5.1, 1.5.2 …) until the next major upgrade, which moves to a new second number (1.6). The first number goes up for a big change such as a new template.
 
+## 1.5.4 — 2026-11-05
+- Counter palette: new **Watercraft** list (under "Both sides") with VASL's assault and motor boats, rafts, landing craft (LCP(L), LCA, LCVP, LCM(3), LCI(S), LCT(4), Daihatsu, Shohatsu) and the landing-craft markers (DP, Aground, Broached, LC crew).
+- Amphibious vehicles (LVTs, DUKWs) stay in their nationality's vehicle lists, as in VASL.
+
 ## 1.5.3 — 2026-11-04
 - Counter palette: the horse counter is listed with each of its faces, Horse (1), Horse (2) and Horse (3), so a single horse for a mounted SMC can be placed. VASL keeps all three on one piece.
 

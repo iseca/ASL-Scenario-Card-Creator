@@ -3,7 +3,7 @@
    and draws counter FRONTS the way VASL layers them (base image + active image layers).
    Everything stays in this browser: the module file and the catalogue go into IndexedDB. */
 const VASL = (() => {
-  const CAT_FMT = 4;   /* bump when the catalogue gains something, so a stored one is rebuilt from the saved module */
+  const CAT_FMT = 5;   /* bump when the catalogue gains something, so a stored one is rebuilt from the saved module */
   /* VASSAL SequenceEncoder: split on a delimiter unless it is escaped with a backslash */
   function tok(s, d) {
     const out = []; let cur = "";
@@ -149,6 +149,9 @@ const VASL = (() => {
     /* fortifications (foxholes, trenches, wire, mines, pillboxes, …) live in the Info tab's "Fortify" list */
     const fort = [...win.getElementsByTagName("*")].find(e => /Widget$/.test(tag(e)) && e.getAttribute("entryName") === "Fortify");
     if (fort) addList(fort, "Fortifications", "Other");
+    /* boats, rafts and landing craft live in the Other tab's "Sea" list */
+    const sea = [...win.getElementsByTagName("*")].find(e => /Widget$/.test(tag(e)) && e.getAttribute("entryName") === "Sea");
+    if (sea) addList(sea, "Watercraft", "Other");
     return { version, nations, fmt: CAT_FMT };
   }
   /* ---- module file ---- */
