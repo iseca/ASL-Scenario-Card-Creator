@@ -425,6 +425,10 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 .palcats button { all: unset; cursor: pointer; padding: 3px 8px; border: 1px solid var(--line); border-radius: 12px; font-size: 12px; }
 .palcats button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .palcats button:focus-visible { outline: 2px solid var(--accent); }
+.palcats button.cap { border-color: #1d5fd6; color: #1d5fd6; }
+.palcats button.cap[aria-pressed="true"] { background: #1d5fd6; color: #fff; }
+.palcats .capfrom { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; margin-left: 4px; }
+.palcats .capfrom select { font: inherit; font-size: 12px; padding: 1px 4px; }
 .paltgt { margin: 0 12px 8px; padding: 6px 8px; border-radius: 4px; background: rgba(0,0,0,.05); font-size: 12px; color: var(--muted); }
 .paltgt b { color: var(--ink); }
 .palgrid { flex: 1; overflow: auto; padding: 4px 12px 16px; display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 8px 6px; align-content: start; }
@@ -2361,14 +2365,27 @@ async function openPal(gp) {
 }
 function palMark() { if (palTarget && !get(palTarget)) palTarget = null; if (!$("pal").hidden && palTarget) pages.querySelector(`.grp[data-g="${palTarget}"]`)?.classList.add("paltarget"); }
 function closePal() { $("pal").hidden = true; document.body.classList.remove("palopen"); fitStage(); pages.querySelectorAll(".grp.paltarget").forEach(x => x.classList.remove("paltarget")); }
+const CAPTURED = "Captured", CAP_BLUE = "#1d5fd6";
 function drawPal() {
   const nat = vasl.cat.nations.find(n => n.name === vasl.nat); if (!nat) return;
   const top = (c) => c.g.split(" › ")[0] || "Other";
   const cats = [...new Set(nat.counters.map(top))].sort((a, b) => (a === "Other") - (b === "Other"));
+  /* captured support weapons: another nationality's SW, drawn with a blue border */
+  const canCap = nat.side !== "Other";
+  if (canCap) cats.push(CAPTURED);
   if (vasl.cat1 && !cats.includes(vasl.cat1)) vasl.cat1 = "";
-  $("palCats").innerHTML = [["", "All"], ...cats.map(c => [c, c])].map(([v, l]) => `<button type="button" data-cat="${esc(v)}" aria-pressed="${vasl.cat1 === v}">${esc(l)}</button>`).join("");
+  const capOn = vasl.cat1 === CAPTURED;
+  const srcs = vasl.cat.nations.filter(n => n.side !== "Other" && n.name !== nat.name && n.counters.some(c => top(c) === "SW"));
+  if (capOn && !srcs.some(n => n.name === vasl.capFrom)) {
+    const enemy = srcs.filter(n => n.side !== nat.side);
+    vasl.capFrom = (enemy.find(n => n.name === (nat.side === "Axis" ? "Russian" : "German")) || enemy[0] || srcs[0])?.name || "";
+  }
+  $("palCats").innerHTML = [["", "All"], ...cats.map(c => [c, c])].map(([v, l]) => `<button type="button" data-cat="${esc(v)}" aria-pressed="${vasl.cat1 === v}"${v === CAPTURED ? ' class="cap" title="Support weapons captured from another nationality, outlined in blue"' : ""}>${esc(l)}</button>`).join("")
+    + (capOn ? `<label class="capfrom">from <select id="palCap" aria-label="Captured from">${srcs.map(n => `<option${n.name === vasl.capFrom ? " selected" : ""}>${esc(n.name)}</option>`).join("")}</select></label>` : "");
   const q = vasl.q.trim().toLowerCase().split(/\s+/).filter(Boolean);
-  const pool = q.length ? nat.counters : nat.counters.filter(c => !vasl.cat1 || top(c) === vasl.cat1);
+  const capNat = capOn && vasl.cat.nations.find(n => n.name === vasl.capFrom);
+  const pool = capOn ? (capNat ? capNat.counters.filter(c => top(c) === "SW").map(c => ({ ...c, cap: 1, g: `Captured ${capNat.name} ${c.g}` })) : [])
+    : q.length ? nat.counters : nat.counters.filter(c => !vasl.cat1 || top(c) === vasl.cat1);
   vasl.list = pool.filter(c => !q.length || q.every(w => (c.n + " " + c.a + " " + c.g).toLowerCase().includes(w)));
   let last = null, html = "";
   vasl.list.forEach((c, i) => {
@@ -2389,9 +2406,9 @@ async function pumpThumbs() {
     const c = vasl.list[+t.dataset.i]; if (!c) continue;
     thumbBusy++;
     (async () => {
-      const key = vasl.nat + "|" + c.id + "|" + c.n;
+      const key = (c.cap ? "cap|" + c.g : vasl.nat) + "|" + c.id + "|" + c.n;
       let r = thumbCache.get(key);
-      if (!r) { try { r = await VASL.render(vasl.blob, c.L, 1.5); } catch (_) { r = null; } thumbCache.set(key, r); }
+      if (!r) { try { r = await VASL.render(vasl.blob, c.L, 1.5, c.cap ? CAP_BLUE : ""); } catch (_) { r = null; } thumbCache.set(key, r); }
       const th = t.querySelector(".th"); th.classList.remove("wait");
       th.innerHTML = r ? `<img src="${r.url}" alt="" draggable="false" style="width:${Math.round(r.w * 1.15)}px">` : "?";
     })().finally(() => { thumbBusy--; pumpThumbs(); });
@@ -2401,13 +2418,13 @@ async function pumpThumbs() {
 async function addVaslCounter(c, gp, at = null) {
   const g = get(gp); if (!g) { toast("Choose a counter row first."); return; }
   try {
-    const r = await VASL.render(vasl.blob, c.L, 3.25);
+    const r = await VASL.render(vasl.blob, c.L, 3.25, c.cap ? CAP_BLUE : "");
     if (!r) { toast("That counter's picture isn't in the module."); return; }
     const sl = Object.assign(blankSlot(r.w >= 56 ? "l" : "s"), { img: r.url, v: 1 });
     if (at !== null && at !== undefined) g.slots.splice(at, 0, sl);
     else { const e = g.slots.findIndex(x => !x.img); if (e >= 0) { sl.qty = g.slots[e].qty; g.slots[e] = sl; } else g.slots.push(sl); }
     render(); queueSave(); setPalTarget(gp);
-    toast(`Added ${c.n}.`);
+    toast(`Added ${c.cap ? "captured " : ""}${c.n}.`);
   } catch (e) { toast("Couldn't draw that counter: " + e.message); }
 }
 async function loadVmod(file) {
@@ -2429,6 +2446,7 @@ for (const id of ["palLoad", "palLoad2"]) $(id).addEventListener("click", () => 
 $("vmodPick").addEventListener("change", (e) => loadVmod(e.target.files[0]));
 $("palNat").addEventListener("change", (e) => { vasl.nat = e.target.value; vasl.cat1 = ""; drawPal(); });
 $("palQ").addEventListener("input", (e) => { vasl.q = e.target.value; drawPal(); });
+$("palCats").addEventListener("change", (e) => { if (e.target.id === "palCap") { vasl.capFrom = e.target.value; drawPal(); } });
 $("palCats").addEventListener("click", (e) => { const b = e.target.closest("[data-cat]"); if (!b) return; vasl.cat1 = b.dataset.cat; drawPal(); });
 $("palGrid").addEventListener("click", (e) => {
   const t = e.target.closest(".tile"); if (!t) return;

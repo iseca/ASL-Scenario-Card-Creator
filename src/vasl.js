@@ -212,7 +212,7 @@ const VASL = (() => {
   }
   const loadImg = (src) => new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = src; });
   /* draw one counter front; returns { url, w, h } with w/h in VASL pixels (48 = ½", 60 = ⅝") */
-  async function render(blob, layers, scale = 4) {
+  async function render(blob, layers, scale = 4, outline = "") {
     const z = await zip(blob);
     const ims = [];
     for (const L of layers) { const src = await imgSrc(z, L.img); const im = src && await loadImg(src); if (im) ims.push({ im, x: L.x, y: L.y }); }
@@ -223,6 +223,12 @@ const VASL = (() => {
     for (const { im, x, y } of ims) {
       const iw = (im.naturalWidth || im.width) * scale, ih = (im.naturalHeight || im.height) * scale;
       g.drawImage(im, cv.width / 2 + x * scale - iw / 2, cv.height / 2 + y * scale - ih / 2, iw, ih);
+    }
+    /* captured equipment: a coloured border just inside the counter's edge */
+    if (outline) {
+      const lw = 2.6 * scale, r = 3 * scale;
+      g.strokeStyle = outline; g.lineWidth = lw;
+      g.beginPath(); g.roundRect(lw / 2, lw / 2, cv.width - lw, cv.height - lw, r); g.stroke();
     }
     return { url: cv.toDataURL("image/png"), w, h };
   }
