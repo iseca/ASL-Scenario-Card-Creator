@@ -5,6 +5,9 @@ The version number shows next to the title in the app's toolbar, and cards saved
 
 Numbering: from v1.5 on, each change gets the next third number (1.5.1, 1.5.2 …) until the next major upgrade, which moves to a new second number (1.6). The first number goes up for a big change such as a new template.
 
+## 1.5.5 — 2026-11-05
+- Counter palette: every nationality has a **Captured** button. It lists another nationality's support weapons (choose which with "from"; German defaults to Russian, Allied nationalities to German) and places them with a blue border to mark them as captured.
+
 ## 1.5.4 — 2026-11-05
 - Counter palette: new **Watercraft** list (under "Both sides") with VASL's assault and motor boats, rafts, landing craft (LCP(L), LCA, LCVP, LCM(3), LCI(S), LCT(4), Daihatsu, Shohatsu) and the landing-craft markers (DP, Aground, Broached, LC crew).
 - Amphibious vehicles (LVTs, DUKWs) stay in their nationality's vehicle lists, as in VASL.
