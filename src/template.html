@@ -2419,7 +2419,7 @@ async function loadVmod(file) {
     await idb.set("vasl_blob", file); await idb.set("vasl_cat", cat);
     vasl.cat = cat; vasl.blob = file; thumbCache.clear(); $("palNat").innerHTML = "";
     const n = cat.nations.reduce((a, x) => a + x.counters.length, 0);
-    toast(`Loaded VASL ${cat.version}: ${n.toLocaleString()} counters in ${cat.nations.length} lists (nationalities and fortifications).`);
+    toast(`Loaded VASL ${cat.version}: ${n.toLocaleString()} counters in ${cat.nations.length} lists (nationalities, fortifications and watercraft).`);
     openPal(palTarget);
   } catch (e) { toast(e.message || "That file couldn't be read."); }
 }
