@@ -5,6 +5,10 @@ The version number shows next to the title in the app's toolbar, and cards saved
 
 Numbering: from v1.5 on, each change gets the next third number (1.5.1, 1.5.2 …) until the next major upgrade, which moves to a new second number (1.6). The first number goes up for a big change such as a new template.
 
+## 1.5.6 — 2026-11-17
+- Saved files (card .json, PNG, PDF) are named in upper case by default, e.g. `A102-RACE-TO-THE-RIVER.pdf`, `…-FRONT.png`, `…-BACK.png`.
+- Zoom for the card page: − / + buttons (50%–300%), the percentage button returns to actual size, and Fit sizes the card to the window (the old behaviour). Ctrl/⌘ + mouse wheel or a trackpad pinch over the card also zooms. The zoom level is remembered in this browser; zooming never changes the exported card.
+
 ## 1.5.5 — 2026-11-05
 - Counter palette: every nationality has a **Captured** button. It lists another nationality's support weapons (choose which with "from"; German defaults to Russian, Allied nationalities to German) and places them with a blue border to mark them as captured.
 

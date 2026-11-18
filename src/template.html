@@ -78,8 +78,10 @@ output.count { min-width: 22px; text-align: center; font: 700 15px var(--f-num);
   padding-block: 22px 70px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
-  display: flex; justify-content: center;
+  display: flex; justify-content: safe center; overflow-x: auto;
 }
+.btn.zlbl { min-width: 52px; font-variant-numeric: tabular-nums; justify-content: center; }
+#zFit[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .fitbox { position: relative; flex: none; }
 .scaler { width: 816px; transform-origin: top left; position: absolute; left: 0; top: 0; }
 .pages { display: flex; flex-direction: column; gap: 28px; }
@@ -510,6 +512,12 @@ body.tpl-asl .only-sasl, body.tpl-sasl .only-asl { display: none !important; }
 <header class="bar">
   <div class="bar-top">
     <div class="brand"><span class="mark" id="brandMark">ASL</span><span>Scenario Card Maker</span><span class="ver" title="Version __APP_VERSION__, built __APP_DATE__">v__APP_VERSION__</span></div>
+    <div class="tg" role="group" aria-label="Zoom">
+      <button type="button" class="btn" id="zOut" title="Zoom out" aria-label="Zoom out">−</button>
+      <button type="button" class="btn zlbl" id="zLbl" title="Actual size (100%)">100%</button>
+      <button type="button" class="btn" id="zIn" title="Zoom in" aria-label="Zoom in">+</button>
+      <button type="button" class="btn" id="zFit" title="Fit the card to the window" aria-pressed="true">Fit</button>
+    </div>
     <div class="tg" role="group" aria-label="Template">
       <label class="lbl" for="tplSel">Template</label>
       <select id="tplSel" class="tplsel"><option value="asl">ASL scenario card</option><option value="sasl">SASL mission card</option></select>
@@ -1409,12 +1417,41 @@ function checkFit() {
 function fitStage() {
   const cs = getComputedStyle(stage);
   const avail = stage.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-  const s = Math.min(1, avail / W);
-  scaler.style.transform = s < 1 ? `scale(${s})` : "";
+  const fit = Math.min(1, avail / W);
+  const s = zoom === "fit" ? fit : zoom;
+  $("zLbl").textContent = Math.round(s * 100) + "%";
+  $("zFit").setAttribute("aria-pressed", zoom === "fit");
+  $("zOut").disabled = s <= ZOOMS[0] + 1e-6; $("zIn").disabled = s >= ZOOMS[ZOOMS.length - 1] - 1e-6;
+  scaler.style.transform = s !== 1 ? `scale(${s})` : "";
   const n = sheet2.hidden ? 1 : 2;
   fitbox.style.width = W * s + "px"; fitbox.style.height = (H * n + 28 * (n - 1)) * s + "px";
 }
 window.addEventListener("resize", fitStage);
+/* ---------- zoom: "fit" (the card as wide as the window allows, never above actual size) or a fixed scale ---------- */
+const ZOOMS = [0.5, 0.67, 0.75, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3];
+let zoom = "fit";
+try { const z = parseFloat(localStorage.getItem("card_zoom")); if (ZOOMS.includes(z)) zoom = z; } catch (_) {}
+function setZoom(z) {
+  /* keep the point at the middle of the window in the middle after zooming */
+  const before = fitbox.getBoundingClientRect(), cx = innerWidth / 2, cy = innerHeight / 2;
+  const fx = (cx - before.left) / (before.width || 1), fy = (cy - before.top) / (before.height || 1);
+  zoom = z; try { localStorage.setItem("card_zoom", String(z)); } catch (_) {}
+  fitStage();
+  const after = fitbox.getBoundingClientRect();
+  stage.scrollLeft += (after.left + fx * after.width) - cx;
+  window.scrollBy(0, (after.top + fy * after.height) - cy);
+}
+function curScale() { const r = fitbox.getBoundingClientRect(); return r.width / W; }
+$("zIn").addEventListener("click", () => { const s = curScale(); setZoom(ZOOMS.find(z => z > s + 0.01) ?? ZOOMS[ZOOMS.length - 1]); });
+$("zOut").addEventListener("click", () => { const s = curScale(); setZoom([...ZOOMS].reverse().find(z => z < s - 0.01) ?? ZOOMS[0]); });
+$("zFit").addEventListener("click", () => setZoom("fit"));
+$("zLbl").addEventListener("click", () => setZoom(1));
+/* Ctrl/⌘ + mouse wheel or trackpad pinch over the card zooms the card instead of the whole page */
+stage.addEventListener("wheel", (e) => {
+  if (!e.ctrlKey && !e.metaKey) return;
+  e.preventDefault();
+  const s = curScale(); if (e.deltaY < 0) setZoom(ZOOMS.find(z => z > s + 0.01) ?? ZOOMS[ZOOMS.length - 1]); else setZoom([...ZOOMS].reverse().find(z => z < s - 0.01) ?? ZOOMS[0]);
+}, { passive: false });
 
 /* ---------- images ---------- */
 const MAXDIM = { photo: 1600, board: 1100, logo: 400, badge: 500, gut: 500, img: 1000 };
@@ -2147,7 +2184,8 @@ setSaveUI();
 function baseName() {
   const t = (el) => { const d = document.createElement("div"); d.innerHTML = el || ""; return d.textContent.trim(); };
   const raw = (isSasl() ? [t(state.num), t(state.title)] : [t(state.sid).replace(/^ASL\s+SCENARIO\s+/i, ""), t(state.title)]).filter(Boolean).join(" ") || (isSasl() ? "sasl-mission" : "scenario-card");
-  return raw.replace(/[’'"]/g, "").replace(/[^\w\-]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "").slice(0, 80) || "scenario-card";
+  /* file names are upper case by default, e.g. "A102-RACE-TO-THE-RIVER" */
+  return (raw.replace(/[’'"]/g, "").replace(/[^\w\-]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "").slice(0, 80) || "scenario-card").toUpperCase();
 }
 async function offer(filename, data) {
   if (!downloads) {
@@ -2183,10 +2221,10 @@ $("bSave").addEventListener("click", (e) => busy(e.currentTarget, () => offer(ba
 $("bPng").addEventListener("click", (e) => busy(e.currentTarget, async () => {
   const two = !sheet2.hidden;
   const c = await snapshot(sheet);
-  await offer(baseName() + (two ? "-front" : "") + ".png", await new Promise(r => c.toBlob(r, "image/png")));
+  await offer(baseName() + (two ? "-FRONT" : "") + ".png", await new Promise(r => c.toBlob(r, "image/png")));
   if (two) {
     const c2 = await snapshot(sheet2);
-    await offer(baseName() + "-back.png", await new Promise(r => c2.toBlob(r, "image/png")));
+    await offer(baseName() + "-BACK.png", await new Promise(r => c2.toBlob(r, "image/png")));
   }
 }));
 $("bPdf").addEventListener("click", (e) => busy(e.currentTarget, async () => {
